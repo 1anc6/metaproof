@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # Upload limits that protect the free tiers.
     uploads_per_ip_per_hour: int = 20
     daily_upload_cap: int = 500
+    # Header holding the visitor's IP that the client cannot forge (set by Cloudflare on Render).
+    client_ip_header: str = "cf-connecting-ip"
 
     # Images not analyzed for this many days are deleted, report included; 0 keeps everything.
     retention_days: int = 90

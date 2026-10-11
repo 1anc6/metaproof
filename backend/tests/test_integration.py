@@ -201,6 +201,21 @@ def test_per_ip_limit_returns_429(client, monkeypatch):
     assert r.status_code == 429 and int(r.headers["Retry-After"]) > 0
 
 
+def test_per_ip_limit_ignores_a_forged_forwarded_for(client, monkeypatch):
+    """Render's proxy passes X-Forwarded-For through, so changing it must not reset the limit."""
+    monkeypatch.setattr(routes, "upload_limiter", SlidingWindowLimiter(2))
+    for i, forged in enumerate(("1.1.1.1", "2.2.2.2")):
+        r = client.post("/api/analyses", files={"file": ("a.jpg", unique_jpeg(40 + i), "image/jpeg")},
+                        headers={"CF-Connecting-IP": "203.0.113.7", "X-Forwarded-For": forged})
+        assert r.status_code == 202
+    r = client.post("/api/analyses", files={"file": ("a.jpg", unique_jpeg(42), "image/jpeg")},
+                    headers={"CF-Connecting-IP": "203.0.113.7", "X-Forwarded-For": "3.3.3.3"})
+    assert r.status_code == 429
+    other = client.post("/api/analyses", files={"file": ("a.jpg", unique_jpeg(43), "image/jpeg")},
+                        headers={"CF-Connecting-IP": "198.51.100.9"})
+    assert other.status_code == 202  # a different visitor has their own allowance
+
+
 def test_daily_cap_returns_429(client):
     app.dependency_overrides[get_settings] = lambda: Settings(daily_upload_cap=1)
     assert upload(client, unique_jpeg(11)).status_code == 202
