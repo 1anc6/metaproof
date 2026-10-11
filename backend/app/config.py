@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     uploads_per_ip_per_hour: int = 20
     daily_upload_cap: int = 500
 
+    # Images not analyzed for this many days are deleted, report included; 0 keeps everything.
+    retention_days: int = 90
+    # Log a warning once the database passes this size (Neon's free tier stops at 512 MB).
+    storage_warn_mb: int = 400
+
     # Cosine similarity at or above which two images count as near-duplicates.
     similar_min_similarity: float = 0.92
 

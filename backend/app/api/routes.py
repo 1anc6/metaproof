@@ -11,6 +11,7 @@ from app.config import Settings, get_settings
 from app.db import get_session
 from app.ingest import UploadRejected, ingest
 from app.ratelimit import RateLimited, SlidingWindowLimiter, check_daily_cap
+from app.retention import retention_cutoff
 
 router = APIRouter(prefix="/api")
 
@@ -68,7 +69,7 @@ def create_analysis(
             select(models.MediaFile).where(models.MediaFile.sha256 == upload.sha256)
         ).one()
 
-        existing = _latest_job(session, media.id, settings.pipeline_version)
+        existing = _latest_job(session, media.id, settings)
         if existing is not None:
             upload.path.unlink(missing_ok=True)
             session.commit()
@@ -189,16 +190,21 @@ def get_thumbnail(sha256: str, session: SessionDep):
                     headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
-def _latest_job(session: Session, media_id: uuid.UUID, pipeline_version: str):
-    """A queued, running or finished job for this file under the current pipeline, if any."""
-    return session.scalars(
+def _latest_job(session: Session, media_id: uuid.UUID, settings: Settings):
+    """A queued, running or finished job for this file under the current pipeline, if any.
+    Expired jobs don't count: re-uploading the file re-analyzes it and restarts its retention."""
+    query = (
         select(models.AnalysisJob)
         .where(models.AnalysisJob.media_id == media_id,
-               models.AnalysisJob.pipeline_version == pipeline_version,
+               models.AnalysisJob.pipeline_version == settings.pipeline_version,
                models.AnalysisJob.status != models.JobStatus.failed)
         .order_by(models.AnalysisJob.created_at.desc())
         .limit(1)
-    ).one_or_none()
+    )
+    cutoff = retention_cutoff(settings)
+    if cutoff is not None:
+        query = query.where(models.AnalysisJob.created_at >= cutoff)
+    return session.scalars(query).one_or_none()
 
 
 def _job_query():

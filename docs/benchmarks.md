@@ -31,7 +31,8 @@ p50 / p95 in milliseconds:
 Per analysis: ~6 KB for the media row and embedding, plus ~7 KB of WebP thumbnail and a few KB
 of findings and analyzer output. Originals are never stored. Neon's free tier (0.5 GB)
 therefore holds roughly 25,000–30,000 analyses; at the time of writing the database used
-8.5 MB.
+8.5 MB. Images not analyzed for 90 days are deleted (`RETENTION_DAYS`), and the API logs a
+warning once the database passes 400 MB (`STORAGE_WARN_MB`).
 
 ## Analysis pipeline (live)
 
