@@ -1,7 +1,8 @@
-import { Download, HardDrive, Server, ShieldCheck, Trash2 } from 'lucide-react'
+import { Download, HardDrive, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { formatWhen } from '../lib/format'
 import { clearHistory, useHistory, type HistoryEntry } from '../lib/history'
+import { promptInstall, useInstallState } from '../lib/install'
 import { ServerBadge } from '../components/Shell'
 import { GithubMark, PageHeader } from '../components/ui'
 
@@ -23,6 +24,8 @@ export function Settings() {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <InstallCard />
+
         <Card icon={HardDrive} title="This device">
           <p className="text-sm text-muted">
             {history.length === 0
@@ -83,6 +86,44 @@ export function Settings() {
         </Card>
       </div>
     </div>
+  )
+}
+
+function InstallCard() {
+  const state = useInstallState()
+  return (
+    <Card icon={Smartphone} title="Install the app" className="lg:col-span-2">
+      {state === 'installed' && (
+        <p className="text-sm text-muted">
+          MetaProof is installed on this device. On Android, share any photo to it from your gallery,
+          WhatsApp or the browser, and it opens straight into the analysis.
+        </p>
+      )}
+      {state === 'available' && (
+        <>
+          <p className="text-sm text-muted">
+            Install MetaProof to open it like an app. On Android it also appears in the share menu, so you
+            can send a suspicious photo straight from your gallery or WhatsApp.
+          </p>
+          <button type="button" onClick={promptInstall} className="btn-primary mt-5">
+            <Download className="size-4" strokeWidth={2.25} /> Install MetaProof
+          </button>
+        </>
+      )}
+      {state === 'ios' && (
+        <p className="text-sm text-muted">
+          In Safari, tap <span className="text-ink">Share</span>, then{' '}
+          <span className="text-ink">Add to Home Screen</span>. iPhones don't let web apps appear in the
+          share menu, so open MetaProof and choose the photo there.
+        </p>
+      )}
+      {state === 'unavailable' && (
+        <p className="text-sm text-muted">
+          Open this site in Chrome on Android, or in Chrome or Edge on a computer, to install it. On
+          Android it then appears in the share menu for photos.
+        </p>
+      )}
+    </Card>
   )
 }
 
