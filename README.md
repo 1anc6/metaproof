@@ -8,7 +8,8 @@ combines them into one explainable verdict: *likely authentic*, *edited*,
 > MetaProof does not claim absolute truth. Every verdict lists the evidence behind it, and
 > the system says "inconclusive" rather than guess.
 
-🚧 **Status:** in development (week 1 of 4). Live demo link coming in week 4.
+🚧 **Status:** in development (week 1 of 4).
+**Live API:** [metaproof.onrender.com/docs](https://metaproof.onrender.com/docs) (free tier: the first request after 15 idle minutes takes about a minute to wake the server).
 
 ## How it works
 
