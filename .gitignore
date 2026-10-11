@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+
+# ML artifacts: datasets and weights live outside git (weights go to Hugging Face Hub)
+ml/data/
+ml/runs/
+*.onnx
+*.pt
+*.safetensors
+*.npy
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local files
+*.pdf
