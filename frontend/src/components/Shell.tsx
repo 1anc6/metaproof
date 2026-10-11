@@ -108,7 +108,7 @@ function ServerBadge() {
 function MobileTopBar() {
   return (
     <header className="no-print sticky top-0 z-30 px-4 pt-[max(env(safe-area-inset-top),12px)] lg:hidden">
-      <div className="glass flex items-center justify-between rounded-full py-2 pr-3 pl-3">
+      <div className="glass glass-bar flex items-center justify-between rounded-full py-2 pr-3 pl-3">
         <NavLink to="/">
           <Logo />
         </NavLink>
@@ -126,7 +126,7 @@ function MobileTabBar() {
       className="no-print fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),14px)] lg:hidden"
       aria-label="Main"
     >
-      <div className="glass flex w-full max-w-sm items-center justify-between rounded-full p-1.5">
+      <div className="glass glass-bar flex w-full max-w-sm items-center justify-between rounded-full p-1.5">
         {items.slice(0, 2).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}

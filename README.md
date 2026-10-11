@@ -14,6 +14,28 @@ explainable verdict: *likely authentic*, *edited*, *likely AI-generated* or *inc
 > MetaProof does not claim absolute truth. Every verdict lists the evidence behind it, and the
 > system answers "inconclusive" rather than guess.
 
+![MetaProof demo: overview, upload, report and detector results](docs/images/demo.gif)
+
+<details>
+<summary>More screenshots</summary>
+
+**Report:** verdict, detector score, key findings and the balance of evidence
+
+![Report page](docs/images/report.jpg)
+
+**Detector results:** detection rate per generator never seen in training
+
+![Detector results](docs/images/detector-results.jpg)
+
+**Mobile:** liquid-glass UI with a floating tab bar
+
+![Mobile screens](docs/images/mobile.jpg)
+
+</details>
+
+<sub>The sample image is a FLUX output from the Community Forensics evaluation set
+(CC BY-NC-SA 4.0), which the detector never saw during training.</sub>
+
 ## Highlights
 
 - **AI-image detector that generalizes:** CLIP ViT-B/16 features plus a calibrated classifier,
