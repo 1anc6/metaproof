@@ -67,6 +67,13 @@ export interface JobSummary {
   finished_at: string | null
 }
 
+export interface SimilarMedia {
+  sha256: string
+  similarity: number
+  label: VerdictLabel | null
+  first_seen_at: string
+}
+
 export interface JobCreated {
   job_id: string
   sha256: string
@@ -113,6 +120,7 @@ export const api = {
     ids.slice(0, 100).forEach((id) => qs.append('ids', id))
     return request<JobSummary[]>(`/api/analyses?${qs}`)
   },
+  similar: (sha: string) => request<SimilarMedia[]>(`/api/media/${encodeURIComponent(sha)}/similar`),
   thumbnailUrl: (sha: string) => `${BASE}/api/media/${encodeURIComponent(sha)}/thumbnail`,
 
   /** XHR instead of fetch so the UI can show upload progress. */

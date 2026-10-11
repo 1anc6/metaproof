@@ -23,11 +23,22 @@ class Settings(BaseSettings):
     # Comma-separated list of frontend origins allowed to call the API.
     cors_origins: str = "http://localhost:5173"
 
+    # ONNX model from ml/export_onnx.py; the Docker image downloads it at build time.
+    # When the file is missing the detector is skipped and the other analyzers still run.
+    detector_model_path: Path = Path("models/detector.onnx")
+
+    # Upload limits that protect the free tiers.
+    uploads_per_ip_per_hour: int = 20
+    daily_upload_cap: int = 500
+
+    # Cosine similarity at or above which two images count as near-duplicates.
+    similar_min_similarity: float = 0.92
+
     # Run the analysis worker inside the API process (a single container on Render).
     run_worker: bool = True
 
     # Bump when analyzers or the evidence engine change, so old results are re-analyzed.
-    pipeline_version: str = "0.1.0"
+    pipeline_version: str = "0.2.0"
 
     @field_validator("database_url")
     @classmethod

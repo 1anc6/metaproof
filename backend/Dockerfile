@@ -10,9 +10,17 @@ RUN apt-get update \
 RUN useradd --create-home --uid 1000 app
 WORKDIR /home/app/backend
 
+# Detector weights live on Hugging Face Hub (too big for git). Downloaded in their own layer
+# so code changes don't re-download them. If the download is skipped or fails, the API still
+# runs and the detector analyzer reports itself unavailable.
+ARG DETECTOR_URL=https://huggingface.co/1anc6/metaproof-detector/resolve/main/detector.onnx
+RUN mkdir -p models && python -c "import os, urllib.request; urllib.request.urlretrieve(os.environ['DETECTOR_URL'], 'models/detector.onnx')"     || echo "detector model not downloaded; continuing without it"
+
 COPY --chown=app pyproject.toml ./
 COPY --chown=app app ./app
-RUN pip install --no-cache-dir --default-timeout=120 --retries 10 --root-user-action=ignore .
+# Environment variables also reach pip's isolated build step, unlike command-line flags.
+ENV PIP_DEFAULT_TIMEOUT=120 PIP_RETRIES=10 PIP_ROOT_USER_ACTION=ignore
+RUN pip install --no-cache-dir .
 
 COPY --chown=app alembic.ini ./
 COPY --chown=app migrations ./migrations

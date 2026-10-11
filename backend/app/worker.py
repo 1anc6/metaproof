@@ -110,6 +110,7 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
     media = MediaInfo(path, job.media.mime_type, job.media.width, job.media.height)
 
     all_findings: list[Finding] = []
+    embedding: tuple[str, list[float]] | None = None
     for analyzer in ANALYZERS:
         started = time.perf_counter()
         run = models.AnalyzerRun(
@@ -125,6 +126,8 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
                 for f in result.findings
             ]
             all_findings.extend(result.findings)
+            if result.embedding is not None:
+                embedding = (str(result.raw.get("model", analyzer.name)), result.embedding)
         except Exception as exc:
             # One broken analyzer must not sink the whole report.
             log.exception("analyzer %s failed on job %s", analyzer.name, job.id)
@@ -132,6 +135,13 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
             run.error = f"{type(exc).__name__}: {exc}"[:500]
         run.duration_ms = int((time.perf_counter() - started) * 1000)
         session.add(run)
+
+    if embedding is not None:
+        try:
+            with session.begin_nested():  # a savepoint: a failure here must not lose the report
+                save_embedding(session, job.media_id, *embedding)
+        except Exception:
+            log.exception("could not store embedding for job %s", job.id)
 
     decision = evidence.decide(all_findings)
     session.add(models.Verdict(
@@ -141,6 +151,20 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
     ))
     job.status = models.JobStatus.done
     job.finished_at = datetime.now(UTC)
+
+
+UPSERT_EMBEDDING_SQL = text("""
+    INSERT INTO media_embeddings (media_id, model, embedding)
+    VALUES (:media_id, :model, CAST(:embedding AS vector))
+    ON CONFLICT (media_id) DO UPDATE SET model = EXCLUDED.model, embedding = EXCLUDED.embedding
+""")
+
+
+def save_embedding(session: Session, media_id, model: str, vector: list[float]) -> None:
+    # pgvector accepts the '[x,y,...]' text form; no extra Python dependency needed.
+    literal = "[" + ",".join(f"{v:.6f}" for v in vector) + "]"
+    session.execute(UPSERT_EMBEDDING_SQL, {"media_id": media_id, "model": model,
+                                           "embedding": literal})
 
 
 def _fail(job: models.AnalysisJob, message: str) -> None:

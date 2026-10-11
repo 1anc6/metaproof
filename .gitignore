@@ -34,3 +34,6 @@ Thumbs.db
 
 # Local tool settings
 .claude/
+
+# Detector weights (downloaded from Hugging Face Hub)
+backend/models/

@@ -34,6 +34,8 @@ class Finding:
 class AnalyzerResult:
     raw: dict = field(default_factory=dict)
     findings: list[Finding] = field(default_factory=list)
+    # Image embedding for near-duplicate search; stored in its own table, not in raw.
+    embedding: list[float] | None = None
 
 
 @dataclass(frozen=True)

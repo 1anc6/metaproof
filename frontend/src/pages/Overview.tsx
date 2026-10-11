@@ -1,4 +1,4 @@
-import { ArrowUpRight, Fingerprint, Layers, Plus, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Copy, Fingerprint, Plus, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatWhen } from '../lib/format'
@@ -9,8 +9,8 @@ import { Orb, Thumb, VerdictBadge } from '../components/ui'
 const LAYERS = [
   { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces', live: true },
   { icon: ShieldCheck, name: 'Content Credentials', detail: 'Signed C2PA provenance', live: true },
-  { icon: Layers, name: 'Invisible watermark', detail: 'TrustMark detection', live: false },
-  { icon: Sparkles, name: 'AI detector', detail: 'CLIP-based pixel analysis', live: false },
+  { icon: Sparkles, name: 'AI detector', detail: 'CLIP features, tested on unseen generators', live: true },
+  { icon: Copy, name: 'Seen-before search', detail: 'Finds resized or recompressed copies', live: true },
 ]
 
 export function Overview() {

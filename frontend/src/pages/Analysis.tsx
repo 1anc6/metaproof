@@ -66,6 +66,7 @@ const STEPS = [
   { key: 'upload', label: 'File received and hashed' },
   { key: 'metadata', label: 'Reading metadata' },
   { key: 'c2pa', label: 'Checking Content Credentials' },
+  { key: 'detector', label: 'Running the AI-image detector' },
   { key: 'verdict', label: 'Weighing the evidence' },
 ]
 

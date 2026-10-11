@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from app.api.routes import router
 from app.config import get_settings
@@ -50,3 +51,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    # The API has no home page; send visitors to the interactive docs.
+    return RedirectResponse("/docs")

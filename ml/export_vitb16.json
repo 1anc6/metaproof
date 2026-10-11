@@ -1,0 +1,14 @@
+{
+  "backbone": "vitb16",
+  "temperature": 1.180759072303772,
+  "fp32": {
+    "size_mb": 345.7,
+    "max_abs_diff_vs_torch": 2.384185791015625e-06,
+    "ms_per_image_1_thread": 294
+  },
+  "int8": {
+    "size_mb": 87.7,
+    "max_abs_diff_vs_torch": 0.17942661046981812,
+    "ms_per_image_1_thread": 130
+  }
+}

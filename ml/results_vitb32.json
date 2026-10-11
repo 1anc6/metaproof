@@ -1,0 +1,782 @@
+{
+  "backbone": "vitb32",
+  "temperature": 1.084105372428894,
+  "results": {
+    "calib": {
+      "n": 2851,
+      "accuracy": 0.8716239915819011,
+      "ece": 0.014666419056832546,
+      "auc": 0.9474357753386824,
+      "per_group": {
+        "1mohitmanoj/surya": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "AACEE/textual_inversion_cat": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "AACEE/textual_inversion_sksship": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Crosstyan/BPModel": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "DFGAN": {
+          "n": 50,
+          "detected": 0.56
+        },
+        "Dalle2": {
+          "n": 75,
+          "detected": 0.7866666666666666
+        },
+        "DeciDiffusionV2": {
+          "n": 51,
+          "detected": 0.8431372549019608
+        },
+        "Dhruvii24/neighbourhoods-global-infrastructure-toronto": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "EnD-Diffusers/Porcelain-Dusk-Mix-V1": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "Firefly_Image2": {
+          "n": 75,
+          "detected": 0.9733333333333334
+        },
+        "GALIP": {
+          "n": 51,
+          "detected": 0.5098039215686274
+        },
+        "Haya44/shrt-finetune": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Hourglass": {
+          "n": 75,
+          "detected": 0.4533333333333333
+        },
+        "IDK-ab0ut/Yiffymix_v36": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "IDK-ab0ut/Yiffymix_v40": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "IDK-ab0ut/Yiffymix_v41": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "IdeogramV1": {
+          "n": 50,
+          "detected": 0.96
+        },
+        "JamesFlare/pastel-mix": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "KORguy/textual_inversion_shirt": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "LCM_lora_sdv15": {
+          "n": 51,
+          "detected": 1.0
+        },
+        "LCM_lora_ssd1b": {
+          "n": 50,
+          "detected": 0.96
+        },
+        "LieDeath/MergeStove2.5D": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Linaqruf/animagine-xl": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Linaqruf/animagine-xl-2.0": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Masagin/Deliberate": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "MidjourneyV5_2": {
+          "n": 50,
+          "detected": 1.0
+        },
+        "MohitSK/RealisticComicBook": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "OFT/MODEL_SD15_RockRaiderRuby_v01": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Roy61/textual_inversion_H3D": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "Roy61/textual_inversion_H3D_numVector5": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Ryzan/fantasy-diffusion-v0": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Ryzan/fantasy-diffusion-v1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Shaleny/my-pet-dog-xzg": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Sygil/Sygil-Diffusion": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "TopdeckingLands/ArtOfMtg_V1": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "VegaKH/Ultraskin": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "WarriorMama777/AbyssOrangeMix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "WarriorMama777/AbyssOrangeMix2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/3DKX2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/3DKXv11": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/526": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Abased": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/AbsoluteReality": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/AnythingRemix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/AnythingV3-768": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/AnythingV4-768": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/ArcticFowl": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Aurora": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/BaronMix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/BeenYou": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/CuteFurry": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "Yntec/CutesyAnime": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/DaintyMix": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Darkside": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/DeliShaper": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/Deliberate2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/DreamAnything": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/DreamWorks": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Dreamscapes_n_Dragonfire_v2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Dreamsphere": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/DucHaiten-FANCYxFANCY": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/DucHaiten-GoldenLife": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/DucHaitenAnime768": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/FotoPhoto": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/GOLDFish": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Gacha": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "Yntec/GalenaVAE": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/HassanBlend12": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/Hassanim": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/IdleFancy": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/IsThisArt": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Jackpot": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "Yntec/KIDSILLUSTRATIONS": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Kitsch-In-Sync": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/KomowataHaruka": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/La-dee-dah-.-_": {
+          "n": 5,
+          "detected": 0.6
+        },
+        "Yntec/LeyLines": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Looking-Glass": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/LuckyStrike": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/MeinaAlter": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/NaughtyChildren": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Nostalgic": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/NovelAIRemix": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/PotaytoPotahto": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/QToriReloaded": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Reddit": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "Yntec/Reliberate": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/SQUEE": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/SamaritanDoesArt": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Shirayuki": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/SillySymphonies": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Splash": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Stuff": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/SuperCuteRemix": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "Yntec/Tantrum": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "Yntec/TheDarkNight": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Toonify2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Wonderland": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/WoopWoopRemix": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "Yntec/YiffyMix": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Yuzu": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "Yntec/animeTWO": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/edgeOfRealism": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/epiCCartoon": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/humu": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/iComixRemix": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "Yntec/iffyMix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/photoMovieRealistic": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/photoMovieX": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/pineappleAnimeMix": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/sexyToons": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "alea31415/onimai-characters": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "aliyualisa/model": {
+          "n": 3,
+          "detected": 0.3333333333333333
+        },
+        "arpita22/my-pet-dog-rog": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "ashishwaghule/my-pet-dog-ash": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "bguisard/stable-diffusion-nano-2-1": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "briannlongzhao/0": {
+          "n": 5,
+          "detected": 0.8
+        },
+        "briannlongzhao/2": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "briannlongzhao/textual_inversion": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "cgburgos/sdxl-1-0-base": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "chaitanyakusumanchi/chaitanya_photorealism": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "cosc/sketchstyle-cutesexyrobutts": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "danbochman/ccxl": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "deepghs/animefull-latest": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "divyansh-jain3/my-pet-dog-xzg": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "doohickey/neopian-diffusion": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "dream-textures/texture-diffusion": {
+          "n": 5,
+          "detected": 0.6
+        },
+        "employelalisa/min": {
+          "n": 6,
+          "detected": 1.0
+        },
+        "gsdf/Counterfeit-V2.0": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "gsdf/Counterfeit-V2.5": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "hangeol/textual_inversion_cat": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "haor/Evt_V4-preview": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "kalebanana/textual_inversion_mvtec": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "kamillaova/epiCRealism": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "kandinsky_2_2": {
+          "n": 75,
+          "detected": 0.92
+        },
+        "kvikontent_midjourney_v6": {
+          "n": 75,
+          "detected": 0.84
+        },
+        "lewdryuna/A-Rainier": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "liaobh/textual_inversion_cat": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "livingbox/bedroom-model-v2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "livingbox/bugatti-evo-03": {
+          "n": 5,
+          "detected": 0.8
+        },
+        "livingbox/modern-08-feb": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "livingbox/modern-29-jan": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "livingbox/modern-style-v3": {
+          "n": 2,
+          "detected": 0.5
+        },
+        "livingbox/modern-style-v4": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "mlpc-lab/TokenCompose_SD14_A": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "naclbit/trinart_characters_19.2m_stable_diffusion_v1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "naclbit/trinart_stable_diffusion_v2": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "nota-ai/bk-sdm-small": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "selshiya/teapot": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "sheshenin/shshnnphoto": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "simbolo-ai/enchanted-bagan-small": {
+          "n": 3,
+          "detected": 0.3333333333333333
+        },
+        "sohamm/my-pet-dog": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "soltustik/textual_inversion_cat": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "steb6/textual_inversion_cat": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "swl-models/toooajk-yagurumagiku-v3-dreambooth": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "swl-models/xiaolxl-guofeng-v1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "swl-models/xiaolxl-guofeng-v2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "swl-models/xiaolxl-guofeng-v3": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "tensor-diffusion/AsianRealistic_SDLife_ChiasedammeV9.0": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "tensor-diffusion/Dark-Sushi-2.5D": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "tensor-diffusion/chilloutmix-NI": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "vseetharamamugeraya/panda-artist": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "yehiaserag/anime-pencil-diffusion": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "real:LAION": {
+          "n": 228,
+          "correct": 0.7631578947368421
+        },
+        "real:N/A": {
+          "n": 1200,
+          "correct": 0.925
+        },
+        "real:coco": {
+          "n": 25,
+          "correct": 0.92
+        },
+        "real:ffhq": {
+          "n": 50,
+          "correct": 0.58
+        },
+        "real:imagenet": {
+          "n": 49,
+          "correct": 0.8775510204081632
+        }
+      }
+    },
+    "heldout": {
+      "n": 4239,
+      "accuracy": 0.8719037508846426,
+      "ece": 0.014952523538486426,
+      "auc": 0.9372610085403176,
+      "per_group": {
+        "Dalle3": {
+          "n": 301,
+          "detected": 0.973421926910299
+        },
+        "FLUX-dev": {
+          "n": 300,
+          "detected": 0.9266666666666666
+        },
+        "FLUX-schnell": {
+          "n": 303,
+          "detected": 0.9207920792079208
+        },
+        "Firefly_Image3": {
+          "n": 302,
+          "detected": 0.9668874172185431
+        },
+        "IdeogramV2": {
+          "n": 300,
+          "detected": 0.88
+        },
+        "Imagen3": {
+          "n": 301,
+          "detected": 0.8803986710963455
+        },
+        "LCM_lora_sdxl": {
+          "n": 300,
+          "detected": 0.8866666666666667
+        },
+        "MidjourneyV6_1": {
+          "n": 324,
+          "detected": 0.9074074074074074
+        },
+        "stable_cascade": {
+          "n": 300,
+          "detected": 0.9266666666666666
+        },
+        "real:LAION": {
+          "n": 1508,
+          "correct": 0.7871352785145889
+        }
+      }
+    },
+    "heldout-hard": {
+      "n": 4239,
+      "accuracy": 0.8221278603444209,
+      "ece": 0.021272632670194403,
+      "auc": 0.8939149872715955,
+      "per_group": {
+        "Dalle3": {
+          "n": 301,
+          "detected": 0.9601328903654485
+        },
+        "FLUX-dev": {
+          "n": 300,
+          "detected": 0.91
+        },
+        "FLUX-schnell": {
+          "n": 303,
+          "detected": 0.8679867986798679
+        },
+        "Firefly_Image3": {
+          "n": 302,
+          "detected": 0.9635761589403974
+        },
+        "IdeogramV2": {
+          "n": 300,
+          "detected": 0.8333333333333334
+        },
+        "Imagen3": {
+          "n": 301,
+          "detected": 0.8803986710963455
+        },
+        "LCM_lora_sdxl": {
+          "n": 300,
+          "detected": 0.94
+        },
+        "MidjourneyV6_1": {
+          "n": 324,
+          "detected": 0.8981481481481481
+        },
+        "stable_cascade": {
+          "n": 300,
+          "detected": 0.8966666666666666
+        },
+        "real:LAION": {
+          "n": 1508,
+          "correct": 0.6710875331564987
+        }
+      }
+    }
+  }
+}

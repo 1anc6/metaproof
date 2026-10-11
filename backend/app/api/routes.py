@@ -2,7 +2,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, selectinload
 
@@ -10,11 +10,14 @@ from app import models, schemas
 from app.config import Settings, get_settings
 from app.db import get_session
 from app.ingest import UploadRejected, ingest
+from app.ratelimit import RateLimited, SlidingWindowLimiter, check_daily_cap
 
 router = APIRouter(prefix="/api")
 
 SessionDep = Annotated[Session, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
+
+upload_limiter = SlidingWindowLimiter(get_settings().uploads_per_ip_per_hour)
 
 
 @router.get("/health", tags=["System"], summary="Health check")
@@ -29,7 +32,8 @@ def health() -> dict:
     tags=["Analyses"],
     summary="Upload an image for analysis",
     responses={200: {"description": "Already analyzed: returns the existing job"},
-               422: {"description": "Not a supported image, too large, or corrupt"}},
+               422: {"description": "Not a supported image, too large, or corrupt"},
+               429: {"description": "Upload limit reached"}},
 )
 def create_analysis(
     file: UploadFile,
@@ -40,6 +44,12 @@ def create_analysis(
 ):
     """Accepts JPEG, PNG, WebP or TIFF. Returns a job id to poll; the file itself is deleted
     after analysis. Uploading a file that was already analyzed returns the existing job."""
+    try:
+        upload_limiter.check(request.client.host if request.client else "unknown")
+        check_daily_cap(session, settings.daily_upload_cap)
+    except RateLimited as exc:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(exc),
+                            headers={"Retry-After": str(exc.retry_after)}) from exc
     try:
         upload = ingest(file.file, settings.temp_dir, settings.max_upload_bytes,
                         settings.max_image_pixels)
@@ -134,6 +144,37 @@ def get_report(sha256: str, session: SessionDep):
     if job is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No finished report for this file.")
     return _job_out(job)
+
+
+SIMILAR_SQL = text("""
+    WITH target AS (
+        SELECT e.embedding FROM media_embeddings e
+        JOIN media_files m ON m.id = e.media_id WHERE m.sha256 = :sha
+    )
+    SELECT m.sha256, m.first_seen_at,
+           1 - (e.embedding <=> (SELECT embedding FROM target)) AS similarity,
+           (SELECT v.label FROM analysis_jobs j JOIN verdicts v ON v.job_id = j.id
+             WHERE j.media_id = m.id ORDER BY j.finished_at DESC LIMIT 1) AS label
+      FROM media_embeddings e
+      JOIN media_files m ON m.id = e.media_id
+     WHERE m.sha256 <> :sha AND EXISTS (SELECT 1 FROM target)
+     ORDER BY e.embedding <=> (SELECT embedding FROM target)
+     LIMIT :limit
+""")
+
+
+@router.get("/media/{sha256}/similar", response_model=list[schemas.SimilarMedia],
+            tags=["Reports"], summary="Near-duplicates analyzed before")
+def get_similar(sha256: str, session: SessionDep, settings: SettingsDep,
+                limit: Annotated[int, Query(ge=1, le=10)] = 5):
+    """Other files that look like the same picture (resized, cropped or recompressed copies),
+    found by CLIP embedding similarity with a pgvector HNSW index."""
+    rows = session.execute(SIMILAR_SQL, {"sha": sha256.lower(), "limit": limit}).all()
+    return [
+        schemas.SimilarMedia(sha256=r.sha256, similarity=round(float(r.similarity), 4),
+                             label=r.label, first_seen_at=r.first_seen_at)
+        for r in rows if r.similarity >= settings.similar_min_similarity
+    ]
 
 
 @router.get("/media/{sha256}/thumbnail", tags=["Reports"], summary="Thumbnail (WebP)",

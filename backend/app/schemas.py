@@ -61,6 +61,13 @@ class JobSummary(BaseModel):
     finished_at: datetime | None
 
 
+class SimilarMedia(BaseModel):
+    sha256: str
+    similarity: float
+    label: str | None
+    first_seen_at: datetime
+
+
 class JobOut(BaseModel):
     job_id: uuid.UUID
     status: str
