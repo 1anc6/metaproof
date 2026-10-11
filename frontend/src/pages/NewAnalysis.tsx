@@ -1,12 +1,13 @@
 import { CloudUpload, Lock, LoaderCircle, MoonStar, WifiOff } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { formatBytes } from '../lib/format'
 import { addToHistory } from '../lib/history'
 import { useServerStatus } from '../lib/hooks'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { rememberPreview } from '../lib/preview'
+import { takeSharedImage } from '../lib/share'
 import { PageHeader } from '../components/ui'
 
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff']
@@ -20,7 +21,12 @@ type State =
 export function NewAnalysis() {
   const navigate = useNavigate()
   const input = useRef<HTMLInputElement>(null)
-  const [state, setState] = useState<State>({ kind: 'idle' })
+  const [params, setParams] = useSearchParams()
+  const [state, setState] = useState<State>(() =>
+    params.get('shared') && params.get('shared') !== '1'
+      ? { kind: 'error', message: 'Nothing MetaProof can analyze was shared. Share a JPEG, PNG, WebP or TIFF image.' }
+      : { kind: 'idle' },
+  )
   const [dragging, setDragging] = useState(false)
 
   const start = useCallback(
@@ -57,6 +63,21 @@ export function NewAnalysis() {
     },
     [navigate],
   )
+
+  // Opened from the phone's share menu: analyze the shared image straight away.
+  const sharedHandled = useRef(false)
+  useEffect(() => {
+    const shared = params.get('shared')
+    if (!shared || sharedHandled.current) return
+    sharedHandled.current = true // React runs effects twice in development; take the file once
+    setParams({}, { replace: true })
+    if (shared !== '1') return // the initial state already explains it
+    takeSharedImage().then((file) =>
+      file
+        ? start(file)
+        : setState({ kind: 'error', message: 'The shared image could not be found. Share it again, or choose it here.' }),
+    )
+  }, [params, setParams, start])
 
   // Paste an image from the clipboard anywhere on the page.
   useEffect(() => {

@@ -53,6 +53,8 @@ explainable verdict: *likely authentic*, *edited*, *likely AI-generated* or *inc
 - **Privacy by design:** uploads are deleted after analysis; only a hash, a thumbnail and the
   findings are kept, for 90 days after the image was last analyzed. GPS coordinates are never
   stored.
+- **Installable, with share-to-analyze:** a web app manifest and a small service worker put
+  MetaProof in Android's share menu, so a photo can be sent straight from the gallery.
 - **Runs on free tiers:** Vercel + Render + Neon + Hugging Face Hub, with CI on GitHub Actions.
 
 ## Architecture
