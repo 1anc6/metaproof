@@ -12,7 +12,7 @@ WORKDIR /home/app/backend
 
 COPY --chown=app pyproject.toml ./
 COPY --chown=app app ./app
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir --default-timeout=120 --retries 10 --root-user-action=ignore .
 
 COPY --chown=app alembic.ini ./
 COPY --chown=app migrations ./migrations
