@@ -15,13 +15,15 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://localhost/metaproof"
 
     max_upload_mb: int = 25
-    max_image_pixels: int = 50_000_000  # anything larger is treated as a decompression bomb
+    # Larger images are rejected. 30 MP keeps decoding inside the 512 MB Render free instance
+    # and still covers phone cameras; higher values also guard against decompression bombs.
+    max_image_pixels: int = 30_000_000
     temp_dir: Path = Path(tempfile.gettempdir()) / "metaproof"
 
     # Comma-separated list of frontend origins allowed to call the API.
     cors_origins: str = "http://localhost:5173"
 
-    # Run the analysis worker inside the API process (one container on HF Spaces).
+    # Run the analysis worker inside the API process (a single container on Render).
     run_worker: bool = True
 
     # Bump when analyzers or the evidence engine change, so old results are re-analyzed.

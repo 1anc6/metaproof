@@ -1,5 +1,7 @@
 name: Backend
 
+# Render deploys main by itself once these checks pass (Auto-Deploy: After CI Checks Pass).
+
 on:
   push:
     branches: [main]
@@ -26,24 +28,3 @@ jobs:
       - run: ruff check .
       - run: pytest -q
 
-  deploy:
-    # Only from main, only after tests pass, and only once the HF token is configured.
-    needs: test
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    concurrency: deploy-backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install huggingface_hub
-      - name: Upload backend to the Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          if [ -z "$HF_TOKEN" ]; then
-            echo "::warning::HF_TOKEN secret not set; skipping deploy."
-            exit 0
-          fi
-          python deploy/deploy_space.py

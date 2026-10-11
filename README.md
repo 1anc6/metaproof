@@ -41,9 +41,9 @@ Design choices worth noting:
 | Database | Neon (serverless PostgreSQL) |
 | Provenance | `c2pa-python` (official C2PA SDK) |
 | Metadata | Pillow, ExifTool (when installed) |
-| ML | PyTorch (training, local GPU), ONNX Runtime (serving) |
+| ML | PyTorch (training, local GPU), ONNX Runtime (serving); weights on Hugging Face Hub |
 | Frontend | React, TypeScript, Vite, Tailwind |
-| Hosting | Hugging Face Spaces (API), Vercel (frontend), GitHub Actions |
+| Hosting | Render (API, Docker), Vercel (frontend), GitHub Actions (CI) |
 
 ## Run locally
 
