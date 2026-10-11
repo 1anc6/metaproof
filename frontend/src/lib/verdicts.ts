@@ -62,7 +62,7 @@ export const STRENGTH_LABEL: Record<Strength, string> = {
   conclusive: 'Conclusive',
 }
 
-const LEAN_LABEL = { authentic: 'authentic', edited: 'edited', ai: 'AI-generated' } as const
+const LEAN_LABEL = { authentic: 'real', edited: 'edited', ai: 'AI-generated' } as const
 const LEAN_COLOR = { authentic: 'var(--color-authentic)', edited: 'var(--color-edited)', ai: 'var(--color-ai)' } as const
 
 /**
