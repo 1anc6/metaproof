@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useHistory } from '../lib/history'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { GithubMark, Logo } from './ui'
+import { Welcome } from './Welcome'
 
 const NAV = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
@@ -28,6 +29,7 @@ export function Shell() {
         <Outlet />
       </main>
       <MobileTabBar />
+      <Welcome />
     </div>
   )
 }
