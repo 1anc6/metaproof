@@ -45,6 +45,22 @@ class MediaOut(BaseModel):
     first_seen_at: datetime
 
 
+class JobSummary(BaseModel):
+    """Light row for history lists: no findings or raw analyzer output."""
+
+    job_id: uuid.UUID
+    status: str
+    sha256: str
+    mime_type: str
+    size_bytes: int
+    width: int
+    height: int
+    label: str | None
+    confidence: float | None
+    created_at: datetime
+    finished_at: datetime | None
+
+
 class JobOut(BaseModel):
     job_id: uuid.UUID
     status: str

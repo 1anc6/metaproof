@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, selectinload
@@ -81,6 +81,32 @@ def create_analysis(
         worker.notify()
     return schemas.JobCreated(job_id=job.id, sha256=media.sha256, status=job.status.value,
                               duplicate=False)
+
+
+@router.get("/analyses", response_model=list[schemas.JobSummary], tags=["Analyses"],
+            summary="Summaries for a list of jobs")
+def list_analyses(
+    session: SessionDep,
+    ids: Annotated[list[uuid.UUID], Query(max_length=100)],
+):
+    """There are no accounts, so each browser keeps its own job ids and asks for them here.
+    Unknown ids are skipped. Results are newest first."""
+    jobs = session.scalars(
+        select(models.AnalysisJob)
+        .options(selectinload(models.AnalysisJob.media), selectinload(models.AnalysisJob.verdict))
+        .where(models.AnalysisJob.id.in_(ids))
+        .order_by(models.AnalysisJob.created_at.desc())
+    ).all()
+    return [
+        schemas.JobSummary(
+            job_id=j.id, status=j.status.value, sha256=j.media.sha256,
+            mime_type=j.media.mime_type, size_bytes=j.media.size_bytes, width=j.media.width,
+            height=j.media.height, label=j.verdict.label if j.verdict else None,
+            confidence=j.verdict.confidence if j.verdict else None,
+            created_at=j.created_at, finished_at=j.finished_at,
+        )
+        for j in jobs
+    ]
 
 
 @router.get("/analyses/{job_id}", response_model=schemas.JobOut, tags=["Analyses"],

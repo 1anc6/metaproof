@@ -67,6 +67,14 @@ Run the tests:
 pytest
 ```
 
+Run the web app (in a second terminal):
+
+```bash
+cd frontend
+npm install
+npm run dev                     # http://localhost:5173
+```
+
 ## API
 
 | Method | Path | Purpose |
@@ -80,7 +88,7 @@ pytest
 
 ```
 backend/    FastAPI app, analyzers, evidence engine, worker, migrations, tests
-frontend/   React dashboard                         (week 3)
+frontend/   React web app (Vite, Tailwind, liquid-glass UI)
 ml/         detector training and ONNX export       (week 2)
 docs/       architecture and benchmark results
 ```
