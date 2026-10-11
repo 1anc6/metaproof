@@ -44,7 +44,7 @@ test('an unsupported file gets a clear message and is not uploaded', async ({ pa
   expect(api.uploads).toHaveLength(0)
 })
 
-test('Content Credentials show the AI-generated original behind an edited file', async ({ page }) => {
+test('a Gemini-style report: the AI-generated original, decisive bars, an overruled detector', async ({ page }) => {
   await mockApi(page)
   await skipWelcome(page)
   const c2pa = {
@@ -64,11 +64,27 @@ test('Content Credentials show the AI-generated original behind an edited file',
       history_actions: [{ action: 'c2pa.created', digital_source_type: 'trainedAlgorithmicMedia', software_agent: null }],
     },
   }
+  const detector = {
+    analyzer: 'detector', version: '1', ok: true, duration_ms: 7000, error: null,
+    findings: [{ code: 'detector.uncertain', signal: 'neutral', strength: 'weak', message: 'The AI-image detector is unsure (32% AI).' }],
+    raw: { available: true, p_ai: 0.32 },
+  }
   await page.route(`**/api/analyses/${JOB_ID}`, (route) => route.fulfill({
-    json: { ...job, verdict: { ...job.verdict, label: 'likely_ai_generated', scores: { authentic: 0, edited: 1, ai: 0 } }, analyzers: [c2pa] },
+    json: {
+      ...job,
+      verdict: {
+        ...job.verdict, label: 'likely_ai_generated', confidence: 0.99,
+        scores: { authentic: 0, edited: 1, ai: 10 }, top_reasons: c2pa.findings,
+      },
+      analyzers: [c2pa, detector],
+    },
   }))
   await page.goto(`/analysis/${JOB_ID}`)
   await expect(page.getByRole('heading', { name: 'Likely AI-generated' })).toBeVisible()
+  // The detector's low score is qualified, and the bars agree with the verdict.
+  await expect(page.getByText('· outweighed by stronger evidence')).toBeVisible()
+  await expect(page.getByText('conclusive', { exact: true })).toBeVisible()
+  await expect(page.getByText(/Decided by conclusive evidence/)).toBeVisible()
   await page.getByRole('button', { name: /Content Credentials/ }).click()
   await expect(page.getByText('Earlier history: the original it was made from')).toBeVisible()
   await expect(page.getByText('· trainedAlgorithmicMedia')).toBeVisible()

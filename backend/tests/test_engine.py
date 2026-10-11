@@ -19,6 +19,18 @@ def test_conclusive_evidence_wins_over_everything():
     ])
     assert d.label == "likely_ai_generated"
     assert d.top_reasons[0]["code"] == "c2pa.ai_generated"
+    # The scores agree with the verdict instead of showing AI at 0.
+    assert d.scores["ai"] == 10.0 and d.scores["ai"] > d.scores["authentic"] == 4.0
+
+
+def test_gemini_like_findings_score_ai_above_its_edits():
+    d = decide([
+        f(Signal.ai, Strength.conclusive, "c2pa.ai_generated"),
+        f(Signal.edited, Strength.moderate, "c2pa.signed_edits"),
+        f(Signal.neutral, Strength.weak, "detector.uncertain"),
+    ])
+    assert d.label == "likely_ai_generated"
+    assert d.scores == {"authentic": 0.0, "edited": 1.0, "ai": 10.0}
 
 
 def test_camera_exif_alone_is_not_enough_for_authentic():

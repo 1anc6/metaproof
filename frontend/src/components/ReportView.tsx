@@ -41,7 +41,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
               {summary}
             </p>
-            <DetectorChip job={job} />
+            <DetectorChip job={job} verdict={verdict} />
             {filename && <p className="mt-4 truncate text-sm text-ink">{filename}</p>}
             <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[11px] text-faint">
               <div>{formatType(job.media.mime_type)}</div>
@@ -73,10 +73,11 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
         <section className="glass animate-rise rounded-[28px] p-5 sm:p-6">
           <p className="eyebrow">Evidence weight</p>
           <h2 className="mt-1 font-display text-lg font-semibold">Balance of signals</h2>
-          <EvidenceBars scores={verdict.scores} />
+          <EvidenceBars verdict={verdict} />
           <p className="mt-5 text-xs leading-relaxed text-faint">
-            Weights add up the findings for each outcome. A verdict needs enough weight and a clear
-            lead; otherwise MetaProof says inconclusive.
+            {decisive(verdict)
+              ? 'Decided by conclusive evidence, which outweighs everything else on its own.'
+              : 'Weights add up the findings for each outcome. A verdict needs enough weight and a clear lead; otherwise MetaProof says inconclusive.'}
           </p>
         </section>
       </div>
@@ -158,7 +159,15 @@ function FindingRow({ finding }: { finding: Finding }) {
   )
 }
 
-function EvidenceBars({ scores }: { scores: Verdict['scores'] }) {
+/** The outcome settled by conclusive evidence (e.g. signed Content Credentials), if any. */
+function decisive(verdict: Verdict): 'authentic' | 'edited' | 'ai' | null {
+  const top = verdict.top_reasons[0]
+  return top?.strength === 'conclusive' && top.signal !== 'neutral' ? top.signal : null
+}
+
+function EvidenceBars({ verdict }: { verdict: Verdict }) {
+  const { scores } = verdict
+  const settled = decisive(verdict)
   const rows = [
     { key: 'authentic' as const, label: 'Authentic' },
     { key: 'edited' as const, label: 'Edited' },
@@ -174,7 +183,9 @@ function EvidenceBars({ scores }: { scores: Verdict['scores'] }) {
           <li key={key}>
             <div className="flex justify-between text-xs">
               <span className="text-muted">{label}</span>
-              <span className="font-mono text-faint tabular-nums">{value.toFixed(1)}</span>
+              <span className="font-mono text-faint tabular-nums">
+                {key === settled ? 'conclusive' : value.toFixed(1)}
+              </span>
             </div>
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
               <div
@@ -422,10 +433,14 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
   )
 }
 
-function DetectorChip({ job }: { job: Job }) {
+function DetectorChip({ job, verdict }: { job: Job; verdict: Verdict }) {
   const raw = job.analyzers.find((a) => a.analyzer === 'detector')?.raw
   if (!raw?.available || typeof raw.p_ai !== 'number') return null
   const pct = Math.round(raw.p_ai * 100)
+  // Say so when stronger evidence settled the verdict the other way, so the number is not read
+  // as contradicting it.
+  const overruled =
+    (verdict.label === 'likely_ai_generated' && pct < 50) || (verdict.label === 'likely_authentic' && pct >= 50)
   const color = pct >= 85 ? 'var(--color-ai)' : pct < 10 ? 'var(--color-authentic)' : 'var(--color-neutral)'
   return (
     <span className="glass mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs">
@@ -434,6 +449,7 @@ function DetectorChip({ job }: { job: Job }) {
       <span className="font-mono font-semibold tabular-nums" style={{ color }}>
         {pct}%
       </span>
+      {overruled && <span className="text-faint">· outweighed by stronger evidence</span>}
     </span>
   )
 }
