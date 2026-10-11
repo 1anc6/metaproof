@@ -1,4 +1,4 @@
-import { BarChart3, Copy, Fingerprint, Scale, ShieldCheck, Sparkles } from 'lucide-react'
+import { BarChart3, Copy, Droplets, Fingerprint, Scale, ShieldCheck, Sparkles } from 'lucide-react'
 import { BANDS, GENERATORS, SUMMARY } from '../data/detectorResults'
 import { PageHeader } from '../components/ui'
 
@@ -14,6 +14,12 @@ const LAYERS = [
     name: 'Content Credentials (C2PA)',
     status: 'Live',
     text: 'Validates signed provenance manifests with the official C2PA SDK. A valid manifest that declares AI generation settles the verdict; a broken signature means the file changed after signing. A valid signature proves who signed and that nothing changed since, not that the scene is real.',
+  },
+  {
+    icon: Droplets,
+    name: 'Invisible watermark',
+    status: 'Live',
+    text: "Stable Diffusion's reference scripts and the SDXL pipelines hide a fixed message in the pixels of every image they generate. MetaProof reads it with the same method as the open-source decoder. A match is strong AI evidence; finding none means nothing, because most images have no watermark and resizing or recompressing removes it.",
   },
   {
     icon: Sparkles,

@@ -1,4 +1,4 @@
-import { ArrowUpRight, Check, ChevronDown, Compass, Fingerprint, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Check, ChevronDown, Compass, Droplets, Fingerprint, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
@@ -189,6 +189,7 @@ function EvidenceBars({ scores }: { scores: Verdict['scores'] }) {
 const ANALYZER_META: Record<string, { title: string; icon: typeof Fingerprint; blurb: string }> = {
   metadata: { title: 'Metadata', icon: Fingerprint, blurb: 'EXIF, XMP and text chunks embedded in the file' },
   c2pa: { title: 'Content Credentials (C2PA)', icon: ShieldCheck, blurb: 'Signed provenance manifest' },
+  watermark: { title: 'Invisible watermark', icon: Droplets, blurb: 'Marks hidden by Stable Diffusion tools' },
   detector: { title: 'AI-image detector', icon: Sparkles, blurb: 'CLIP features + calibrated classifier' },
 }
 
@@ -223,6 +224,8 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
           <MetadataDetails raw={result.raw} />
         ) : result.analyzer === 'c2pa' ? (
           <C2paDetails raw={result.raw} />
+        ) : result.analyzer === 'watermark' ? (
+          <WatermarkDetails raw={result.raw} />
         ) : result.analyzer === 'detector' ? (
           <DetectorDetails raw={result.raw} />
         ) : (
@@ -285,6 +288,24 @@ function MetadataDetails({ raw }: { raw: Record<string, unknown> }) {
           </div>
         </details>
       )}
+    </div>
+  )
+}
+
+function WatermarkDetails({ raw }: { raw: Record<string, unknown> }) {
+  if (!raw.checked) {
+    return <p className="text-sm text-muted">The image is too small to check for invisible watermarks.</p>
+  }
+  const found = raw.found as { generator: string; bits_matched: number; bits_total: number } | undefined
+  const marks = (raw.marks as Record<string, number>) ?? {}
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted">
+        {found
+          ? `The pixels carry the invisible watermark ${found.generator} adds to every image it generates.`
+          : 'No known generator watermark. Most images have none, and resizing or recompressing an image removes it, so this is not evidence either way.'}
+      </p>
+      <Fields rows={Object.entries(marks).map(([name, n]) => [name, `${n} bits match`] as [string, ReactNode])} />
     </div>
   )
 }

@@ -29,8 +29,8 @@ app = FastAPI(
     title="MetaProof API",
     description=(
         "Evidence-based authenticity analysis for images. Each upload is checked for "
-        "metadata traces, C2PA Content Credentials and (soon) watermarks and AI-generation "
-        "artifacts, then given one explainable verdict: likely authentic, edited, likely "
+        "metadata traces, C2PA Content Credentials, invisible generator watermarks and "
+        "AI-generation artifacts, then given one explainable verdict: likely authentic, edited, likely "
         "AI-generated or inconclusive.\n\n"
         "**Typical flow:** `POST /api/analyses` → poll `GET /api/analyses/{job_id}` → share "
         "`/api/media/{sha256}/report`.\n\n"
