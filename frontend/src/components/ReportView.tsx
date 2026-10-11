@@ -3,12 +3,13 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
 import { formatBytes, formatDateTime, formatType, formatWhen, shortHash } from '../lib/format'
-import { SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
+import { leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
 import { SignalDot, Thumb, VerdictBadge } from './ui'
 
 export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   const verdict = job.verdict!
   const v = VERDICTS[verdict.label]
+  const lean = verdict.label === 'inconclusive' ? leaning(verdict.scores) : null
   const sha = job.media.sha256
 
   return (
@@ -27,7 +28,16 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <h1 className={`mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl ${v.text} print-dark`}>
               {v.title}
             </h1>
-            <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">{v.summary}</p>
+            {lean && (
+              <p className="mt-2 font-display text-lg font-medium" style={{ color: lean.color }}>
+                leaning {lean.label}
+              </p>
+            )}
+            <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
+              {lean
+                ? `Some evidence points to ${lean.label === 'authentic' ? 'an authentic photo' : `an ${lean.label} image`}, but not enough to decide. Treat it as unverified.`
+                : v.summary}
+            </p>
             <DetectorChip job={job} />
             {filename && <p className="mt-4 truncate text-sm text-ink">{filename}</p>}
             <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[11px] text-faint">

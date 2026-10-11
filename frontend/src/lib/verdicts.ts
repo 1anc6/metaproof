@@ -61,3 +61,17 @@ export const STRENGTH_LABEL: Record<Strength, string> = {
   strong: 'Strong',
   conclusive: 'Conclusive',
 }
+
+const LEAN_LABEL = { authentic: 'authentic', edited: 'edited', ai: 'AI-generated' } as const
+const LEAN_COLOR = { authentic: 'var(--color-authentic)', edited: 'var(--color-edited)', ai: 'var(--color-ai)' } as const
+
+/**
+ * For an inconclusive verdict, which way the evidence tilts (if any). The engine still said
+ * "not enough to decide"; this only tells the reader which outcome had the most support.
+ */
+export function leaning(scores: Record<'authentic' | 'edited' | 'ai', number>) {
+  const ranked = (Object.keys(scores) as (keyof typeof scores)[]).sort((a, b) => scores[b] - scores[a])
+  const [top, second] = ranked
+  if (scores[top] <= 0 || scores[top] === scores[second]) return null
+  return { key: top, label: LEAN_LABEL[top], color: LEAN_COLOR[top] }
+}
