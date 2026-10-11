@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     run_worker: bool = True
 
     # Bump when analyzers or the evidence engine change, so old results are re-analyzed.
-    pipeline_version: str = "0.2.0"
+    pipeline_version: str = "0.3.0"
 
     @field_validator("database_url")
     @classmethod

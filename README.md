@@ -43,6 +43,8 @@ explainable verdict: *likely authentic*, *edited*, *likely AI-generated* or *inc
   Firefly 3, Imagen 3, …): **AUC 0.953**, 0.950 after social-media recompression.
   [Method and results →](ml/README.md)
 - **Signed provenance:** validates C2PA Content Credentials with the official SDK.
+- **Invisible watermarks:** reads the marks Stable Diffusion 1.x/2.x and SDXL hide in their
+  output, with a numpy port of the open-source decoder that matches it bit for bit.
 - **"Seen before" search:** CLIP embeddings in Postgres with a pgvector HNSW index find
   resized or recompressed copies that a file hash misses, in under 1 ms at 30K images.
   [Benchmarks →](docs/benchmarks.md)
