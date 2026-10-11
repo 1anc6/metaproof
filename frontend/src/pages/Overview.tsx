@@ -4,6 +4,7 @@ import type { VerdictLabel } from '../lib/api'
 import { formatWhen } from '../lib/format'
 import { useHistory } from '../lib/history'
 import { useSummaries } from '../lib/hooks'
+import { DEMO_REPORT_PATH } from '../lib/demo'
 import { Orb, Thumb, VerdictBadge } from '../components/ui'
 
 const LAYERS = [
@@ -49,8 +50,8 @@ export function Overview() {
             <Link to="/new" className="btn-primary">
               <Plus className="size-4" strokeWidth={2.5} /> New analysis
             </Link>
-            <Link to="/method" className="glass btn-ghost">
-              How it works
+            <Link to={DEMO_REPORT_PATH} className="glass btn-ghost">
+              See an example report
             </Link>
           </div>
         </div>
@@ -164,9 +165,14 @@ function EmptyRecent() {
       <p className="mt-1 max-w-xs text-sm text-faint">
         Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
       </p>
-      <Link to="/new" className="btn-primary mt-5">
-        <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
-      </Link>
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        <Link to="/new" className="btn-primary">
+          <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
+        </Link>
+        <Link to={DEMO_REPORT_PATH} className="glass btn-ghost">
+          See an example
+        </Link>
+      </div>
     </div>
   )
 }

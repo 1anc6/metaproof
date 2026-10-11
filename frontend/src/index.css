@@ -8,7 +8,7 @@
   --color-void: #030303;
   --color-ink: #f4f4f5;
   --color-muted: #a1a1aa;
-  --color-faint: #71717a;
+  --color-faint: #8a8a93; /* 5.6:1 on the background, above WCAG AA */
 
   /* Verdict colours: muted so the interface stays monochrome. */
   --color-authentic: #6ee7b7;

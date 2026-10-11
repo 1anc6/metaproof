@@ -1,9 +1,12 @@
-import { CloudUpload, Lock, LoaderCircle } from 'lucide-react'
+import { CloudUpload, Lock, LoaderCircle, MoonStar, WifiOff } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { formatBytes } from '../lib/format'
 import { addToHistory } from '../lib/history'
+import { useServerStatus } from '../lib/hooks'
+import { DEMO_REPORT_PATH } from '../lib/demo'
+import { rememberPreview } from '../lib/preview'
 import { PageHeader } from '../components/ui'
 
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff']
@@ -11,7 +14,7 @@ const MAX_MB = 25
 
 type State =
   | { kind: 'idle' }
-  | { kind: 'uploading'; file: File; progress: number }
+  | { kind: 'uploading'; file: File; progress: number; preview: string }
   | { kind: 'error'; message: string }
 
 export function NewAnalysis() {
@@ -31,11 +34,14 @@ export function NewAnalysis() {
         setState({ kind: 'error', message: `That file is ${formatBytes(file.size)}. The limit is ${MAX_MB} MB.` })
         return
       }
-      setState({ kind: 'uploading', file, progress: 0 })
+      // A local preview of the picked file; nothing extra leaves the browser.
+      const preview = URL.createObjectURL(file)
+      setState({ kind: 'uploading', file, progress: 0, preview })
       try {
         const created = await api.upload(file, (progress) =>
           setState((s) => (s.kind === 'uploading' ? { ...s, progress } : s)),
         )
+        rememberPreview(created.job_id, preview)
         addToHistory({
           jobId: created.job_id,
           sha256: created.sha256,
@@ -45,6 +51,7 @@ export function NewAnalysis() {
         })
         navigate(`/analysis/${created.job_id}`)
       } catch (e) {
+        URL.revokeObjectURL(preview)
         setState({ kind: 'error', message: (e as Error).message })
       }
     },
@@ -62,6 +69,7 @@ export function NewAnalysis() {
   }, [start])
 
   const busy = state.kind === 'uploading'
+  const server = useServerStatus()
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -70,6 +78,8 @@ export function NewAnalysis() {
         title="Bring your evidence."
         subtitle="Drop an image to inspect its provenance and authenticity signals."
       />
+
+      <ServerNotice state={server} />
 
       <div
         role="button"
@@ -103,7 +113,7 @@ export function NewAnalysis() {
         />
 
         {busy ? (
-          <Uploading file={state.file} progress={state.progress} />
+          <Uploading file={state.file} progress={state.progress} preview={state.preview} />
         ) : (
           <div className="relative flex flex-col items-center">
             <span className="glass glass-strong grid size-16 place-items-center rounded-full shadow-[0_0_40px_rgba(255,255,255,0.12)] transition group-hover:scale-105">
@@ -146,15 +156,31 @@ export function NewAnalysis() {
         Your file is deleted as soon as it is analyzed. MetaProof keeps only its SHA-256 hash, a small
         thumbnail and the findings, so the report can be shared by link. GPS coordinates are never stored.
       </p>
+      <p className="mt-3 text-xs text-faint">
+        No image at hand?{' '}
+        <Link to={DEMO_REPORT_PATH} className="text-ink underline decoration-white/30 underline-offset-4">
+          See an example report
+        </Link>
+        .
+      </p>
     </div>
   )
 }
 
-function Uploading({ file, progress }: { file: File; progress: number }) {
+function Uploading({ file, progress, preview }: { file: File; progress: number; preview: string }) {
   const done = progress >= 1
   return (
     <div className="relative flex w-full max-w-sm flex-col items-center">
-      <LoaderCircle className="size-8 animate-spin text-muted" strokeWidth={1.5} />
+      {preview ? (
+        <div className="relative">
+          <img src={preview} alt="" className="max-h-40 max-w-56 rounded-2xl object-contain ring-1 ring-white/10" />
+          <div className="absolute inset-0 grid place-items-center rounded-2xl bg-black/40">
+            <LoaderCircle className="size-8 animate-spin text-white" strokeWidth={1.5} />
+          </div>
+        </div>
+      ) : (
+        <LoaderCircle className="size-8 animate-spin text-muted" strokeWidth={1.5} />
+      )}
       <p className="mt-5 max-w-full truncate font-medium">{file.name}</p>
       <p className="mt-1 text-xs text-faint">
         {done ? 'Uploaded, starting analysis…' : `Uploading ${formatBytes(file.size)}…`}
@@ -166,6 +192,27 @@ function Uploading({ file, progress }: { file: File; progress: number }) {
         />
       </div>
       <p className="mt-3 text-[11px] text-faint">If the server was asleep, the first upload can take up to a minute.</p>
+    </div>
+  )
+}
+
+function ServerNotice({ state }: { state: ReturnType<typeof useServerStatus> }) {
+  if (state !== 'waking' && state !== 'offline') return null
+  const waking = state === 'waking'
+  const Icon = waking ? MoonStar : WifiOff
+  return (
+    <div
+      role="status"
+      className={`animate-rise mb-4 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${
+        waking ? 'border-edited/20 bg-edited/5 text-edited' : 'border-ai/20 bg-ai/5 text-ai'
+      }`}
+    >
+      <Icon className="mt-0.5 size-4 shrink-0" />
+      <p>
+        {waking
+          ? 'The server is waking up. Free hosting sleeps when idle, so this takes about a minute; you can upload now and it will continue on its own.'
+          : 'Cannot reach the MetaProof server right now. Check your connection, or try again in a minute.'}
+      </p>
     </div>
   )
 }

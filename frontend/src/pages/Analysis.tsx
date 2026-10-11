@@ -6,6 +6,7 @@ import { useHistory } from '../lib/history'
 import { ReportView } from '../components/ReportView'
 import { ErrorPanel, Orb } from '../components/ui'
 import { ReportSkeleton } from './Report'
+import { previewFor } from '../lib/preview'
 
 const POLL_MS = 1500
 
@@ -59,7 +60,7 @@ export function Analysis() {
   if (job?.status === 'done' && job.verdict) return <ReportView job={job} filename={filename} />
   // First load of an older analysis: show the report layout, not the progress steps.
   if (!job && !justUploaded) return <ReportSkeleton />
-  return <Progress job={job} filename={filename} />
+  return <Progress job={job} filename={filename} preview={previewFor(jobId)} />
 }
 
 const STEPS = [
@@ -70,7 +71,7 @@ const STEPS = [
   { key: 'verdict', label: 'Weighing the evidence' },
 ]
 
-function Progress({ job, filename }: { job: Job | null; filename?: string }) {
+function Progress({ job, filename, preview }: { job: Job | null; filename?: string; preview?: string }) {
   // The worker runs analyzers in order; light up the steps as time passes while it runs.
   const [tick, setTick] = useState(0)
   useEffect(() => {
@@ -81,7 +82,15 @@ function Progress({ job, filename }: { job: Job | null; filename?: string }) {
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center pt-6 text-center sm:pt-12">
-      <Orb size={150} />
+      {preview ? (
+        <div className="relative">
+          <img src={preview} alt="" className="max-h-52 max-w-full rounded-3xl object-contain ring-1 ring-white/10" />
+          {/* a soft light sweeping across the image while it is analyzed */}
+          <div className="skeleton pointer-events-none absolute inset-0 rounded-3xl opacity-60 mix-blend-screen" />
+        </div>
+      ) : (
+        <Orb size={150} />
+      )}
       <p className="eyebrow mt-10">{job?.status === 'queued' ? 'In queue' : 'Analyzing'}</p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Reading the evidence</h1>
       {filename && <p className="mt-2 max-w-full truncate text-sm text-muted">{filename}</p>}

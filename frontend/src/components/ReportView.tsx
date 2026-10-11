@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Fingerprint, Link2, Plus, Printer, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Check, ChevronDown, Compass, Fingerprint, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
@@ -51,7 +51,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             </dl>
           </div>
         </div>
-        <Actions sha={sha} />
+        <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -78,6 +78,8 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
         </section>
       </div>
 
+      {verdict.label === 'inconclusive' && <NextSteps />}
+
       <SeenBefore sha={sha} />
 
       {/* Analyzer details */}
@@ -96,10 +98,24 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   )
 }
 
-function Actions({ sha }: { sha: string }) {
+// Phones get the system share sheet (WhatsApp, Messages, …); desktops copy the link.
+const nativeShare =
+  typeof navigator !== 'undefined' &&
+  typeof navigator.share === 'function' &&
+  window.matchMedia('(pointer: coarse)').matches
+
+function Actions({ sha, title }: { sha: string; title: string }) {
   const [copied, setCopied] = useState(false)
   const shareUrl = `${window.location.origin}/report/${sha}`
-  const copy = async () => {
+  const share = async () => {
+    if (nativeShare) {
+      try {
+        await navigator.share({ title: `MetaProof report: ${title}`, url: shareUrl })
+        return
+      } catch (e) {
+        if ((e as DOMException).name === 'AbortError') return // the user closed the sheet
+      }
+    }
     try {
       await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
@@ -110,9 +126,9 @@ function Actions({ sha }: { sha: string }) {
   }
   return (
     <div className="no-print relative mt-6 flex flex-wrap gap-2 border-t border-white/5 pt-5">
-      <button type="button" onClick={copy} className="glass btn-ghost">
-        {copied ? <Check className="size-4" /> : <Link2 className="size-4" />}
-        {copied ? 'Link copied' : 'Copy share link'}
+      <button type="button" onClick={share} className="glass btn-ghost">
+        {copied ? <Check className="size-4" /> : nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
+        {copied ? 'Link copied' : nativeShare ? 'Share report' : 'Copy share link'}
       </button>
       <button type="button" onClick={() => window.print()} className="glass btn-ghost">
         <Printer className="size-4" /> Save as PDF
@@ -406,6 +422,48 @@ function SeenBefore({ sha }: { sha: string }) {
           </li>
         ))}
       </ul>
+    </section>
+  )
+}
+
+const SEARCH_TOOLS = [
+  { name: 'Google Lens', url: 'https://lens.google.com/' },
+  { name: 'TinEye', url: 'https://tineye.com/' },
+  { name: 'Bing Visual Search', url: 'https://www.bing.com/visualsearch' },
+]
+
+/** Inconclusive is the most common verdict, so it should leave the reader with something to do. */
+function NextSteps() {
+  return (
+    <section className="glass animate-rise rounded-[28px] p-5 sm:p-6">
+      <div className="flex items-center gap-3">
+        <Compass className="size-5" strokeWidth={1.5} />
+        <h2 className="font-display text-lg font-semibold">What you can do next</h2>
+      </div>
+      <ol className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-muted">
+        <li>
+          <span className="text-ink">Find the original.</span> A reverse image search shows where the
+          picture appeared first and whether an older or larger version exists:
+          <span className="mt-2 flex flex-wrap gap-2">
+            {SEARCH_TOOLS.map((t) => (
+              <a key={t.name} href={t.url} target="_blank" rel="noreferrer" className="glass btn-ghost !py-1.5 !text-xs">
+                {t.name} <ArrowUpRight className="size-3.5" />
+              </a>
+            ))}
+          </span>
+        </li>
+        <li>
+          <span className="text-ink">Ask for the original file.</span> Photos straight from a camera or
+          phone keep more metadata, and some carry signed Content Credentials that MetaProof can verify.
+        </li>
+        <li>
+          <span className="text-ink">Look at the context.</span> Who posted it first, and do other
+          sources show the same scene from another angle?
+        </li>
+      </ol>
+      <p className="mt-4 text-xs text-faint">
+        These sites open in a new tab; you upload the image there yourself. MetaProof sends them nothing.
+      </p>
     </section>
   )
 }
