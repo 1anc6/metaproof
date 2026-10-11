@@ -11,6 +11,11 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   const v = VERDICTS[verdict.label]
   const lean = verdict.label === 'inconclusive' ? leaning(verdict.scores) : null
   const sha = job.media.sha256
+  const summary = lean
+    ? lean.key === 'authentic'
+      ? leansRealSummary(job)
+      : `Some evidence points to an ${lean.label} image, but not enough to decide. Treat it as unverified.`
+    : v.summary
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,9 +39,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
               </p>
             )}
             <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
-              {lean
-                ? `Some evidence points to ${lean.label === 'authentic' ? 'an authentic photo' : `an ${lean.label} image`}, but not enough to decide. Treat it as unverified.`
-                : v.summary}
+              {summary}
             </p>
             <DetectorChip job={job} />
             {filename && <p className="mt-4 truncate text-sm text-ink">{filename}</p>}
@@ -186,6 +189,21 @@ function EvidenceBars({ scores }: { scores: Verdict['scores'] }) {
   )
 }
 
+/** What supports "real" in plain words, so a lean is not mistaken for proof. */
+function leansRealSummary(job: Job) {
+  const codes = new Set(job.analyzers.flatMap((a) => a.findings.map((f) => f.code)))
+  const traces = [
+    codes.has('meta.camera_capture') && 'camera data',
+    codes.has('meta.camera_original') && 'the structure of an untouched camera file',
+    codes.has('detector.camera_like') && 'pixels that look like a camera photo',
+  ].filter(Boolean) as string[]
+  const found = traces.length
+    ? `${traces.slice(0, -1).join(', ')}${traces.length > 1 ? ' and ' : ''}${traces.at(-1)}`
+    : 'some signs of a real photo'
+  const ai = job.verdict?.scores.ai ? 'only weak signs of AI' : 'no signs of AI'
+  return `It has ${found}, and ${ai}. Nothing here proves it is unedited, such as signed Content Credentials, so treat it as probably real but unverified.`
+}
+
 const ANALYZER_META: Record<string, { title: string; icon: typeof Fingerprint; blurb: string }> = {
   metadata: { title: 'Metadata', icon: Fingerprint, blurb: 'EXIF, XMP and text chunks embedded in the file' },
   c2pa: { title: 'Content Credentials (C2PA)', icon: ShieldCheck, blurb: 'Signed provenance manifest' },
@@ -267,6 +285,11 @@ function MetadataDetails({ raw }: { raw: Record<string, unknown> }) {
           ['IPTC source type', str(f.xmp_digital_source_type)],
           ['PNG text keys', (f.png_text_keys as string[] | undefined)?.join(', ') || null],
           ['GPS', f.has_gps ? 'Present (coordinates not stored)' : 'None'],
+          ['Maker data', f.has_exif ? (f.has_makernote ? 'Present' : 'None') : null],
+          ['Recorded size', f.exif_size_matches == null ? null : f.exif_size_matches ? 'Matches the pixels' : 'Differs from the pixels'],
+          ['Embedded preview', typeof f.thumbnail_similarity === 'number'
+            ? `${f.thumbnail_similarity >= 0.9 ? 'Matches the picture' : 'Differs from the picture'} (${f.thumbnail_similarity.toFixed(2)})`
+            : null],
         ]}
       />
       {exiftool && Object.keys(exiftool).length > 0 && (

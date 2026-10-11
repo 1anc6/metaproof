@@ -4,18 +4,28 @@ Pillow covers the signals we score on everywhere. When the ExifTool binary is in
 (it is in the Docker image), its full tag dump is added to the raw output for the report.
 """
 
+import io
 import json
 import shutil
 import subprocess
 
-from PIL import Image
+import numpy as np
+from PIL import ExifTags, Image
 
 from app.analyzers.base import AnalyzerResult, Finding, MediaInfo, Signal, Strength
 
 # Tag ids from the EXIF spec (PIL.ExifTags has the same values).
 TAG_MAKE, TAG_MODEL, TAG_SOFTWARE, TAG_DATETIME = 271, 272, 305, 306
 TAG_DATETIME_ORIGINAL = 36867
+TAG_MAKERNOTE, TAG_PIXEL_X, TAG_PIXEL_Y = 0x927C, 0xA002, 0xA003
+TAG_THUMB_OFFSET, TAG_THUMB_LENGTH = 0x0201, 0x0202
 EXIF_IFD, GPS_IFD = 0x8769, 0x8825
+
+# The embedded preview must look like the picture. Genuine camera files mostly score 0.91-1.0;
+# a few score far lower, so a poor match only withholds this support and is never held against
+# the file. Editors such as GIMP and Photoshop write a fresh preview, so a match alone proves
+# nothing: it counts only next to the other camera traces below.
+MIN_THUMBNAIL_SIMILARITY = 0.9
 
 AI_TOOL_HINTS = (
     "midjourney", "stable diffusion", "stablediffusion", "dall-e", "dall·e", "firefly",
@@ -36,7 +46,7 @@ EXIFTOOL_TIMEOUT_S = 15
 
 class MetadataAnalyzer:
     name = "metadata"
-    version = "0.1.0"
+    version = "0.2.0"
 
     def run(self, media: MediaInfo) -> AnalyzerResult:
         fields = _read_with_pillow(media)
@@ -54,6 +64,7 @@ def _read_with_pillow(media: MediaInfo) -> dict:
         xmp = img.info.get("xmp") or img.info.get("XML:com.adobe.xmp") or b""
         if isinstance(xmp, bytes):
             xmp = xmp.decode("utf-8", errors="replace")
+        size_matches = _exif_size_matches(img, exif_ifd)
         png_text_keys = sorted(
             k for k, v in img.info.items() if isinstance(v, str) and k != "XML:com.adobe.xmp"
         )
@@ -71,7 +82,46 @@ def _read_with_pillow(media: MediaInfo) -> dict:
             "xmp_digital_source_type": _digital_source_type(xmp),
             "xmp_creator_tool": _xmp_attr(xmp, "xmp:CreatorTool"),
             "png_text_keys": png_text_keys,
+            "has_makernote": TAG_MAKERNOTE in exif_ifd,
+            "exif_size_matches": size_matches,
+            # Last: it may switch a JPEG to reduced-size decoding.
+            "thumbnail_similarity": _thumbnail_similarity(img, exif),
         }
+
+
+def _exif_size_matches(img: Image.Image, exif_ifd) -> bool | None:
+    """Whether the size the camera recorded is the size of the pixels; None if not recorded."""
+    w, h = exif_ifd.get(TAG_PIXEL_X), exif_ifd.get(TAG_PIXEL_Y)
+    if not w or not h:
+        return None
+    return (w, h) in (img.size, img.size[::-1])
+
+
+def _thumbnail_similarity(img: Image.Image, exif) -> float | None:
+    """Correlation between the EXIF preview and the image, scaled to the preview's size."""
+    ifd1 = exif.get_ifd(ExifTags.IFD.IFD1) if exif else {}
+    offset, length = ifd1.get(TAG_THUMB_OFFSET), ifd1.get(TAG_THUMB_LENGTH)
+    raw = img.info.get("exif") or b""
+    if not offset or not length or not raw:
+        return None
+    tiff = raw[6:] if raw.startswith(b"Exif\x00\x00") else raw
+    try:
+        with Image.open(io.BytesIO(tiff[offset: offset + length])) as thumb:
+            t = np.asarray(thumb.convert("L"), dtype=np.float64)
+    except (OSError, ValueError):  # missing or broken preview: no support either way
+        return None
+    # Previews are often letterboxed to 160x120; compare only the picture area.
+    rows = np.nonzero(t.max(axis=1) > 12)[0]
+    cols = np.nonzero(t.max(axis=0) > 12)[0]
+    if len(rows) < 16 or len(cols) < 16:
+        return None
+    t = t[rows[0]: rows[-1] + 1, cols[0]: cols[-1] + 1]
+    img.draft("L", (t.shape[1] * 2, t.shape[0] * 2))  # JPEG: decode at reduced size, cheaply
+    m = np.asarray(img.convert("L").resize((t.shape[1], t.shape[0]), Image.BILINEAR),
+                   dtype=np.float64)
+    a, b = t - t.mean(), m - m.mean()
+    denom = np.sqrt((a * a).sum() * (b * b).sum())
+    return round(float((a * b).sum() / denom), 3) if denom else None
 
 
 def _findings(f: dict) -> list[Finding]:
@@ -108,10 +158,20 @@ def _findings(f: dict) -> list[Finding]:
         out.append(Finding("meta.modified_after_capture", Signal.edited, Strength.weak,
                            "Modification date differs from the original capture date."))
 
-    if f["make"] and f["model"] and f["datetime_original"]:
+    camera = f["make"] and f["model"] and f["datetime_original"]
+    if camera:
         out.append(Finding("meta.camera_capture", Signal.authentic, Strength.weak,
                            f"Camera capture metadata present ({f['make']} {f['model']}). "
                            "This is easy to forge, so it counts only as weak evidence."))
+
+    # A file straight from the camera keeps traces that editors and naive EXIF copying tend to
+    # break. Still weak: the phone's own photo editor keeps them, so this cannot show "unedited".
+    if (camera and not editor and f["has_makernote"] and f["exif_size_matches"] is not False
+            and (f["thumbnail_similarity"] or 0) >= MIN_THUMBNAIL_SIMILARITY
+            and not (f["datetime_modified"] and f["datetime_modified"] != f["datetime_original"])):
+        out.append(Finding("meta.camera_original", Signal.authentic, Strength.weak,
+                           "The file has the structure of a camera original: maker data, the "
+                           "recorded image size and a preview that matches the picture."))
 
     if not f["has_exif"] and not f["has_xmp"] and not f["png_text_keys"]:
         out.append(Finding("meta.stripped", Signal.neutral, Strength.weak,
