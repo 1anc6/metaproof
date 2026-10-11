@@ -141,6 +141,13 @@
   border-radius: inherit;
   border: 1px solid rgb(255 255 255 / 0.18);
 }
+/* The first-visit intro: an opaque copy of the page backdrop, spotlight a little brighter. */
+.welcome {
+  background-color: var(--color-void);
+  background-image:
+    radial-gradient(40rem 28rem at 50% -6rem, rgb(255 255 255 / 0.12), transparent 70%),
+    radial-gradient(30rem 24rem at 100% 110%, rgb(255 255 255 / 0.05), transparent 70%);
+}
 .beam {
   background: conic-gradient(from 180deg at 50% 0%, transparent 160deg, rgb(255 255 255 / 0.16) 180deg, transparent 200deg);
   filter: blur(6px);
