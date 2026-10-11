@@ -86,6 +86,14 @@ def test_migrations_create_tables_and_pgvector():
     assert vector is not None
 
 
+def test_upload_filenames_are_not_stored():
+    with engine.connect() as conn:
+        columns = set(conn.execute(text(
+            "select column_name from information_schema.columns "
+            "where table_name = 'analysis_jobs'")).scalars())
+    assert "original_filename" not in columns
+
+
 # --- upload → queue → worker → report ---------------------------------------------------------
 
 def test_upload_is_queued_then_analyzed(client):

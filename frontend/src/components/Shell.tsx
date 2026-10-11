@@ -1,4 +1,4 @@
-import { BookOpen, History, LayoutGrid, Plus } from 'lucide-react'
+import { BookOpen, History, LayoutGrid, Plus, Settings } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useHistory } from '../lib/history'
@@ -10,6 +10,7 @@ const NAV = [
   { to: '/new', label: 'New analysis', icon: Plus },
   { to: '/history', label: 'History', icon: History },
   { to: '/method', label: 'How it works', icon: BookOpen },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function Shell() {
@@ -19,10 +20,11 @@ export function Shell() {
   }, [pathname])
 
   return (
-    <div className="min-h-dvh lg:pl-[264px]">
+    <div className="min-h-dvh lg:pl-[252px]">
       <Sidebar />
       <MobileTopBar />
-      <main className="mx-auto w-full max-w-6xl px-4 pt-6 pb-32 sm:px-8 lg:pt-12 lg:pb-16">
+      {/* Desktop: 12px from the sidebar and level with its top edge, like a second panel. */}
+      <main className="mx-auto w-full max-w-6xl px-4 pt-6 pb-32 sm:px-8 lg:mx-0 lg:max-w-[1680px] lg:px-3 lg:pt-3 lg:pb-12">
         <Outlet />
       </main>
       <MobileTabBar />
@@ -66,7 +68,8 @@ function Sidebar() {
         <div className="mt-auto flex flex-col gap-3">
           <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-3.5">
             <p className="text-xs leading-relaxed text-muted">
-              Files are analyzed, then deleted. Only a hash, a thumbnail and the findings are kept.
+              Files are analyzed, then deleted. Only a hash, a thumbnail and the findings are kept,
+              for 90 days.
             </p>
           </div>
           <div className="flex items-center justify-between px-2">
@@ -94,7 +97,7 @@ const SERVER_LABEL: Record<ServerState, { text: string; dot: string }> = {
   offline: { text: 'API offline', dot: 'bg-ai' },
 }
 
-function ServerBadge() {
+export function ServerBadge() {
   const state = useServerStatus()
   const s = SERVER_LABEL[state]
   return (
@@ -118,26 +121,27 @@ function MobileTopBar() {
   )
 }
 
-/** Floating glass tab bar with a bright centre action, after the mobile reference. */
+/** Floating glass tab bar: two tabs either side of a bright centre action. */
 function MobileTabBar() {
   const items = NAV.filter((n) => n.to !== '/new')
+  const half = items.length / 2
   return (
     <nav
       className="no-print fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),14px)] lg:hidden"
       aria-label="Main"
     >
       <div className="glass glass-bar flex w-full max-w-sm items-center justify-between rounded-full p-1.5">
-        {items.slice(0, 2).map((item) => (
+        {items.slice(0, half).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}
         <NavLink
           to="/new"
           aria-label="New analysis"
-          className="grid size-12 place-items-center rounded-full bg-white text-black shadow-[0_8px_24px_-6px_rgba(255,255,255,0.5)] transition active:scale-95"
+          className="mx-1 grid size-12 shrink-0 place-items-center rounded-full bg-white text-black shadow-[0_8px_24px_-6px_rgba(255,255,255,0.5)] transition active:scale-95"
         >
           <Plus className="size-5" strokeWidth={2.25} />
         </NavLink>
-        {items.slice(2).map((item) => (
+        {items.slice(half).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}
       </div>
@@ -151,7 +155,7 @@ function TabLink({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] transition ${
+        `flex h-12 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] transition ${
           isActive ? 'text-ink' : 'text-faint'
         }`
       }

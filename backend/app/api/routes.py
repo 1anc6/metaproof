@@ -79,7 +79,7 @@ def create_analysis(
 
         job = models.AnalysisJob(
             media_id=media.id, pipeline_version=settings.pipeline_version,
-            original_filename=(file.filename or "")[:255] or None, temp_path=str(upload.path),
+            temp_path=str(upload.path),
         )
         session.add(job)
         session.commit()
