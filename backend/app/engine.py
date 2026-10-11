@@ -8,9 +8,11 @@ from dataclasses import dataclass
 
 from app.analyzers.base import Finding, Signal, Strength
 
-ENGINE_VERSION = "0.1.0-rules"
+ENGINE_VERSION = "0.2.0-rules"
 
-WEIGHTS = {Strength.weak: 0.5, Strength.moderate: 1.0, Strength.strong: 2.0}
+# Conclusive evidence decides the verdict on its own (see decide); its weight only makes the
+# reported scores agree with that. Everything else for one outcome rarely adds up past 4.
+WEIGHTS = {Strength.weak: 0.5, Strength.moderate: 1.0, Strength.strong: 2.0, Strength.conclusive: 10.0}
 
 # A label needs this much total support...
 MIN_SUPPORT = 1.0
