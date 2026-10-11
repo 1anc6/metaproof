@@ -121,3 +121,75 @@ def test_untrusted_signer_is_not_tampering():
                                status=[{"code": "signingCredential.untrusted"}]))
     assert summary["signer_trusted"] is False
     assert "c2pa.invalid" not in {f.code for f in findings_for(summary)}
+
+
+def _gemini_store(parent_actions, relationship="parentOf"):
+    """Shaped like a Gemini download: the file records opened -> edited (composite) ->
+    converted, and its parent ingredient's own manifest declares how the picture was made."""
+    store = _store([
+        {"action": "c2pa.opened"},
+        {"action": "c2pa.edited", "digitalSourceType": IPTC + "composite"},
+        {"action": "c2pa.converted"},
+    ], status=[{"code": "signingCredential.untrusted"}])
+    store["manifests"]["urn:test"]["ingredients"] = [
+        {"title": "image.png", "relationship": relationship, "active_manifest": "urn:parent"},
+    ]
+    store["manifests"]["urn:parent"] = {
+        "claim_generator": "Google C2PA Core Generator Library",
+        "assertions": [{"label": "c2pa.actions.v2", "data": {"actions": parent_actions}}],
+    }
+    return store
+
+
+def test_ai_origin_in_the_edit_history_is_conclusive():
+    summary = summarize(_gemini_store([
+        {"action": "c2pa.created", "digitalSourceType": IPTC + "trainedAlgorithmicMedia"},
+    ]))
+    assert summary["history_actions"][0]["digital_source_type"] == "trainedAlgorithmicMedia"
+    findings = findings_for(summary)
+    assert [f.code for f in findings] == ["c2pa.ai_generated", "c2pa.signed_edits"]
+    assert findings[0].strength == Strength.conclusive
+    assert "AI-generated original" in findings[0].message
+    assert findings[1].message.startswith("After it was generated")
+
+    from app import engine
+    assert engine.decide(findings).label == "likely_ai_generated"  # not "edited"
+
+
+def test_edited_camera_photo_stays_edited():
+    summary = summarize(_gemini_store([
+        {"action": "c2pa.created", "digitalSourceType": IPTC + "digitalCapture"},
+    ]))
+    findings = findings_for(summary)
+    assert [f.code for f in findings] == ["c2pa.signed_edits"]
+    assert findings[0].message.startswith("Signed edit history")
+
+
+def test_only_parent_ingredients_count_as_the_origin():
+    # A placed component (componentOf) is not what the picture was made from.
+    summary = summarize(_gemini_store([
+        {"action": "c2pa.created", "digitalSourceType": IPTC + "trainedAlgorithmicMedia"},
+    ], relationship="componentOf"))
+    assert summary["history_actions"] == []
+
+
+def test_history_walk_survives_loops():
+    store = _gemini_store([{"action": "c2pa.created"}])
+    store["manifests"]["urn:parent"]["ingredients"] = [
+        {"relationship": "parentOf", "active_manifest": "urn:test"},     # points back at the file
+        {"relationship": "parentOf", "active_manifest": "urn:parent"},   # and at itself
+    ]
+    assert [a["action"] for a in summarize(store)["history_actions"]] == ["c2pa.created"]
+
+
+def test_real_signed_file_with_an_ai_original_is_ai_not_edited():
+    # A real C2PA file read by the official SDK (tests/fixtures/make_c2pa_chain.py): the
+    # bug was calling Gemini downloads "edited" because only the top manifest was read.
+    from app import engine
+
+    path = Path(__file__).parent / "fixtures" / "c2pa_ai_original_then_edited.png"
+    result = C2paAnalyzer().run(MediaInfo(path, "image/png", 640, 384))
+    assert result.raw["validation_state"] == "Valid" and result.raw["signer_trusted"] is False
+    assert [a["action"] for a in result.raw["actions"]] == ["c2pa.opened", "c2pa.edited", "c2pa.converted"]
+    assert result.raw["history_actions"][0]["digital_source_type"] == "trainedAlgorithmicMedia"
+    assert engine.decide(result.findings).label == "likely_ai_generated"
