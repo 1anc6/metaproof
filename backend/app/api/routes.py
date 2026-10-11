@@ -54,7 +54,7 @@ def create_analysis(
         upload = ingest(file.file, settings.temp_dir, settings.max_upload_bytes,
                         settings.max_image_pixels)
     except UploadRejected as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
 
     try:
         # Insert-or-ignore keeps concurrent uploads of the same file from racing.

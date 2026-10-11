@@ -1,98 +1,140 @@
 # MetaProof
 
-**Evidence-based authenticity analysis for images.** Upload an image and MetaProof checks
-its metadata, its C2PA Content Credentials, invisible watermarks and its pixels, then
-combines them into one explainable verdict: *likely authentic*, *edited*,
-*likely AI-generated* or *inconclusive*.
+[![Backend](https://github.com/1anc6/metaproof/actions/workflows/backend.yml/badge.svg)](https://github.com/1anc6/metaproof/actions/workflows/backend.yml)
+[![Frontend](https://github.com/1anc6/metaproof/actions/workflows/frontend.yml/badge.svg)](https://github.com/1anc6/metaproof/actions/workflows/frontend.yml)
 
-> MetaProof does not claim absolute truth. Every verdict lists the evidence behind it, and
-> the system says "inconclusive" rather than guess.
+**Evidence-based authenticity analysis for images.** Upload an image and MetaProof checks its
+metadata, its C2PA Content Credentials and its pixels, then combines the evidence into one
+explainable verdict: *likely authentic*, *edited*, *likely AI-generated* or *inconclusive*.
 
-🚧 **Status:** in development (week 1 of 4).
-**Live app:** [metaproof.vercel.app](https://metaproof.vercel.app) · **API docs:** [metaproof.onrender.com/docs](https://metaproof.onrender.com/docs) (free tier: the first request after 15 idle minutes takes about a minute to wake the server).
+**Live app:** [metaproof.vercel.app](https://metaproof.vercel.app) ·
+**API docs:** [metaproof.onrender.com/docs](https://metaproof.onrender.com/docs) ·
+**Model:** [huggingface.co/1anc6/metaproof-detector](https://huggingface.co/1anc6/metaproof-detector)
 
-## How it works
+> MetaProof does not claim absolute truth. Every verdict lists the evidence behind it, and the
+> system answers "inconclusive" rather than guess.
 
+## Highlights
+
+- **AI-image detector that generalizes:** CLIP ViT-B/16 features plus a calibrated classifier,
+  tested on **9 generators never seen in training** (FLUX, Midjourney 6.1, DALL·E 3,
+  Firefly 3, Imagen 3, …): **AUC 0.953**, 0.950 after social-media recompression.
+  [Method and results →](ml/README.md)
+- **Signed provenance:** validates C2PA Content Credentials with the official SDK.
+- **"Seen before" search:** CLIP embeddings in Postgres with a pgvector HNSW index find
+  resized or recompressed copies that a file hash misses, in under 1 ms at 30K images.
+  [Benchmarks →](docs/benchmarks.md)
+- **Postgres is the job queue:** `FOR UPDATE SKIP LOCKED`, tested with concurrent workers;
+  no Redis.
+- **Privacy by design:** uploads are deleted after analysis; only a hash, a thumbnail and the
+  findings are kept. GPS coordinates are never stored.
+- **Runs on free tiers:** Vercel + Render + Neon + Hugging Face Hub, with CI on GitHub Actions.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[Browser] -->|upload| W[React app<br/>Vercel]
+    W -->|HTTPS| A[FastAPI<br/>Render, Docker]
+    A -->|stream, hash, validate| T[(temp file)]
+    A -->|enqueue| Q[(Postgres job queue<br/>Neon)]
+    Q -->|SKIP LOCKED| K[worker]
+    K --> M[Metadata<br/>EXIF / XMP / ExifTool]
+    K --> C[C2PA<br/>Content Credentials]
+    K --> D[AI detector<br/>CLIP + MLP, ONNX]
+    M & C & D --> E[Evidence engine]
+    E -->|verdict, findings| DB[(Neon Postgres<br/>+ pgvector)]
+    D -->|embedding| DB
+    HF[(Hugging Face Hub<br/>model weights)] -.->|build time| A
 ```
-Upload ─► FastAPI ─► hash + validate ─► Postgres job queue ─► analyzers ─► evidence engine ─► report
-                                         (SKIP LOCKED)        │
-                                                              ├─ metadata  (EXIF, XMP, PNG text)
-                                                              ├─ C2PA      (Content Credentials)
-                                                              ├─ watermark (TrustMark)        [week 2]
-                                                              └─ AI detector (CLIP + MLP, ONNX) [week 2]
-```
 
-Design choices worth noting:
+1. The API streams the upload to a private temp file, computing SHA-256 on the way, checks the
+   real file type from its bytes and decodes it once under size and pixel limits. A file seen
+   before returns its existing report.
+2. A job row is queued in Postgres; the worker claims it with `FOR UPDATE SKIP LOCKED` and is
+   woken by new uploads instead of polling, so the serverless database can sleep.
+3. Each analyzer turns the file into typed findings (`signal`, `strength`, `message`).
+4. The evidence engine weighs them: signed proof decides on its own, missing data is neutral,
+   and a verdict needs enough weight and a clear lead, otherwise it is **inconclusive**.
+5. The file is deleted; the report is shareable at `/report/<sha256>`.
 
-- **No original files are stored.** Uploads are analyzed and deleted; only the hash,
-  findings, a small thumbnail and the verdict are kept. GPS coordinates are never stored.
-- **Postgres is the queue.** Jobs are claimed with `FOR UPDATE SKIP LOCKED`, so no Redis is
-  needed. The worker wakes on new uploads instead of polling, so Neon can scale to zero.
-- **Duplicate files are free.** The SHA-256 is computed while streaming; a known file
-  returns its existing report.
-- **Absence is not evidence.** Missing metadata or credentials never count against a file.
-- **Every result is versioned.** Analyzer, model and engine versions are stored with each
-  analysis, so old reports stay reproducible.
+## The detector, in short
+
+| Unseen generator | Detected | | Unseen generator | Detected |
+| --- | --- | --- | --- | --- |
+| Firefly Image 3 | 99% | | FLUX schnell | 93% |
+| DALL·E 3 | 98% | | Imagen 3 | 93% |
+| Stable Cascade | 98% | | Ideogram 2 | 88% |
+| Midjourney 6.1 | 94% | | SDXL-LCM | 87% |
+| FLUX dev | 94% | | **AUC (all)** | **0.953** |
+
+About 20% of real photos score above 0.5, so the score only decides a verdict on its own at
+≥ 0.95, where 1.8% of real photos are flagged. Every image is resized and re-encoded as JPEG
+before the model sees it, so file format can't give the answer away. Full details, including
+why the 8-bit weight-only export was chosen over int8, are in [`ml/README.md`](ml/README.md).
 
 ## Tech stack
 
 | Layer | Technology |
 | --- | --- |
 | API | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic |
-| Database | Neon (serverless PostgreSQL) |
+| Database | PostgreSQL (Neon) with pgvector; Postgres-backed job queue |
 | Provenance | `c2pa-python` (official C2PA SDK) |
-| Metadata | Pillow, ExifTool (when installed) |
-| ML | PyTorch (training, local GPU), ONNX Runtime (serving); weights on Hugging Face Hub |
-| Frontend | React, TypeScript, Vite, Tailwind |
-| Hosting | Render (API, Docker), Vercel (frontend), GitHub Actions (CI) |
+| Metadata | Pillow, ExifTool |
+| ML | PyTorch + open_clip (training on an RTX 4050), ONNX Runtime (serving) |
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| Infrastructure | Docker, Render, Vercel, Hugging Face Hub, GitHub Actions |
 
 ## Run locally
 
-Requirements: Python 3.11+, a [Neon](https://neon.tech) database (free tier).
-Optional: [ExifTool](https://exiftool.org) for the full tag dump.
+Requirements: Python 3.11+, Node 20+, a Postgres database ([Neon](https://neon.tech) free tier
+works). Optional: [ExifTool](https://exiftool.org).
 
 ```bash
 cd backend
-python -m venv .venv
-.venv/Scripts/activate          # macOS/Linux: source .venv/bin/activate
+python -m venv .venv && .venv/Scripts/activate      # macOS/Linux: source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env            # then paste your Neon connection string
-alembic upgrade head            # create the tables
-uvicorn app.main:app --reload   # API docs at http://localhost:8000/docs
+cp .env.example .env                                # paste your database URL
+alembic upgrade head
+# optional: the detector model (121 MB)
+curl -L -o models/detector.onnx https://huggingface.co/1anc6/metaproof-detector/resolve/main/detector.onnx
+uvicorn app.main:app --reload                       # http://localhost:8000/docs
 ```
-
-Run the tests:
-
-```bash
-pytest
-```
-
-Run the web app (in a second terminal):
 
 ```bash
 cd frontend
 npm install
-npm run dev                     # http://localhost:5173
+npm run dev                                         # http://localhost:5173
+```
+
+Tests (integration tests need a throwaway Postgres with pgvector):
+
+```bash
+docker run -d -p 54329:5432 -e POSTGRES_PASSWORD=test -e POSTGRES_DB=metaproof_test pgvector/pgvector:pg17
+TEST_DATABASE_URL=postgresql://postgres:test@localhost:54329/metaproof_test pytest
 ```
 
 ## API
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/api/analyses` | Upload an image (multipart `file`); returns a job id |
+| `POST` | `/api/analyses` | Upload an image (multipart `file`); returns a job id. 429 when rate-limited |
 | `GET` | `/api/analyses/{job_id}` | Job status, verdict, findings per analyzer |
+| `GET` | `/api/analyses?ids=…` | Summaries for a list of jobs (browser history) |
 | `GET` | `/api/media/{sha256}/report` | Shareable latest report for a file |
+| `GET` | `/api/media/{sha256}/similar` | Near-duplicates analyzed before |
 | `GET` | `/api/media/{sha256}/thumbnail` | Small WebP preview |
 
 ## Repository layout
 
 ```
-backend/    FastAPI app, analyzers, evidence engine, worker, migrations, tests
+backend/    FastAPI app, analyzers, evidence engine, worker, migrations, tests, benchmarks
 frontend/   React web app (Vite, Tailwind, liquid-glass UI)
-ml/         detector training and ONNX export       (week 2)
-docs/       architecture and benchmark results
+ml/         dataset sampling, feature extraction, training, calibration, ONNX export
+docs/       benchmarks
 ```
 
 ## License
 
-MIT
+Code: MIT. Detector weights: CC BY-NC-SA 4.0 (derived from the Community Forensics dataset),
+non-commercial use only.
