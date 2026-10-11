@@ -1,6 +1,7 @@
 name: Frontend
 
-# Vercel builds and deploys the site itself; this checks types, lint and the build on every push.
+# Vercel builds and deploys the site itself; this checks types, lint, the build and the browser
+# tests (Playwright, with the API faked) on every push.
 
 on:
   push:
@@ -27,3 +28,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: frontend/test-results
+          retention-days: 7
