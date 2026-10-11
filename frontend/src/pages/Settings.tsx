@@ -1,4 +1,6 @@
-import { Download, HardDrive, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
+import { CircleAlert, CircleCheck, Download, HardDrive, OctagonAlert, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { api, type ServiceStatus } from '../lib/api'
 import type { ReactNode } from 'react'
 import { formatWhen } from '../lib/format'
 import { clearHistory, useHistory, type HistoryEntry } from '../lib/history'
@@ -60,7 +62,8 @@ export function Settings() {
             <span className="text-muted">Status</span>
             <ServerBadge />
           </div>
-          <p className="mt-3 text-sm text-muted">
+          <ServiceFigures />
+          <p className="mt-4 text-xs text-faint">
             The API runs on a free instance that sleeps when idle, so the first upload after a quiet
             spell can take up to a minute.
           </p>
@@ -85,6 +88,83 @@ export function Settings() {
           </ul>
         </Card>
       </div>
+    </div>
+  )
+}
+
+type Level = { label: string; color: string; icon: typeof CircleCheck }
+const LEVELS: Record<'ok' | 'warn' | 'full', Level> = {
+  ok: { label: 'Healthy', color: 'var(--color-authentic)', icon: CircleCheck },
+  warn: { label: 'Getting full', color: 'var(--color-edited)', icon: CircleAlert },
+  full: { label: 'Almost full', color: 'var(--color-ai)', icon: OctagonAlert },
+}
+
+/** Live figures from GET /api/status: storage against the plan's limit and the last day's work. */
+function ServiceFigures() {
+  const [status, setStatus] = useState<ServiceStatus | null>(null)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    api.status().then((s) => !cancelled && setStatus(s)).catch(() => !cancelled && setFailed(true))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (failed) return <p className="mt-4 text-sm text-muted">Storage figures are unavailable while the server is unreachable.</p>
+  if (!status) return <div className="skeleton mt-4 h-24" aria-label="Loading storage figures" />
+
+  const { database_mb: used, storage_limit_mb: limit, storage_warn_mb: warn } = status
+  const share = Math.min(1, used / limit)
+  const level = LEVELS[used >= limit * 0.95 ? 'full' : used >= warn ? 'warn' : 'ok']
+  const Icon = level.icon
+  return (
+    <div className="mt-4 flex flex-col gap-4">
+      <div>
+        <div className="flex items-baseline justify-between gap-3 text-sm">
+          <span className="text-muted">Database storage</span>
+          <span className="font-mono text-xs text-ink tabular-nums">
+            {used.toFixed(1)} MB of {limit} MB
+          </span>
+        </div>
+        <div
+          className="relative mt-2 h-1.5 rounded-full bg-white/10"
+          role="meter"
+          aria-label="Database storage used"
+          aria-valuemin={0}
+          aria-valuemax={limit}
+          aria-valuenow={used}
+          aria-valuetext={`${used.toFixed(1)} of ${limit} MB, ${level.label.toLowerCase()}`}
+          title={`${(share * 100).toFixed(1)}% used. A warning is logged at ${warn} MB.`}
+        >
+          <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, 1)}%`, background: level.color }} />
+          {/* where the server starts logging warnings */}
+          <div className="absolute top-[-3px] h-[12px] w-px bg-white/40" style={{ left: `${(warn / limit) * 100}%` }} aria-hidden />
+        </div>
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+          <Icon className="size-3.5" style={{ color: level.color }} strokeWidth={2} aria-hidden />
+          {level.label} · reports are kept for {status.retention_days} days
+        </p>
+      </div>
+      <dl className="grid grid-cols-3 gap-3">
+        <Figure label="Analyses today" value={`${status.analyses_24h}`} note={`of ${status.daily_cap} a day`} />
+        <Figure
+          label="Failed today"
+          value={`${status.failed_24h}`}
+          note={status.failed_24h ? 'see the server logs' : 'none'}
+        />
+        <Figure label="Last analysis" value={status.last_analysis_at ? formatWhen(status.last_analysis_at) : '–'} />
+      </dl>
+    </div>
+  )
+}
+
+function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div className="min-w-0 rounded-2xl border border-white/5 bg-white/[0.02] p-2.5 sm:p-3">
+      <dt className="text-[11px] leading-tight text-faint">{label}</dt>
+      <dd className="mt-1 font-display text-base leading-tight font-semibold tabular-nums sm:text-lg">{value}</dd>
+      {note && <dd className="mt-0.5 text-[11px] leading-tight text-faint">{note}</dd>}
     </div>
   )
 }

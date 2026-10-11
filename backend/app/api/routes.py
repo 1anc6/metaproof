@@ -1,3 +1,5 @@
+import threading
+import time
 import uuid
 from typing import Annotated
 
@@ -24,6 +26,44 @@ upload_limiter = SlidingWindowLimiter(get_settings().uploads_per_ip_per_hour)
 @router.get("/health", tags=["System"], summary="Health check")
 def health() -> dict:
     return {"status": "ok"}
+
+
+STATUS_SQL = text("""
+    SELECT pg_database_size(current_database()) AS size_bytes,
+           count(*) FILTER (WHERE created_at >= now() - interval '1 day') AS analyses_24h,
+           count(*) FILTER (WHERE created_at >= now() - interval '1 day'
+                              AND status = 'failed') AS failed_24h,
+           max(finished_at) AS last_analysis_at
+      FROM analysis_jobs
+""")
+STATUS_TTL_S = 60
+_status_cache: tuple[float, schemas.ServiceStatus] | None = None
+_status_lock = threading.Lock()
+
+
+@router.get("/status", response_model=schemas.ServiceStatus, tags=["System"],
+            summary="Storage and analysis figures")
+def service_status(session: SessionDep, settings: SettingsDep):
+    """Database size against the plan's limit, and the last day's analyses and failures.
+    Unlike /health this reads the database, so it is cached for a minute."""
+    global _status_cache
+    with _status_lock:
+        if _status_cache and time.monotonic() - _status_cache[0] < STATUS_TTL_S:
+            return _status_cache[1]
+        row = session.execute(STATUS_SQL).one()
+        result = schemas.ServiceStatus(
+            database_mb=round(row.size_bytes / (1024 * 1024), 1),
+            storage_warn_mb=settings.storage_warn_mb,
+            storage_limit_mb=settings.storage_limit_mb,
+            retention_days=settings.retention_days,
+            analyses_24h=row.analyses_24h,
+            failed_24h=row.failed_24h,
+            daily_cap=settings.daily_upload_cap,
+            last_analysis_at=row.last_analysis_at,
+            pipeline_version=settings.pipeline_version,
+        )
+        _status_cache = (time.monotonic(), result)
+        return result
 
 
 @router.post(

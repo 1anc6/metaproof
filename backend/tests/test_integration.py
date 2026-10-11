@@ -47,6 +47,7 @@ def clean_state(monkeypatch):
     with engine.begin() as conn:
         conn.execute(text("TRUNCATE media_files CASCADE"))
     routes.upload_limiter._hits.clear()
+    routes._status_cache = None
     # The detector needs a 121 MB model that CI does not download; its logic has unit tests.
     monkeypatch.setattr(worker, "ANALYZERS", [MetadataAnalyzer(), C2paAnalyzer()])
     yield
@@ -367,3 +368,27 @@ def test_worker_runs_maintenance_at_most_once_a_day(monkeypatch):
     clock[0] += worker.MAINTENANCE_INTERVAL_S
     w._maybe_run_maintenance()  # an upload the next day
     assert len(calls) == 2
+
+
+# --- status -----------------------------------------------------------------------------------
+
+def test_status_reports_storage_and_the_last_day(client):
+    upload(client, unique_jpeg(50))
+    gone = upload(client, unique_jpeg(51)).json()
+    with SessionLocal() as s:
+        Path(s.get(models.AnalysisJob, gone["job_id"]).temp_path).unlink()
+    drain_queue()  # one done, one failed (its file vanished)
+
+    body = client.get("/api/status").json()
+    assert body["analyses_24h"] == 2 and body["failed_24h"] == 1
+    assert 0 < body["database_mb"] < body["storage_limit_mb"] == 512
+    assert body["storage_warn_mb"] == 400 and body["retention_days"] == 90
+    assert body["daily_cap"] == 500 and body["last_analysis_at"]
+
+
+def test_status_is_cached_for_a_minute(client):
+    first = client.get("/api/status").json()
+    upload(client, unique_jpeg(52))
+    assert client.get("/api/status").json() == first  # served from the cache
+    routes._status_cache = None
+    assert client.get("/api/status").json()["analyses_24h"] == first["analyses_24h"] + 1

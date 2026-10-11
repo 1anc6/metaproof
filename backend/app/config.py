@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     retention_days: int = 90
     # Log a warning once the database passes this size (Neon's free tier stops at 512 MB).
     storage_warn_mb: int = 400
+    # The database plan's storage limit, shown on the status page (Neon free tier: 0.5 GB).
+    storage_limit_mb: int = 512
 
     # Cosine similarity at or above which two images count as near-duplicates.
     similar_min_similarity: float = 0.92
