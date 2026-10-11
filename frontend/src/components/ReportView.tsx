@@ -333,6 +333,27 @@ function WatermarkDetails({ raw }: { raw: Record<string, unknown> }) {
   )
 }
 
+type C2paAction = { action: string; digital_source_type: string; software_agent: string | null }
+
+function ActionList({ title, actions }: { title: string; actions: C2paAction[] }) {
+  if (actions.length === 0) return null
+  return (
+    <div>
+      <p className="text-[11px] text-faint">{title}</p>
+      <ol className="mt-2 flex flex-col gap-1.5">
+        {actions.map((a, i) => (
+          <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm">
+            <span className="font-mono text-xs text-faint">{i + 1}.</span>
+            <span>{a.action}</span>
+            {a.digital_source_type && <span className="text-xs text-muted">· {a.digital_source_type}</span>}
+            {a.software_agent && <span className="text-xs text-faint">· {a.software_agent}</span>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
 function C2paDetails({ raw }: { raw: Record<string, unknown> }) {
   if (!raw.present) {
     return (
@@ -342,7 +363,8 @@ function C2paDetails({ raw }: { raw: Record<string, unknown> }) {
       </p>
     )
   }
-  const actions = (raw.actions as { action: string; digital_source_type: string; software_agent: string | null }[]) ?? []
+  const actions = (raw.actions as C2paAction[]) ?? []
+  const history = (raw.history_actions as C2paAction[] | undefined) ?? []
   const failures = (raw.validation_failures as string[]) ?? []
   return (
     <div className="flex flex-col gap-5">
@@ -357,21 +379,8 @@ function C2paDetails({ raw }: { raw: Record<string, unknown> }) {
         ]}
       />
       {failures.length > 0 && <p className="text-sm text-ai">Validation failures: {failures.join(', ')}</p>}
-      {actions.length > 0 && (
-        <div>
-          <p className="text-[11px] text-faint">Recorded actions</p>
-          <ol className="mt-2 flex flex-col gap-1.5">
-            {actions.map((a, i) => (
-              <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm">
-                <span className="font-mono text-xs text-faint">{i + 1}.</span>
-                <span>{a.action}</span>
-                {a.digital_source_type && <span className="text-xs text-muted">· {a.digital_source_type}</span>}
-                {a.software_agent && <span className="text-xs text-faint">· {a.software_agent}</span>}
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+      <ActionList title="Recorded actions" actions={actions} />
+      <ActionList title="Earlier history: the original it was made from" actions={history} />
     </div>
   )
 }
