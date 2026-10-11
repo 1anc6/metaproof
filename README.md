@@ -9,7 +9,7 @@ combines them into one explainable verdict: *likely authentic*, *edited*,
 > the system says "inconclusive" rather than guess.
 
 🚧 **Status:** in development (week 1 of 4).
-**Live API:** [metaproof.onrender.com/docs](https://metaproof.onrender.com/docs) (free tier: the first request after 15 idle minutes takes about a minute to wake the server).
+**Live app:** [metaproof.vercel.app](https://metaproof.vercel.app) · **API docs:** [metaproof.onrender.com/docs](https://metaproof.onrender.com/docs) (free tier: the first request after 15 idle minutes takes about a minute to wake the server).
 
 ## How it works
 
