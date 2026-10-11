@@ -64,7 +64,6 @@ class AnalysisJob(Base):
         Enum(JobStatus, name="job_status"), default=JobStatus.queued
     )
     pipeline_version: Mapped[str] = mapped_column(String(32))
-    original_filename: Mapped[str | None] = mapped_column(String(255))
     temp_path: Mapped[str | None] = mapped_column(Text)  # cleared once the file is deleted
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     error: Mapped[str | None] = mapped_column(Text)

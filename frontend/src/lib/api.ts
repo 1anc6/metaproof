@@ -146,7 +146,8 @@ export const api = {
       xhr.onerror = () =>
         reject(new ApiError(0, 'Cannot reach the MetaProof server. Check your connection and try again.'))
       const form = new FormData()
-      form.append('file', file)
+      // A neutral name: the real filename stays on this device (see lib/history.ts).
+      form.append('file', file, 'upload')
       xhr.send(form)
     })
   },

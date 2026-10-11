@@ -6,6 +6,7 @@ import { Method } from './pages/Method'
 import { NewAnalysis } from './pages/NewAnalysis'
 import { Overview } from './pages/Overview'
 import { Report } from './pages/Report'
+import { Settings } from './pages/Settings'
 import { ErrorPanel } from './components/ui'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="report/:sha" element={<Report />} />
         <Route path="history" element={<History />} />
         <Route path="method" element={<Method />} />
+        <Route path="settings" element={<Settings />} />
         <Route
           path="*"
           element={
