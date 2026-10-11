@@ -141,6 +141,14 @@ docker run -d -p 54329:5432 -e POSTGRES_PASSWORD=test -e POSTGRES_DB=metaproof_t
 TEST_DATABASE_URL=postgresql://postgres:test@localhost:54329/metaproof_test pytest
 ```
 
+Browser tests for the frontend (Playwright against the production build, API faked):
+
+```bash
+cd frontend
+npx playwright install chromium   # once
+npm run test:e2e
+```
+
 ## API
 
 | Method | Path | Purpose |

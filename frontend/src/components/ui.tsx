@@ -8,7 +8,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
     <span className="flex items-center gap-2.5">
       <span className="orb relative block size-7 shrink-0" aria-hidden />
       {!compact && (
-        <span className="font-display text-[17px] font-semibold tracking-tight">metaproof</span>
+        <span className="font-display text-[17px] font-semibold tracking-tight">MetaProof</span>
       )}
     </span>
   )
