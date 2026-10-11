@@ -68,6 +68,20 @@ class SimilarMedia(BaseModel):
     first_seen_at: datetime
 
 
+class ServiceStatus(BaseModel):
+    """Public health figures for the Settings page. No per-user or per-file data."""
+
+    database_mb: float
+    storage_warn_mb: int
+    storage_limit_mb: int
+    retention_days: int
+    analyses_24h: int
+    failed_24h: int
+    daily_cap: int
+    last_analysis_at: datetime | None
+    pipeline_version: str
+
+
 class JobOut(BaseModel):
     job_id: uuid.UUID
     status: str

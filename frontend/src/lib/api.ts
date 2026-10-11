@@ -74,6 +74,18 @@ export interface SimilarMedia {
   first_seen_at: string
 }
 
+export interface ServiceStatus {
+  database_mb: number
+  storage_warn_mb: number
+  storage_limit_mb: number
+  retention_days: number
+  analyses_24h: number
+  failed_24h: number
+  daily_cap: number
+  last_analysis_at: string | null
+  pipeline_version: string
+}
+
 export interface JobCreated {
   job_id: string
   sha256: string
@@ -112,6 +124,7 @@ async function errorMessage(res: Response): Promise<string> {
 
 export const api = {
   health: () => request<{ status: string }>('/api/health'),
+  status: () => request<ServiceStatus>('/api/status'),
   job: (id: string) => request<Job>(`/api/analyses/${encodeURIComponent(id)}`),
   report: (sha: string) => request<Job>(`/api/media/${encodeURIComponent(sha)}/report`),
   jobs: (ids: string[]) => {

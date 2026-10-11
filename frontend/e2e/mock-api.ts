@@ -41,17 +41,29 @@ export const job = {
 // 1x1 transparent PNG for thumbnails.
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64')
 
+export const status = {
+  database_mb: 9.2, storage_warn_mb: 400, storage_limit_mb: 512, retention_days: 90,
+  analyses_24h: 14, failed_24h: 0, daily_cap: 500, last_analysis_at: now, pipeline_version: '0.4.0',
+}
+
 export interface ApiLog {
   uploads: string[] // raw multipart bodies sent to POST /api/analyses
 }
 
 /** Fakes every /api route the frontend calls. Works for the page and its service worker. */
-export async function mockApi(target: BrowserContext | Page): Promise<ApiLog> {
+export async function mockApi(
+  target: BrowserContext | Page,
+  overrides: { status?: Partial<typeof status> | 'down' } = {},
+): Promise<ApiLog> {
   const log: ApiLog = { uploads: [] }
   await target.route('**/api/**', async (route) => {
     const req = route.request()
     const { pathname } = new URL(req.url())
     if (pathname === '/api/health') return route.fulfill({ json: { status: 'ok' } })
+    if (pathname === '/api/status') {
+      if (overrides.status === 'down') return route.abort('connectionrefused')
+      return route.fulfill({ json: { ...status, ...overrides.status } })
+    }
     if (pathname === '/api/analyses' && req.method() === 'POST') {
       log.uploads.push(req.postDataBuffer()?.toString('latin1') ?? '')
       return route.fulfill({ status: 202, json: { job_id: JOB_ID, sha256: SHA, status: 'queued', duplicate: false } })

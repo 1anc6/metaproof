@@ -159,6 +159,7 @@ npm run test:e2e
 | `GET` | `/api/media/{sha256}/report` | Shareable latest report for a file |
 | `GET` | `/api/media/{sha256}/similar` | Near-duplicates analyzed before |
 | `GET` | `/api/media/{sha256}/thumbnail` | Small WebP preview |
+| `GET` | `/api/status` | Database size against the plan limit, and the last day's analyses and failures (cached 1 min) |
 
 ## Repository layout
 
