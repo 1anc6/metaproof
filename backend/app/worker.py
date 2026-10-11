@@ -15,12 +15,14 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app import engine as evidence
-from app import models
+from app import models, retention
 from app.analyzers import ANALYZERS
 from app.analyzers.base import Finding, MediaInfo
 from app.db import SessionLocal
 
 log = logging.getLogger("metaproof.worker")
+
+MAINTENANCE_INTERVAL_S = 24 * 3600
 
 CLAIM_SQL = text("""
     UPDATE analysis_jobs
@@ -40,6 +42,7 @@ class Worker:
         self._wake = threading.Event()
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._loop, name="analysis-worker", daemon=True)
+        self._last_maintenance: float | None = None
 
     def start(self) -> None:
         recover_interrupted_jobs()
@@ -64,6 +67,19 @@ class Worker:
             except Exception:  # keep the thread alive; the job row records the failure
                 log.exception("worker loop error")
                 time.sleep(2)
+            self._maybe_run_maintenance()
+
+    def _maybe_run_maintenance(self) -> None:
+        # Runs only after a wake-up (startup or an upload), so an idle Neon database can sleep.
+        now = time.monotonic()
+        last = self._last_maintenance
+        if last is not None and now - last < MAINTENANCE_INTERVAL_S:
+            return
+        self._last_maintenance = now
+        try:
+            retention.run_maintenance()
+        except Exception:
+            log.exception("maintenance failed")
 
 
 def recover_interrupted_jobs() -> None:

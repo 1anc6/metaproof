@@ -49,7 +49,8 @@ explainable verdict: *likely authentic*, *edited*, *likely AI-generated* or *inc
 - **Postgres is the job queue:** `FOR UPDATE SKIP LOCKED`, tested with concurrent workers;
   no Redis.
 - **Privacy by design:** uploads are deleted after analysis; only a hash, a thumbnail and the
-  findings are kept. GPS coordinates are never stored.
+  findings are kept, for 90 days after the image was last analyzed. GPS coordinates are never
+  stored.
 - **Runs on free tiers:** Vercel + Render + Neon + Hugging Face Hub, with CI on GitHub Actions.
 
 ## Architecture

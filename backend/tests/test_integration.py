@@ -3,7 +3,9 @@
     TEST_DATABASE_URL=postgresql://postgres:test@localhost:54329/metaproof_test pytest
 """
 
+import logging
 import threading
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -19,7 +21,7 @@ if TEST_DATABASE_URL:
     from alembic import command
     from alembic.config import Config
 
-    from app import models, worker
+    from app import models, retention, worker
     from app.analyzers.c2pa_check import C2paAnalyzer
     from app.analyzers.metadata import MetadataAnalyzer
     from app.api import routes
@@ -220,3 +222,125 @@ def test_similar_finds_near_duplicates_only(client):
     assert found[0]["similarity"] > 0.98 and found[0]["label"] == "edited"
     # Files without an embedding simply have no matches.
     assert client.get("/api/media/" + "0" * 64 + "/similar").json() == []
+
+
+# --- retention --------------------------------------------------------------------------------
+
+def age(job_id: str, days: int) -> None:
+    """Pretend a job (and its image, if older) was created `days` ago."""
+    when = datetime.now(UTC) - timedelta(days=days)
+    with SessionLocal() as s:
+        job = s.get(models.AnalysisJob, job_id)
+        job.created_at = job.finished_at = when
+        job.media.first_seen_at = min(job.media.first_seen_at, when)
+        s.commit()
+
+
+def purge(days: int = 90) -> "retention.PurgeResult":
+    with SessionLocal() as s:
+        result = retention.purge_expired(s, datetime.now(UTC) - timedelta(days=days))
+        s.commit()
+    return result
+
+
+def counts() -> tuple[int, int, int]:
+    with SessionLocal() as s:
+        return tuple(s.scalar(select(func.count()).select_from(t)) for t in
+                     (models.MediaFile, models.AnalysisJob, models.Finding))
+
+
+def test_retention_deletes_expired_images_and_everything_derived(client):
+    old = upload(client, unique_jpeg(30)).json()
+    fresh = upload(client, unique_jpeg(31)).json()
+    drain_queue()
+    with SessionLocal() as s:
+        media_id = s.get(models.AnalysisJob, old["job_id"]).media_id
+        worker.save_embedding(s, media_id, "test", [1.0] + [0.0] * 511)
+        s.commit()
+    age(old["job_id"], 91)
+
+    assert purge() == retention.PurgeResult(media_deleted=1, jobs_deleted=0)
+
+    assert client.get(f"/api/media/{old['sha256']}/report").status_code == 404
+    assert client.get(f"/api/media/{old['sha256']}/thumbnail").status_code == 404
+    assert client.get(f"/api/analyses/{old['job_id']}").status_code == 404
+    assert client.get(f"/api/media/{fresh['sha256']}/report").status_code == 200
+    with engine.connect() as conn:
+        assert conn.execute(text("select count(*) from media_embeddings")).scalar() == 0
+    assert counts()[:2] == (1, 1)
+
+
+def test_retention_keeps_the_report_job_and_trims_older_ones(client):
+    app.dependency_overrides[get_settings] = lambda: Settings(pipeline_version="old")
+    first = upload(client, unique_jpeg(32)).json()
+    drain_queue()
+    app.dependency_overrides[get_settings] = lambda: Settings(pipeline_version="new")
+    second = upload(client, unique_jpeg(32)).json()  # re-analyzed under a newer pipeline
+    drain_queue()
+    age(first["job_id"], 200)
+    age(second["job_id"], 100)
+    third = upload(client, unique_jpeg(32)).json()  # expired, so analyzed again
+    assert third["duplicate"] is False
+    drain_queue()
+
+    assert purge() == retention.PurgeResult(media_deleted=0, jobs_deleted=2)
+    report = client.get(f"/api/media/{first['sha256']}/report").json()
+    assert report["job_id"] == third["job_id"]
+
+
+def test_retention_never_touches_queued_jobs(client):
+    body = upload(client, unique_jpeg(33)).json()
+    age(body["job_id"], 365)  # e.g. the worker was down for a long time
+
+    assert purge() == retention.PurgeResult(media_deleted=0, jobs_deleted=0)
+    assert drain_queue() == 1
+
+
+def test_reupload_of_an_expired_image_is_analyzed_again(client):
+    data = unique_jpeg(34)
+    first = upload(client, data).json()
+    drain_queue()
+    assert upload(client, data).json()["duplicate"] is True
+    age(first["job_id"], 91)
+
+    again = upload(client, data)
+    assert again.status_code == 202
+    assert again.json()["duplicate"] is False and again.json()["job_id"] != first["job_id"]
+
+
+def test_retention_can_be_turned_off(client):
+    body = upload(client, unique_jpeg(35)).json()
+    drain_queue()
+    age(body["job_id"], 3650)
+    app.dependency_overrides[get_settings] = lambda: Settings(retention_days=0)
+    assert upload(client, unique_jpeg(35)).json()["duplicate"] is True
+    assert retention.retention_cutoff(Settings(retention_days=0)) is None
+
+
+def test_maintenance_purges_and_warns_near_the_storage_limit(client, monkeypatch, caplog):
+    body = upload(client, unique_jpeg(36)).json()
+    drain_queue()
+    age(body["job_id"], 91)
+    monkeypatch.setattr(retention, "get_settings", lambda: Settings(storage_warn_mb=0))
+
+    with caplog.at_level(logging.INFO, logger="metaproof.retention"):
+        retention.run_maintenance()
+
+    assert counts() == (0, 0, 0)
+    assert any(r.levelno == logging.WARNING and "warning threshold" in r.getMessage()
+               for r in caplog.records)
+
+
+def test_worker_runs_maintenance_at_most_once_a_day(monkeypatch):
+    calls = []
+    monkeypatch.setattr(retention, "run_maintenance", lambda: calls.append(1))
+    clock = [1000.0]
+    monkeypatch.setattr(worker.time, "monotonic", lambda: clock[0])
+    w = worker.Worker()
+
+    w._maybe_run_maintenance()  # startup
+    clock[0] += 3600
+    w._maybe_run_maintenance()  # an upload an hour later
+    clock[0] += worker.MAINTENANCE_INTERVAL_S
+    w._maybe_run_maintenance()  # an upload the next day
+    assert len(calls) == 2

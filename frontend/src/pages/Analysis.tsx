@@ -35,7 +35,7 @@ export function Analysis() {
         .catch((e: ApiError) => {
           if (cancelled) return
           if (e.status === 0) timer = setTimeout(poll, POLL_MS * 2) // server waking up: keep trying
-          else setError(e.status === 404 ? 'This analysis does not exist.' : e.message)
+          else setError(e.status === 404 ? 'This analysis does not exist or has expired.' : e.message)
         })
     }
     poll()
