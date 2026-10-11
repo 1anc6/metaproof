@@ -5,16 +5,22 @@ Two layers:
 - a global 24-hour cap counted in Postgres, so it survives restarts and redeploys.
 """
 
+import ipaddress
+import logging
 import threading
 import time
 from collections import defaultdict, deque
 
+from fastapi import Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import models
 
 HOUR = 3600.0
+
+log = logging.getLogger("metaproof.ratelimit")
+_logged_source = False
 
 
 class RateLimited(Exception):
@@ -45,6 +51,26 @@ class SlidingWindowLimiter:
             if len(self._hits) > 10_000:  # forget idle clients so memory stays bounded
                 for k in [k for k, v in self._hits.items() if not v]:
                     del self._hits[k]
+
+
+def client_ip(request: Request, trusted_header: str) -> str:
+    """The visitor's IP, for the per-IP limit.
+
+    X-Forwarded-For can't be trusted on Render: its proxy keeps whatever the client sent and
+    appends to it, so uvicorn's --proxy-headers can return an IP the client made up. Cloudflare,
+    which fronts Render, overwrites CF-Connecting-IP with the address it saw. Without that header
+    this falls back to the old behaviour, so it is never less safe than before.
+    """
+    value = request.headers.get(trusted_header, "").strip() if trusted_header else ""
+    try:
+        ip, source = str(ipaddress.ip_address(value)), trusted_header
+    except ValueError:
+        ip, source = (request.client.host if request.client else "unknown"), "connection"
+    global _logged_source
+    if not _logged_source:  # once per process, so the logs show which source is live
+        _logged_source = True
+        log.info("per-IP upload limit keyed on the %s address", source)
+    return ip
 
 
 def check_daily_cap(session: Session, cap: int) -> None:

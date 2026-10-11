@@ -10,7 +10,7 @@ from app import models, schemas
 from app.config import Settings, get_settings
 from app.db import get_session
 from app.ingest import UploadRejected, ingest
-from app.ratelimit import RateLimited, SlidingWindowLimiter, check_daily_cap
+from app.ratelimit import RateLimited, SlidingWindowLimiter, check_daily_cap, client_ip
 from app.retention import retention_cutoff
 
 router = APIRouter(prefix="/api")
@@ -46,7 +46,7 @@ def create_analysis(
     """Accepts JPEG, PNG, WebP or TIFF. Returns a job id to poll; the file itself is deleted
     after analysis. Uploading a file that was already analyzed returns the existing job."""
     try:
-        upload_limiter.check(request.client.host if request.client else "unknown")
+        upload_limiter.check(client_ip(request, settings.client_ip_header))
         check_daily_cap(session, settings.daily_upload_cap)
     except RateLimited as exc:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(exc),
