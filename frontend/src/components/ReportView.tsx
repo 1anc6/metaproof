@@ -396,12 +396,32 @@ function C2paDetails({ raw }: { raw: Record<string, unknown> }) {
   )
 }
 
+type DetectorBands = { strong: number; weak: number; likely_real_below: number }
+
+// Reports from before the API sent its band edges, keyed by the model that produced them.
+const LEGACY_BANDS: Record<string, DetectorBands> = {
+  'clip-vitb16-mlp-v1': { strong: 0.95, weak: 0.85, likely_real_below: 0.1 },
+  'clip-vitb16-mlp-v3': { strong: 0.91, weak: 0.79, likely_real_below: 0.05 },
+}
+
+/** The band edges the evidence engine used for this score, as percentages. */
+function detectorBands(raw: Record<string, unknown>) {
+  const b = (raw.bands as DetectorBands | undefined) ??
+    LEGACY_BANDS[raw.model as string] ?? LEGACY_BANDS['clip-vitb16-mlp-v1']
+  return { strong: b.strong * 100, weak: b.weak * 100, real: b.likely_real_below * 100 }
+}
+
+function detectorColor(pct: number, bands: ReturnType<typeof detectorBands>) {
+  return pct >= bands.weak ? 'var(--color-ai)' : pct < bands.real ? 'var(--color-authentic)' : 'var(--color-neutral)'
+}
+
 function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
   if (!raw.available || typeof raw.p_ai !== 'number') {
     return <p className="text-sm text-muted">The detector model is not loaded on this server.</p>
   }
   const pct = Math.round(raw.p_ai * 100)
-  const color = pct >= 85 ? 'var(--color-ai)' : pct < 10 ? 'var(--color-authentic)' : 'var(--color-neutral)'
+  const bands = detectorBands(raw)
+  const color = detectorColor(pct, bands)
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -414,7 +434,7 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
         <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]">
           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color, boxShadow: `0 0 14px ${color}` }} />
           {/* band edges used by the evidence engine */}
-          {[10, 85, 95].map((t) => (
+          {[bands.real, bands.weak, bands.strong].map((t) => (
             <span key={t} className="absolute top-0 h-full w-px bg-white/25" style={{ left: `${t}%` }} />
           ))}
         </div>
@@ -441,7 +461,7 @@ function DetectorChip({ job, verdict }: { job: Job; verdict: Verdict }) {
   // as contradicting it.
   const overruled =
     (verdict.label === 'likely_ai_generated' && pct < 50) || (verdict.label === 'likely_authentic' && pct >= 50)
-  const color = pct >= 85 ? 'var(--color-ai)' : pct < 10 ? 'var(--color-authentic)' : 'var(--color-neutral)'
+  const color = detectorColor(pct, detectorBands(raw))
   return (
     <span className="glass mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs">
       <Sparkles className="size-3.5" style={{ color }} />

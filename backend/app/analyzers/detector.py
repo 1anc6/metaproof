@@ -74,7 +74,11 @@ class DetectorAnalyzer:
         p_ai, embedding = self._get_session().run(None, {"pixels": pixels})
         p_ai = float(p_ai[0])
         return AnalyzerResult(
-            raw={"available": True, "p_ai": round(p_ai, 4), "model": MODEL_ID},
+            raw={"available": True, "p_ai": round(p_ai, 4), "model": MODEL_ID,
+                 # The band edges used for this score, so a report can draw them correctly
+                 # even after a later model changes them.
+                 "bands": {"strong": BANDS[0][0], "weak": BANDS[1][0],
+                           "likely_real_below": LIKELY_REAL_BELOW}},
             findings=findings_for(p_ai),
             embedding=[round(float(v), 6) for v in embedding[0]],
         )
