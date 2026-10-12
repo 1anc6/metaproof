@@ -88,7 +88,7 @@ python eval_onnx.py --variants fp32,w8        # 6. end-to-end check with the API
 python export_onnx.py --backbone vitb16 --upload 1anc6/metaproof-detector
 ```
 
-### v2 data: newer generators (in progress)
+### v2 data: newer generators
 
 v2 keeps everything above and adds 2025–26 generators. Training gets Imagen 4, GPT-4o
 image, Seedream 3/4, Recraft v2/v3, HiDream, Reve, Ideogram 3, Hunyuan 2.1/3, Wan 2.2, Grok
@@ -102,6 +102,11 @@ stay out of training, so the v1 numbers remain comparable.
 Rapidata repeats images across rows, so extraction dedupes by content hash and stops at 600
 distinct images per training generator (300 per held-out one). The `local` split runs your
 own images from `Images/` at the repo root (git-ignored).
+
+First extraction (about 1.5 hours, download-bound): 5,400 new distinct training images, with
+300–550 for most generators. Seedream 4, Wan 2.2, Ideogram 3 and Hunyuan 3 come only from
+the small Bananamark set, which repeats heavily, so they have 37 or fewer. `heldout2` has
+1,423 AI images and 890 real photos.
 
 ```bash
 python scan_metadata.py --only rapidata      # exact model counts per row group
