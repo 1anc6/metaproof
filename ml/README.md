@@ -108,6 +108,28 @@ First extraction (about 1.5 hours, download-bound): 5,400 new distinct training 
 the small Bananamark set, which repeats heavily, so they have 37 or fewer. `heldout2` has
 1,423 AI images and 890 real photos.
 
+**Lesson from the first v2 head:** balancing the new AI images with COCO and Landscapes
+snapshots taught it "polished means AI". Real images flagged at ≥ 0.95 rose from 1.8% to 2.5%,
+mostly stock photos, logos, news screenshots and 3D renders. ("Real" in these test sets means
+"not from a generator", not "camera photo".) Balancing with about 6,000 LAION images, which
+include exactly those kinds of images, fixed it. `compare_heads.py` reports false alarms per
+kind of image (CLIP zero-shot labels; studio product photos are sometimes labelled "3D
+render").
+
+| ≥ 0.95, v1 → v3 | Real images flagged | AI caught |
+| --- | --- | --- |
+| v1 test (2023–24 generators) | 1.8% → 0.8% | 60% → 61% |
+| v1 test, recompressed | 5.2% → 1.6% | 76% → 70% |
+| heldout2 (Nano Banana 2, GPT Image 2, Qwen 2.1, FLUX.2) | 0.3% → 0.1% | 11% → 16% |
+
+v3's AUC is higher everywhere except heldout2-hard (v1 test 0.953 → 0.972), so its threshold
+can come down. Chosen on the calibration split to flag no more real images than v1 does at
+0.95, the threshold is 0.908. There v3 flags fewer real images on every test and catches
+more AI: 70% of the v1 test, 20% of heldout2, and 5 of 10 Gemini images (v1: 1).
+Next-generation models (GPT Image 2, Nano Banana 2, Qwen 2.1) remain mostly undetected (1–5%
+at 0.95). The v1 test's real images are now the same kind as the training ones (both LAION),
+so the independent heldout2 real photos are the stricter check.
+
 ```bash
 python scan_metadata.py --only rapidata      # exact model counts per row group
 python scan_metadata.py --only zr            # file list of the held-out benchmark

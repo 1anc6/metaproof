@@ -14,7 +14,11 @@ already extracted are reused:
   both sides). Role "heldout" (Nano Banana, FLUX.2) goes to a new test split, heldout2.
 - zr-zhang benchmark: GPT Image 2, Nano Banana 2, Qwen Image 2.1, FLUX.2 and real photos, in
   heldout2 only.
-- More COCO and Landscapes photos keep the training classes roughly balanced.
+- About 6,000 more LAION real images keep the training classes roughly balanced. LAION holds
+  the polished human-made images (stock and product photos, graphics, screenshots, 3D
+  renders) that look like AI output. A first attempt balanced with COCO and Landscapes
+  snapshots instead, and taught the model "polished means AI": more stock photos, logos and
+  screenshots were flagged.
 - Local folders (default: Images/ at the repo root, git-ignored) become a third test split,
   "local", for checking the detector on your own images.
 
@@ -48,12 +52,15 @@ MAX_REAL_MB_PER_IMAGE = 2.0     # skips RAISE raw photos (~22 MB each)
 
 # Whole files from the Small set: (model_name in the footer, number of files).
 SMALL_FILES = [
-    ("COCO", 5), ("LandscapesHQ", 2), ("VISION", 1),   # real photos (v1: COCO 2, Landscapes 1)
+    ("COCO", 2), ("LandscapesHQ", 1), ("VISION", 1),   # real photos
     ("SYSTEMATIC_FAKE", 2),                             # ~6k images from thousands of SD variants
 ]
 
 # v2: newer generators.
 NEW_FAKES_PER_TRAIN_GEN = 600
+# LAION real images from row groups no other split uses. Those next to the v1 held-out
+# generators are allowed too: the test holds out generators, and these rows are not in it.
+NEW_REAL_LAION = 6000
 NEW_FAKES_PER_HELDOUT_GEN = 300
 # Rapidata row groups mix a featured model with a few images from many others, and repeat
 # images across rows (a row group of 200 images can hold only 76 distinct ones). Which images
@@ -223,6 +230,16 @@ def main():
 
     # v2: newer generators, with their own random stream so the v1 plan above stays identical.
     rng2 = random.Random(f"{SEED}-v2")
+    used = {(i["file"], i["row_group"]) for items in plan.values() for i in items}
+    laion = [g for g in ev if g["label"] == 0 and g["real_source"] == "LAION"
+             and (g["file"], g["row_group"]) not in used
+             and g["bytes"] / g["rows"] <= MAX_REAL_MB_PER_IMAGE * 1e6]
+    laion.sort(key=lambda g: (g["file"], g["row_group"]))
+    # Own random stream, so the Rapidata selection below (and its extracted chunks) is unchanged.
+    for g in take_row_groups(laion, NEW_REAL_LAION, random.Random(f"{SEED}-v2-laion")):
+        plan["train"].append({"repo": EVAL_REPO, "file": g["file"], "row_group": g["row_group"],
+                              "rows": g["rows"], "bytes": g["bytes"],
+                              "calib_by_hash": CALIB_FRACTION})
     plan["heldout2"], plan["local"] = [], []
     rapidata = json.loads((DATA_DIR / "index_rapidata.json").read_text())
     for item in pick_rapidata(rapidata, "train", NEW_FAKES_PER_TRAIN_GEN, rng2):
