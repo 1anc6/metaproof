@@ -1,5 +1,5 @@
 import { BarChart3, Copy, Droplets, Fingerprint, Scale, ShieldCheck, Sparkles } from 'lucide-react'
-import { BANDS, GENERATORS, SUMMARY } from '../data/detectorResults'
+import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
 import { PageHeader } from '../components/ui'
 
 const LAYERS = [
@@ -143,6 +143,26 @@ function DetectorResults() {
       </div>
 
       <div className="mt-7">
+        <p className="text-[11px] text-faint">Newest generators (2026), as uploaded: still mostly missed</p>
+        <ul className="mt-3 flex flex-col gap-2.5">
+          {NEWEST.map((g) => (
+            <li key={g.name} className="grid grid-cols-[110px_1fr_44px] items-center gap-3 sm:grid-cols-[130px_1fr_48px]">
+              <span className="truncate text-xs text-muted">{g.name}</span>
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-full rounded-full bg-white" style={{ width: `${g.clean * 100}%` }} />
+              </div>
+              <span className="text-right font-mono text-xs tabular-nums text-ink">{Math.round(g.clean * 100)}%</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-xs leading-relaxed text-faint">
+          These models came out after the training data. Their images often keep signed Content
+          Credentials, which MetaProof checks first; when those are stripped, the detector usually
+          can't tell, and the verdict stays inconclusive rather than "authentic".
+        </p>
+      </div>
+
+      <div className="mt-7">
         <p className="text-[11px] text-faint">How the score is used (as uploaded / recompressed)</p>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[480px] text-left text-xs">
@@ -170,9 +190,10 @@ function DetectorResults() {
 
       <p className="mt-5 text-xs leading-relaxed text-faint">
         Wrongly calling a real photo AI-generated is the costlier mistake, so only very high scores
-        decide on their own. About one in five real photos scores above 50%, which is why the
-        detector is one signal among several and MetaProof answers "inconclusive" when evidence is weak.
-        Data: Community Forensics (CVPR 2025), CC BY-NC-SA 4.0.
+        decide on their own. About one in ten real photos scores above 50% (one in five after
+        recompression), which is why the detector is one signal among several and MetaProof answers
+        "inconclusive" when evidence is weak. Data: Community Forensics (CVPR 2025), CC BY-NC-SA
+        4.0, and Rapidata's human-preference sets for 2025 generators, CDLA-Permissive-2.0.
       </p>
     </section>
   )

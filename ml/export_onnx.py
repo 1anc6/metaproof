@@ -9,11 +9,14 @@ quantization was rejected because quantizing CLIP's activations cost ~0.03 AUC; 
 
     python export_onnx.py --backbone vitb32
     python export_onnx.py --backbone vitb32 --upload 1anc6/metaproof-detector
+    python export_onnx.py --backbone vitb16 --skip-export --upload 1anc6/metaproof-detector
+
+The upload is one commit; pin backend/Dockerfile's DETECTOR_URL to the printed revision so
+the deployed model always matches the thresholds in the code.
 """
 
 import argparse
 import json
-import shutil
 import time
 from pathlib import Path
 
@@ -48,18 +51,26 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--backbone", default="vitb32", choices=list(BACKBONES))
     ap.add_argument("--upload", help="Hugging Face model repo, e.g. 1anc6/metaproof-detector")
+    ap.add_argument("--skip-export", action="store_true", help="upload the existing export")
     args = ap.parse_args()
 
-    arch, pretrained, _ = BACKBONES[args.backbone]
+    if not args.skip_export:
+        export(args.backbone)
+    if args.upload:
+        upload(args.backbone, args.upload)
+
+
+def export(backbone: str) -> None:
+    arch, pretrained, _ = BACKBONES[backbone]
     clip, _, _ = open_clip.create_model_and_transforms(arch, pretrained=pretrained)
-    ckpt = torch.load(DATA_DIR / f"head_{args.backbone}.pt")
+    ckpt = torch.load(DATA_DIR / f"head_{backbone}.pt")
     head = Head(ckpt["dim"])
     head.load_state_dict(ckpt["state_dict"])
     model = Detector(clip.visual.float().eval(), head.eval(), ckpt["temperature"]).eval()
 
     OUT.mkdir(parents=True, exist_ok=True)
-    fp32 = OUT / f"detector_{args.backbone}_fp32.onnx"
-    w8 = OUT / f"detector_{args.backbone}_w8.onnx"
+    fp32 = OUT / f"detector_{backbone}_fp32.onnx"
+    w8 = OUT / f"detector_{backbone}_w8.onnx"
     dummy = torch.randn(2, 3, 224, 224)
     torch.onnx.export(model, (dummy,), fp32, input_names=["pixels"],
                       output_names=["p_ai", "embedding"],
@@ -76,7 +87,7 @@ def main():
     x = torch.randn(8, 3, 224, 224)
     with torch.no_grad():
         ref = model(x)[0].numpy()
-    report = {"backbone": args.backbone, "temperature": ckpt["temperature"]}
+    report = {"backbone": backbone, "temperature": ckpt["temperature"]}
     for name, path in (("fp32", fp32), ("w8", w8)):
         opts = ort.SessionOptions()
         opts.intra_op_num_threads = 1  # Render's free tier has a fraction of one CPU
@@ -93,22 +104,25 @@ def main():
             "ms_per_image_1_thread": round((time.perf_counter() - t) / 5 * 1000),
         }
     print(json.dumps(report, indent=2))
-    Path(f"export_{args.backbone}.json").write_text(json.dumps(report, indent=2))
+    Path(f"export_{backbone}.json").write_text(json.dumps(report, indent=2))
 
-    if args.upload:
-        from huggingface_hub import HfApi
 
-        api = HfApi()
-        api.create_repo(args.upload, repo_type="model", exist_ok=True)
-        card = OUT / "README.md"
-        shutil.copy(Path(__file__).with_name("MODEL_CARD.md"), card)
-        # The API downloads this exact name at Docker build time.
-        api.upload_file(path_or_fileobj=w8, path_in_repo="detector.onnx", repo_id=args.upload)
-        api.upload_file(path_or_fileobj=card, path_in_repo="README.md", repo_id=args.upload)
-        results = Path(f"results_{args.backbone}.json")
-        if results.exists():
-            api.upload_file(path_or_fileobj=results, path_in_repo="results.json", repo_id=args.upload)
-        print(f"uploaded to https://huggingface.co/{args.upload}")
+def upload(backbone: str, repo: str) -> None:
+    from huggingface_hub import CommitOperationAdd, HfApi
+
+    api = HfApi()
+    api.create_repo(repo, repo_type="model", exist_ok=True)
+    # The API downloads detector.onnx at Docker build time, pinned to this commit.
+    files = {"detector.onnx": OUT / f"detector_{backbone}_w8.onnx",
+             "README.md": Path(__file__).with_name("MODEL_CARD.md")}
+    results = Path(f"results_{backbone}.json")
+    if results.exists():
+        files["results.json"] = results
+    commit = api.create_commit(
+        repo, [CommitOperationAdd(path_in_repo=k, path_or_fileobj=str(v)) for k, v in files.items()],
+        commit_message=f"Detector {backbone}: model, card and results")
+    print(f"uploaded to https://huggingface.co/{repo}, revision {commit.oid}")
+    print(f"DETECTOR_URL=https://huggingface.co/{repo}/resolve/{commit.oid}/detector.onnx")
 
 
 if __name__ == "__main__":

@@ -17,23 +17,26 @@ from app.analyzers.base import AnalyzerResult, Finding, MediaInfo, Signal, Stren
 
 log = logging.getLogger("metaproof.detector")
 
-MODEL_ID = "clip-vitb16-mlp-v1"
+MODEL_ID = "clip-vitb16-mlp-v3"
 STANDARD_SHORT_SIDE = 256
 STANDARD_JPEG_QUALITY = 90
 CLIP_SIZE = 224
 CLIP_MEAN = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)
 CLIP_STD = np.array([0.26862954, 0.26130258, 0.27577711], dtype=np.float32)
 
-# Probability bands -> evidence strength, chosen on nine generators never seen in training
-# (ml/README.md). Wrongly flagging a real photo is the costlier mistake, so only p >= 0.95
-# (1.8% of real photos, 5.2% after recompression) is strong enough to decide on its own;
-# 0.85-0.95 only tips the balance together with other evidence. Below 0.10 almost no AI
-# images remain (0.7%). The detector alone never produces "conclusive".
+# Probability bands -> evidence strength (ml/README.md). Wrongly flagging a real photo is the
+# costlier mistake. Thresholds were chosen on the calibration split so that v3 flags no more
+# real images than v1 did at 0.95 / 0.85; on nine generators never seen in training that is
+# 1.3% of real images at p >= 0.91 (2.7% after recompression), strong enough to decide on
+# its own, while 0.79-0.91 only tips the balance together with other evidence. Below 0.05
+# almost no AI images from those generators remain (0.8%), though about a third of the
+# newest ones (GPT Image 2, Nano Banana 2) score that low too, so it stays weak support.
+# The detector alone never produces "conclusive".
 BANDS = [
-    (0.95, Signal.ai, Strength.strong),
-    (0.85, Signal.ai, Strength.weak),
+    (0.91, Signal.ai, Strength.strong),
+    (0.79, Signal.ai, Strength.weak),
 ]
-LIKELY_REAL_BELOW = 0.10
+LIKELY_REAL_BELOW = 0.05
 
 
 class DetectorAnalyzer:

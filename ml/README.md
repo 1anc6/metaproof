@@ -88,7 +88,12 @@ python eval_onnx.py --variants fp32,w8        # 6. end-to-end check with the API
 python export_onnx.py --backbone vitb16 --upload 1anc6/metaproof-detector
 ```
 
-### v2 data: newer generators
+### v2 data: newer generators (shipped as detector v3)
+
+The live API runs v3 (`MODEL_ID = "clip-vitb16-mlp-v3"`, pipeline 0.7.0), with thresholds
+chosen on the calibration split to flag no more real images than v1 did: ≥ 0.91 strong,
+0.79–0.91 weak, < 0.05 weak support for a real photo. The sections above describe v1; v3's
+numbers are below and in `results_vitb16.json`.
 
 v2 keeps everything above and adds 2025–26 generators. Training gets Imagen 4, GPT-4o
 image, Seedream 3/4, Recraft v2/v3, HiDream, Reve, Ideogram 3, Hunyuan 2.1/3, Wan 2.2, Grok

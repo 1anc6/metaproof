@@ -1,12 +1,12 @@
 {
   "backbone": "vitb16",
-  "temperature": 1.180759072303772,
+  "temperature": 1.1756654977798462,
   "results": {
     "calib": {
-      "n": 2851,
-      "accuracy": 0.9010873377762189,
-      "ece": 0.01636127729827333,
-      "auc": 0.9703052705094323,
+      "n": 4047,
+      "accuracy": 0.9004200642451199,
+      "ece": 0.011626913396110933,
+      "auc": 0.9658545316350174,
       "per_group": {
         "1mohitmanoj/surya": {
           "n": 4,
@@ -18,7 +18,7 @@
         },
         "AACEE/textual_inversion_sksship": {
           "n": 4,
-          "detected": 0.5
+          "detected": 0.75
         },
         "Crosstyan/BPModel": {
           "n": 3,
@@ -26,7 +26,7 @@
         },
         "DFGAN": {
           "n": 50,
-          "detected": 0.7
+          "detected": 0.5
         },
         "Dalle2": {
           "n": 75,
@@ -34,11 +34,11 @@
         },
         "DeciDiffusionV2": {
           "n": 51,
-          "detected": 0.9411764705882353
+          "detected": 0.9019607843137255
         },
         "Dhruvii24/neighbourhoods-global-infrastructure-toronto": {
           "n": 3,
-          "detected": 1.0
+          "detected": 0.6666666666666666
         },
         "EnD-Diffusers/Porcelain-Dusk-Mix-V1": {
           "n": 4,
@@ -50,15 +50,31 @@
         },
         "GALIP": {
           "n": 51,
-          "detected": 0.6078431372549019
+          "detected": 0.5098039215686274
+        },
+        "GPT-4o-image": {
+          "n": 57,
+          "detected": 1.0
+        },
+        "Grok-Aurora": {
+          "n": 56,
+          "detected": 0.9464285714285714
         },
         "Haya44/shrt-finetune": {
           "n": 4,
           "detected": 0.25
         },
+        "HiDream-I1": {
+          "n": 41,
+          "detected": 1.0
+        },
         "Hourglass": {
           "n": 75,
-          "detected": 0.48
+          "detected": 0.4533333333333333
+        },
+        "HunyuanImage2.1": {
+          "n": 9,
+          "detected": 1.0
         },
         "IDK-ab0ut/Yiffymix_v36": {
           "n": 4,
@@ -70,15 +86,31 @@
         },
         "IDK-ab0ut/Yiffymix_v41": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "IdeogramV1": {
           "n": 50,
-          "detected": 0.98
+          "detected": 0.92
+        },
+        "IdeogramV3": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Imagen4-Ultra-2505": {
+          "n": 53,
+          "detected": 1.0
+        },
+        "Imagen4-Ultra-2507": {
+          "n": 28,
+          "detected": 0.8571428571428571
         },
         "JamesFlare/pastel-mix": {
           "n": 2,
           "detected": 1.0
+        },
+        "Janus-7B": {
+          "n": 52,
+          "detected": 0.9615384615384616
         },
         "KORguy/textual_inversion_shirt": {
           "n": 4,
@@ -90,7 +122,7 @@
         },
         "LCM_lora_ssd1b": {
           "n": 50,
-          "detected": 0.94
+          "detected": 0.92
         },
         "LieDeath/MergeStove2.5D": {
           "n": 3,
@@ -104,36 +136,68 @@
           "n": 3,
           "detected": 1.0
         },
+        "Lumina": {
+          "n": 26,
+          "detected": 1.0
+        },
         "Masagin/Deliberate": {
           "n": 4,
-          "detected": 0.75
+          "detected": 0.5
         },
         "MidjourneyV5_2": {
           "n": 50,
-          "detected": 1.0
+          "detected": 0.98
         },
         "MohitSK/RealisticComicBook": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "OFT/MODEL_SD15_RockRaiderRuby_v01": {
           "n": 3,
           "detected": 1.0
         },
+        "RecraftV2": {
+          "n": 55,
+          "detected": 0.9818181818181818
+        },
+        "RecraftV3": {
+          "n": 22,
+          "detected": 1.0
+        },
+        "Reve-Halfmoon": {
+          "n": 34,
+          "detected": 0.9411764705882353
+        },
         "Roy61/textual_inversion_H3D": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Roy61/textual_inversion_H3D_numVector5": {
           "n": 4,
           "detected": 0.75
         },
+        "Runway-Frames": {
+          "n": 50,
+          "detected": 0.88
+        },
         "Ryzan/fantasy-diffusion-v0": {
           "n": 4,
-          "detected": 0.75
+          "detected": 0.5
         },
         "Ryzan/fantasy-diffusion-v1": {
           "n": 4,
+          "detected": 1.0
+        },
+        "SD3": {
+          "n": 59,
+          "detected": 0.9491525423728814
+        },
+        "Seedream3": {
+          "n": 42,
+          "detected": 0.8333333333333334
+        },
+        "Seedream4": {
+          "n": 3,
           "detected": 1.0
         },
         "Shaleny/my-pet-dog-xzg": {
@@ -152,6 +216,10 @@
           "n": 4,
           "detected": 1.0
         },
+        "Wan2.2": {
+          "n": 6,
+          "detected": 0.6666666666666666
+        },
         "WarriorMama777/AbyssOrangeMix": {
           "n": 4,
           "detected": 0.75
@@ -162,11 +230,11 @@
         },
         "Yntec/3DKX2": {
           "n": 4,
-          "detected": 0.75
+          "detected": 0.5
         },
         "Yntec/3DKXv11": {
           "n": 4,
-          "detected": 0.75
+          "detected": 0.5
         },
         "Yntec/526": {
           "n": 4,
@@ -178,7 +246,7 @@
         },
         "Yntec/AbsoluteReality": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Yntec/AnythingRemix": {
           "n": 4,
@@ -282,7 +350,7 @@
         },
         "Yntec/Hassanim": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Yntec/IdleFancy": {
           "n": 4,
@@ -294,7 +362,7 @@
         },
         "Yntec/Jackpot": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Yntec/KIDSILLUSTRATIONS": {
           "n": 4,
@@ -322,7 +390,7 @@
         },
         "Yntec/LuckyStrike": {
           "n": 4,
-          "detected": 0.75
+          "detected": 1.0
         },
         "Yntec/MeinaAlter": {
           "n": 4,
@@ -330,7 +398,7 @@
         },
         "Yntec/NaughtyChildren": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Yntec/Nostalgic": {
           "n": 5,
@@ -338,7 +406,7 @@
         },
         "Yntec/NovelAIRemix": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Yntec/PotaytoPotahto": {
           "n": 4,
@@ -350,7 +418,7 @@
         },
         "Yntec/Reddit": {
           "n": 3,
-          "detected": 1.0
+          "detected": 0.6666666666666666
         },
         "Yntec/Reliberate": {
           "n": 4,
@@ -378,11 +446,11 @@
         },
         "Yntec/Stuff": {
           "n": 5,
-          "detected": 1.0
+          "detected": 0.8
         },
         "Yntec/SuperCuteRemix": {
           "n": 3,
-          "detected": 1.0
+          "detected": 0.6666666666666666
         },
         "Yntec/Tantrum": {
           "n": 2,
@@ -414,11 +482,11 @@
         },
         "Yntec/animeTWO": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Yntec/edgeOfRealism": {
           "n": 4,
-          "detected": 0.75
+          "detected": 0.5
         },
         "Yntec/epiCCartoon": {
           "n": 4,
@@ -438,11 +506,11 @@
         },
         "Yntec/photoMovieRealistic": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "Yntec/photoMovieX": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.5
         },
         "Yntec/pineappleAnimeMix": {
           "n": 4,
@@ -462,7 +530,7 @@
         },
         "arpita22/my-pet-dog-rog": {
           "n": 3,
-          "detected": 1.0
+          "detected": 0.6666666666666666
         },
         "ashishwaghule/my-pet-dog-ash": {
           "n": 3,
@@ -482,11 +550,11 @@
         },
         "briannlongzhao/textual_inversion": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "cgburgos/sdxl-1-0-base": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "chaitanyakusumanchi/chaitanya_photorealism": {
           "n": 5,
@@ -506,7 +574,7 @@
         },
         "divyansh-jain3/my-pet-dog-xzg": {
           "n": 3,
-          "detected": 1.0
+          "detected": 0.6666666666666666
         },
         "doohickey/neopian-diffusion": {
           "n": 4,
@@ -514,7 +582,7 @@
         },
         "dream-textures/texture-diffusion": {
           "n": 5,
-          "detected": 0.8
+          "detected": 0.6
         },
         "employelalisa/min": {
           "n": 6,
@@ -530,7 +598,7 @@
         },
         "hangeol/textual_inversion_cat": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "haor/Evt_V4-preview": {
           "n": 3,
@@ -538,7 +606,7 @@
         },
         "kalebanana/textual_inversion_mvtec": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.5
         },
         "kamillaova/epiCRealism": {
           "n": 3,
@@ -546,11 +614,11 @@
         },
         "kandinsky_2_2": {
           "n": 75,
-          "detected": 0.9733333333333334
+          "detected": 0.96
         },
         "kvikontent_midjourney_v6": {
           "n": 75,
-          "detected": 0.8666666666666667
+          "detected": 0.84
         },
         "lewdryuna/A-Rainier": {
           "n": 4,
@@ -558,7 +626,7 @@
         },
         "liaobh/textual_inversion_cat": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "livingbox/bedroom-model-v2": {
           "n": 4,
@@ -602,7 +670,7 @@
         },
         "selshiya/teapot": {
           "n": 3,
-          "detected": 0.6666666666666666
+          "detected": 0.3333333333333333
         },
         "sheshenin/shshnnphoto": {
           "n": 4,
@@ -622,7 +690,7 @@
         },
         "steb6/textual_inversion_cat": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "swl-models/toooajk-yagurumagiku-v3-dreambooth": {
           "n": 3,
@@ -634,7 +702,7 @@
         },
         "swl-models/xiaolxl-guofeng-v2": {
           "n": 4,
-          "detected": 1.0
+          "detected": 0.75
         },
         "swl-models/xiaolxl-guofeng-v3": {
           "n": 4,
@@ -661,12 +729,12 @@
           "detected": 0.6666666666666666
         },
         "real:LAION": {
-          "n": 228,
-          "correct": 0.7894736842105263
+          "n": 826,
+          "correct": 0.9043583535108959
         },
         "real:N/A": {
           "n": 1200,
-          "correct": 0.96
+          "correct": 0.9533333333333334
         },
         "real:coco": {
           "n": 25,
@@ -674,47 +742,47 @@
         },
         "real:ffhq": {
           "n": 50,
-          "correct": 0.48
+          "correct": 0.56
         },
         "real:imagenet": {
           "n": 49,
-          "correct": 0.8979591836734694
+          "correct": 0.9387755102040817
         }
       }
     },
     "heldout": {
       "n": 4239,
-      "accuracy": 0.8874734607218684,
-      "ece": 0.009831314014921664,
-      "auc": 0.9529964442052978,
+      "accuracy": 0.9160179287567822,
+      "ece": 0.01118162225850156,
+      "auc": 0.9724797418770829,
       "per_group": {
         "Dalle3": {
           "n": 301,
-          "detected": 0.9767441860465116
+          "detected": 0.9634551495016611
         },
         "FLUX-dev": {
           "n": 300,
-          "detected": 0.9366666666666666
+          "detected": 0.92
         },
         "FLUX-schnell": {
           "n": 303,
-          "detected": 0.933993399339934
+          "detected": 0.8910891089108911
         },
         "Firefly_Image3": {
           "n": 302,
-          "detected": 0.9867549668874173
+          "detected": 0.9735099337748344
         },
         "IdeogramV2": {
           "n": 300,
-          "detected": 0.8833333333333333
+          "detected": 0.8566666666666667
         },
         "Imagen3": {
           "n": 301,
-          "detected": 0.9335548172757475
+          "detected": 0.920265780730897
         },
         "LCM_lora_sdxl": {
           "n": 300,
-          "detected": 0.8733333333333333
+          "detected": 0.8533333333333334
         },
         "MidjourneyV6_1": {
           "n": 324,
@@ -726,47 +794,47 @@
         },
         "real:LAION": {
           "n": 1508,
-          "correct": 0.7964190981432361
+          "correct": 0.9058355437665783
         }
       }
     },
     "heldout-hard": {
       "n": 4239,
-      "accuracy": 0.8520877565463553,
-      "ece": 0.04475733431815877,
-      "auc": 0.9499692595186228,
+      "accuracy": 0.9023354564755839,
+      "ece": 0.010065080408612426,
+      "auc": 0.9668444725894945,
       "per_group": {
         "Dalle3": {
           "n": 301,
-          "detected": 0.9867109634551495
+          "detected": 0.9700996677740864
         },
         "FLUX-dev": {
           "n": 300,
-          "detected": 0.9733333333333334
+          "detected": 0.9366666666666666
         },
         "FLUX-schnell": {
           "n": 303,
-          "detected": 0.9570957095709571
+          "detected": 0.9372937293729373
         },
         "Firefly_Image3": {
           "n": 302,
-          "detected": 0.9966887417218543
+          "detected": 0.9834437086092715
         },
         "IdeogramV2": {
           "n": 300,
-          "detected": 0.9433333333333334
+          "detected": 0.9033333333333333
         },
         "Imagen3": {
           "n": 301,
-          "detected": 0.9800664451827242
+          "detected": 0.9534883720930233
         },
         "LCM_lora_sdxl": {
           "n": 300,
-          "detected": 0.9733333333333334
+          "detected": 0.9666666666666667
         },
         "MidjourneyV6_1": {
           "n": 324,
-          "detected": 0.9907407407407407
+          "detected": 0.9567901234567902
         },
         "stable_cascade": {
           "n": 300,
@@ -774,7 +842,151 @@
         },
         "real:LAION": {
           "n": 1508,
-          "correct": 0.6246684350132626
+          "correct": 0.8050397877984085
+        }
+      }
+    },
+    "heldout2": {
+      "n": 2313,
+      "accuracy": 0.5897103329009944,
+      "ece": 0.3118386767253801,
+      "auc": 0.7702290618806604,
+      "per_group": {
+        "FLUX.2": {
+          "n": 300,
+          "detected": 0.37666666666666665
+        },
+        "FLUX.2-dev": {
+          "n": 41,
+          "detected": 1.0
+        },
+        "FLUX.2-flex": {
+          "n": 40,
+          "detected": 1.0
+        },
+        "FLUX.2-pro": {
+          "n": 66,
+          "detected": 0.9090909090909091
+        },
+        "GPT Image 2": {
+          "n": 300,
+          "detected": 0.21
+        },
+        "Nano Banana 2": {
+          "n": 300,
+          "detected": 0.21333333333333335
+        },
+        "NanoBanana": {
+          "n": 40,
+          "detected": 0.95
+        },
+        "NanoBananaPro": {
+          "n": 36,
+          "detected": 0.9166666666666666
+        },
+        "Qwen Image 2.1": {
+          "n": 300,
+          "detected": 0.23666666666666666
+        },
+        "real:zr:Hybrid": {
+          "n": 300,
+          "correct": 0.96
+        },
+        "real:zr:Structure": {
+          "n": 292,
+          "correct": 0.9965753424657534
+        },
+        "real:zr:Texture": {
+          "n": 298,
+          "correct": 0.8791946308724832
+        }
+      }
+    },
+    "heldout2-hard": {
+      "n": 2313,
+      "accuracy": 0.6182447038478167,
+      "ece": 0.24817014240466098,
+      "auc": 0.7203171018658159,
+      "per_group": {
+        "FLUX.2": {
+          "n": 300,
+          "detected": 0.43333333333333335
+        },
+        "FLUX.2-dev": {
+          "n": 41,
+          "detected": 1.0
+        },
+        "FLUX.2-flex": {
+          "n": 40,
+          "detected": 1.0
+        },
+        "FLUX.2-pro": {
+          "n": 66,
+          "detected": 0.9545454545454546
+        },
+        "GPT Image 2": {
+          "n": 300,
+          "detected": 0.18666666666666668
+        },
+        "Nano Banana 2": {
+          "n": 300,
+          "detected": 0.41
+        },
+        "NanoBanana": {
+          "n": 40,
+          "detected": 0.95
+        },
+        "NanoBananaPro": {
+          "n": 36,
+          "detected": 0.9722222222222222
+        },
+        "Qwen Image 2.1": {
+          "n": 300,
+          "detected": 0.33
+        },
+        "real:zr:Hybrid": {
+          "n": 300,
+          "correct": 0.9366666666666666
+        },
+        "real:zr:Structure": {
+          "n": 292,
+          "correct": 0.9691780821917808
+        },
+        "real:zr:Texture": {
+          "n": 298,
+          "correct": 0.8087248322147651
+        }
+      }
+    },
+    "local": {
+      "n": 21,
+      "accuracy": 0.8095238095238095,
+      "ece": 0.15137040615081787,
+      "auc": 0.9272727272727272,
+      "per_group": {
+        "local-ai": {
+          "n": 10,
+          "detected": 0.8
+        },
+        "real:local": {
+          "n": 11,
+          "correct": 0.8181818181818182
+        }
+      }
+    },
+    "local-hard": {
+      "n": 21,
+      "accuracy": 0.8571428571428571,
+      "ece": 0.13905042409896848,
+      "auc": 0.9545454545454545,
+      "per_group": {
+        "local-ai": {
+          "n": 10,
+          "detected": 0.9
+        },
+        "real:local": {
+          "n": 11,
+          "correct": 0.8181818181818182
         }
       }
     }

@@ -24,9 +24,12 @@ def test_preprocess_ignores_alpha_and_mode():
 
 @pytest.mark.parametrize("p, signal, strength", [
     (0.97, Signal.ai, Strength.strong),
+    (0.91, Signal.ai, Strength.strong),
     (0.90, Signal.ai, Strength.weak),
-    (0.80, Signal.neutral, Strength.weak),
+    (0.79, Signal.ai, Strength.weak),
+    (0.78, Signal.neutral, Strength.weak),
     (0.40, Signal.neutral, Strength.weak),
+    (0.06, Signal.neutral, Strength.weak),
     (0.03, Signal.authentic, Strength.weak),
 ])
 def test_probability_bands(p, signal, strength):

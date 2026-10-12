@@ -39,8 +39,10 @@ explainable verdict: *likely authentic*, *edited*, *likely AI-generated* or *inc
 ## Highlights
 
 - **AI-image detector that generalizes:** CLIP ViT-B/16 features plus a calibrated classifier,
-  tested on **9 generators never seen in training** (FLUX, Midjourney 6.1, DALL·E 3,
-  Firefly 3, Imagen 3, …): **AUC 0.953**, 0.950 after social-media recompression.
+  trained on 30 generators up to 2025 and tested on **9 generators never seen in training**
+  (FLUX, Midjourney 6.1, DALL·E 3, Firefly 3, Imagen 3, …): **AUC 0.972**, 0.967 after
+  social-media recompression. Honest about its gap: the newest models (GPT Image 2, Nano
+  Banana 2) are mostly missed.
   [Method and results →](ml/README.md)
 - **Signed provenance:** validates C2PA Content Credentials with the official SDK.
 - **Invisible watermarks:** reads the marks Stable Diffusion 1.x/2.x and SDXL hide in their
@@ -89,16 +91,20 @@ flowchart LR
 
 | Unseen generator | Detected | | Unseen generator | Detected |
 | --- | --- | --- | --- | --- |
-| Firefly Image 3 | 99% | | FLUX schnell | 93% |
-| DALL·E 3 | 98% | | Imagen 3 | 93% |
-| Stable Cascade | 98% | | Ideogram 2 | 88% |
-| Midjourney 6.1 | 94% | | SDXL-LCM | 87% |
-| FLUX dev | 94% | | **AUC (all)** | **0.953** |
+| Stable Cascade | 98% | | Imagen 3 | 92% |
+| Firefly Image 3 | 97% | | FLUX schnell | 89% |
+| DALL·E 3 | 96% | | Ideogram 2 | 86% |
+| Midjourney 6.1 | 94% | | SDXL-LCM | 85% |
+| FLUX dev | 92% | | **AUC (all)** | **0.972** |
 
-About 20% of real photos score above 0.5, so the score only decides a verdict on its own at
-≥ 0.95, where 1.8% of real photos are flagged. Every image is resized and re-encoded as JPEG
-before the model sees it, so file format can't give the answer away. Full details, including
-why the 8-bit weight-only export was chosen over int8, are in [`ml/README.md`](ml/README.md).
+Detector v3 adds 18 generators from 2025 (Imagen 4, GPT-4o image, Seedream, Recraft, …).
+About 9% of real images score above 0.5, so the score only decides a verdict on its own at
+≥ 0.91, where 70% of AI images and 1.3% of real images land (v1: 60% and 1.8% at 0.95).
+The newest generators (2026), tested on an independent benchmark, are still mostly missed:
+21–38% of FLUX.2, Qwen Image 2.1, Nano Banana 2 and GPT Image 2 images score above 0.5.
+Every image is resized and re-encoded as JPEG before the model sees it, so file format can't
+give the answer away. Full details, including why the 8-bit weight-only export was chosen
+over int8, are in [`ml/README.md`](ml/README.md).
 
 ## Tech stack
 
