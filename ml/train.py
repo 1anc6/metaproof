@@ -23,7 +23,8 @@ def load_split(split: str, backbone: str) -> dict:
     if not files:
         raise SystemExit(f"no features for {split}/{backbone}; run extract_features.py first")
     parts = [np.load(f) for f in files]
-    return {k: np.concatenate([p[k] for p in parts]) for k in parts[0].files}
+    keys = set.intersection(*(set(p.files) for p in parts))  # v1 chunks have no "sha"
+    return {k: np.concatenate([p[k] for p in parts]) for k in sorted(keys)}
 
 
 class Head(torch.nn.Module):
@@ -114,7 +115,10 @@ def main():
         return 1 / (1 + np.exp(-logits(head, split["features"].astype(np.float32)) / temperature))
 
     metrics = {"backbone": args.backbone, "temperature": temperature, "results": {}}
-    for split_name in ["calib", "heldout", "heldout-hard"]:
+    # heldout: v1 test (2023-24 generators). heldout2: newer generators held out entirely
+    # (Nano Banana, FLUX.2, GPT Image 2, Qwen Image). local: your own images, if planned.
+    for split_name in ["calib", "heldout", "heldout-hard", "heldout2", "heldout2-hard",
+                       "local", "local-hard"]:
         try:
             s = load_split(split_name, args.backbone)
         except SystemExit:

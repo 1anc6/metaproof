@@ -7,27 +7,35 @@ shorter side resized to 256 px, then re-encoded as JPEG. Without it a detector c
 Both CLIP backbones are computed in one pass, so each image is downloaded once.
 Images never touch the disk; resumable per chunk.
 
+Three kinds of chunks (see sample_plan.py): Community Forensics row groups, Rapidata row
+groups with two images per row ("pairs"), and lists of single image files ("files", from the
+zr-zhang benchmark or a local folder). Exact duplicates, by content hash, are kept only once
+per split; Rapidata reuses its comparison images across rows and datasets.
+
     python extract_features.py --split train
 """
 
 import argparse
+import hashlib
 import io
 import json
 import queue
 import random
 import threading
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
 import open_clip
+import pyarrow as pa
 import pyarrow.parquet as pq
 import torch
 from huggingface_hub import HfFileSystem, hf_hub_download
 from PIL import Image
 from tqdm import tqdm
 
-from common import BACKBONES, DATA_DIR, SEED
+from common import BACKBONES, DATA_DIR, RAPIDATA_MODELS, SEED
 
 Image.MAX_IMAGE_PIXELS = 200_000_000
 COLUMNS = ["image_data", "label", "model_name", "real_source", "nsfw_flag"]
@@ -56,9 +64,52 @@ VARIANTS = {
     "heldout": [("", lambda rng: (90, 1.0)),            # what the live API sees
                 ("-hard", lambda rng: (60, 0.5))],      # social-media style recompression
 }
+VARIANTS["heldout2"] = VARIANTS["heldout"]  # newer generators, never seen in training
+VARIANTS["local"] = VARIANTS["heldout"]     # your own images
+
+
+def as_table(data: list[bytes], label: list[int], model: list[str], source: list[str]):
+    """The same columns a Community Forensics row group has."""
+    return pa.table({"image_data": pa.array(data, pa.binary()),
+                     "label": pa.array(label, pa.int8()),
+                     "model_name": pa.array(model, pa.string()),
+                     "real_source": pa.array(source, pa.string()),
+                     "nsfw_flag": pa.array(["False"] * len(data), pa.string())})
+
+
+def read_pairs(item: dict, fs: HfFileSystem):
+    """Rapidata: two images per row; keep those from the models the plan chose."""
+    with fs.open(item["file"], "rb", block_size=4 * 1024 * 1024) as f:
+        t = pq.ParquetFile(f).read_row_group(
+            item["row_group"], columns=["model1", "image1", "model2", "image2"]).to_pydict()
+    keep = set(item["keep"])
+    data, models = [], []
+    for col in ("1", "2"):
+        for raw, img in zip(t[f"model{col}"], t[f"image{col}"]):
+            if raw in keep and img and img.get("bytes"):
+                data.append(img["bytes"])
+                models.append(RAPIDATA_MODELS[raw][0])
+    return as_table(data, [1] * len(data), models, [""] * len(data))
+
+
+def read_files(item: dict, fs: HfFileSystem):
+    """Single image files: on the Hub (zr-zhang benchmark) or a local folder (absolute paths)."""
+    data = []
+    for path in item["files"]:
+        if Path(path).is_absolute():
+            data.append(Path(path).read_bytes())
+        else:
+            with fs.open(path, "rb") as f:
+                data.append(f.read())
+    n = len(data)
+    return as_table(data, [item["label"]] * n, [item["model"]] * n, [item["source"]] * n)
 
 
 def read_chunk(item: dict, fs: HfFileSystem, tmp: Path):
+    if item.get("kind") == "pairs":
+        return read_pairs(item, fs)
+    if item.get("kind") == "files":
+        return read_files(item, fs)
     repo = item["repo"].removeprefix("datasets/")
     if item.get("whole_file"):
         # One huge row group: download the file once (resumable), read, delete.
@@ -79,7 +130,29 @@ def read_chunk(item: dict, fs: HfFileSystem, tmp: Path):
 
 
 def chunk_key(item: dict) -> str:
+    if "key" in item:  # v2 sources; their file names would collide across repos
+        return item["key"]
     return item["file"].split("/")[-1].replace(".parquet", "") + f"_rg{item['row_group']}"
+
+
+def already_extracted(dirs: list[Path]) -> tuple[set[str], Counter]:
+    """Hashes and per-generator counts of images already extracted for this split.
+
+    Chunks from v1 have no hashes; they are not needed, as v1 has no capped generators."""
+    seen: set[str] = set()
+    have: Counter = Counter()
+    for d in dirs:
+        for f in d.glob("*.npz"):
+            with np.load(f) as z:
+                if "sha" in z.files:
+                    seen.update(z["sha"].tolist())
+                    have.update(z["model"][z["label"] == 1].tolist())
+    return seen, have
+
+
+def full(item: dict, have: Counter) -> bool:
+    """A capped chunk whose generators all have enough distinct images: no need to fetch it."""
+    return "cap" in item and all(have[g] >= item["cap"] for g in item["expected"])
 
 
 def fetch(item: dict, tmp: Path):
@@ -93,7 +166,7 @@ def fetch(item: dict, tmp: Path):
     return item, None
 
 
-def downloader(items, done: set, q: queue.Queue, tmp: Path, parallel: int = 8):
+def downloader(items, done: set, have: Counter, q: queue.Queue, tmp: Path, parallel: int = 8):
     """Small chunks are latency-bound (2-4 s each), so fetch several at once."""
     todo = [i for i in items if chunk_key(i) not in done]
     small = [i for i in todo if not i.get("whole_file")]
@@ -101,6 +174,8 @@ def downloader(items, done: set, q: queue.Queue, tmp: Path, parallel: int = 8):
     with ThreadPoolExecutor(parallel) as pool:
         window = []
         for item in small:
+            if full(item, have):  # `have` is updated by the main thread as images arrive
+                continue
             window.append(pool.submit(fetch, item, tmp))
             if len(window) >= parallel * 2:
                 q.put(window.pop(0).result())
@@ -128,6 +203,8 @@ def main():
     # A chunk is done when the last output directory has it.
     last_dir = list(outdirs.values())[-1]
     done = {p.stem for p in last_dir.glob("*.npz")}
+    last_bb = list(BACKBONES)[-1]
+    seen, have = already_extracted([last_dir, DATA_DIR / "features" / f"calib_{last_bb}"])
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     models, preprocess = {}, None
@@ -136,7 +213,7 @@ def main():
         models[bb] = m.visual.to(device).eval().half()
 
     q: queue.Queue = queue.Queue(maxsize=4)
-    threading.Thread(target=downloader, args=(items, done, q, tmp), daemon=True).start()
+    threading.Thread(target=downloader, args=(items, done, have, q, tmp), daemon=True).start()
     bar = tqdm(total=sum(i["rows"] for i in items), desc=args.split, unit="img")
     bar.update(sum(i["rows"] for i in items if chunk_key(i) in done))
 
@@ -150,22 +227,46 @@ def main():
         n = table.num_rows
         nsfw = cols.get("nsfw_flag", ["False"] * n)
 
+        todo = []
+        for i in range(n):
+            if str(nsfw[i]) == "True":
+                continue
+            sha = hashlib.sha1(cols["image_data"][i]).hexdigest()[:16]
+            if sha in seen:
+                continue
+            gen = str(cols["model_name"][i] or "")
+            if "cap" in item and have[gen] >= item["cap"]:
+                continue  # this generator has enough distinct images
+            seen.add(sha)
+            if int(cols["label"][i]) == 1:
+                have[gen] += 1
+            # Calibration share: every tenth image of a whole file, or chosen by content hash.
+            if item.get("whole_file"):
+                to_calib = i % round(1 / item["calib_fraction"]) == 0
+            elif item.get("calib_by_hash"):
+                to_calib = int(sha[:8], 16) % round(1 / item["calib_by_hash"]) == 0
+            else:
+                to_calib = False
+            todo.append((i, sha, to_calib))
+
         for variant, pick in VARIANTS[args.split]:
             tensors, meta = [], []
-            for i in range(n):
-                if str(nsfw[i]) == "True":
-                    continue
+            for i, sha, to_calib in todo:
                 try:
                     img = Image.open(io.BytesIO(cols["image_data"][i]))
                     quality, scale = pick(rng)
                     tensors.append(preprocess(standardize(img, quality, scale)))
                 except Exception:
                     continue
-                # Whole files: send every tenth image to the calibration split instead.
-                to_calib = item.get("whole_file") and i % round(1 / item["calib_fraction"]) == 0
                 meta.append((int(cols["label"][i]), str(cols["model_name"][i] or ""),
-                             str(cols["real_source"][i] or ""), bool(to_calib)))
+                             str(cols["real_source"][i] or ""), bool(to_calib), sha))
             if not tensors:
+                # Nothing new in this chunk (e.g. only duplicates): mark it done anyway.
+                for bb in models:
+                    np.savez_compressed(outdirs[(variant, bb)] / f"{key}.npz",
+                                        features=np.zeros((0, BACKBONES[bb][2]), np.float16),
+                                        label=np.zeros(0, np.int8), model=np.array([], str),
+                                        source=np.array([], str), sha=np.array([], str))
                 continue
             x_all = torch.stack(tensors)
             for bb, model in models.items():
@@ -175,7 +276,7 @@ def main():
                         f = model(x_all[s:s + BATCH].to(device).half()).float()
                         feats.append(torch.nn.functional.normalize(f, dim=-1).cpu().numpy())
                 feats = np.concatenate(feats).astype(np.float16)
-                labels, gens, sources, calib = map(np.array, zip(*meta))
+                labels, gens, sources, calib, shas = map(np.array, zip(*meta))
                 for target, mask in (("main", ~calib), ("calib", calib)):
                     if not mask.any():
                         continue
@@ -184,7 +285,7 @@ def main():
                     out_dir.mkdir(parents=True, exist_ok=True)
                     np.savez_compressed(out_dir / f"{key}.npz", features=feats[mask],
                                         label=labels[mask].astype(np.int8), model=gens[mask],
-                                        source=sources[mask])
+                                        source=sources[mask], sha=shas[mask])
         bar.update(item["rows"])
     bar.close()
     print("done")

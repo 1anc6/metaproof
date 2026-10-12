@@ -88,6 +88,31 @@ python eval_onnx.py --variants fp32,w8        # 6. end-to-end check with the API
 python export_onnx.py --backbone vitb16 --upload 1anc6/metaproof-detector
 ```
 
+### v2 data: newer generators (in progress)
+
+v2 keeps everything above and adds 2025–26 generators. Training gets Imagen 4, GPT-4o
+image, Seedream 3/4, Recraft v2/v3, HiDream, Reve, Ideogram 3, Hunyuan 2.1/3, Wan 2.2, Grok
+Aurora, Runway Frames, Lumina, Janus and SD3, from Rapidata's human-preference datasets
+(CDLA-Permissive-2.0). A new test split, `heldout2`, contains only families never trained on:
+Nano Banana (1, Pro, 2), FLUX.2, GPT Image 2 and Qwen Image 2.1. These come from Rapidata and
+the [zr-zhang benchmark](https://huggingface.co/datasets/zr-zhang/MLLM-Generated-Image-Detection-Dataset)
+(Apache-2.0, research use). Generators in the v1 test (DALL-E 3, Imagen 3, Ideogram 2, FLUX.1)
+stay out of training, so the v1 numbers remain comparable.
+
+Rapidata repeats images across rows, so extraction dedupes by content hash and stops at 600
+distinct images per training generator (300 per held-out one). The `local` split runs your
+own images from `Images/` at the repo root (git-ignored).
+
+```bash
+python scan_metadata.py --only rapidata      # exact model counts per row group
+python scan_metadata.py --only zr            # file list of the held-out benchmark
+python sample_plan.py                        # v1 items unchanged, v2 items added
+python extract_features.py --split train     # only the new chunks are downloaded
+python extract_features.py --split heldout2
+python extract_features.py --split local
+python train.py --backbone vitb16            # reports heldout, heldout2 and local
+```
+
 Large files go to `D:/metaproof/data` (override with `METAPROOF_DATA`). Trained on an RTX 4050
 laptop GPU (6 GB); feature extraction is download-bound (~1 hour at 5 MB/s).
 
