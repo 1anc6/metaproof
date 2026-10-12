@@ -31,6 +31,16 @@ def load_split(split: str, backbone: str) -> dict:
     return out
 
 
+def head_input(features: np.ndarray) -> np.ndarray:
+    """What the head sees. v1-v3 features are one 512-d view per image. v5 features ("vitb16n")
+    have five: the 256 px global view and four full-resolution crops; the head gets the global
+    view and the mean of the crops side by side (1024-d)."""
+    f = features.astype(np.float32)
+    if f.ndim == 3:
+        return np.concatenate([f[:, 0], f[:, 1:].mean(axis=1)], axis=1)
+    return f
+
+
 TEST_SPLITS = ["heldout2", "local"]  # the test splits that record content hashes
 
 
@@ -129,15 +139,16 @@ def main():
 
     train = drop_test_images(load_split("train", args.backbone), args.backbone)
     calib = drop_test_images(load_split("calib", args.backbone), args.backbone)
-    head = Head(train["features"].shape[1])
-    fit(head, train["features"].astype(np.float32), train["label"].astype(np.float32))
+    x_train = head_input(train["features"])
+    head = Head(x_train.shape[1])
+    fit(head, x_train, train["label"].astype(np.float32))
 
-    temperature = fit_temperature(logits(head, calib["features"].astype(np.float32)),
+    temperature = fit_temperature(logits(head, head_input(calib["features"])),
                                   calib["label"].astype(np.float32))
     print(f"temperature = {temperature:.3f}")
 
     def prob(split):
-        return 1 / (1 + np.exp(-logits(head, split["features"].astype(np.float32)) / temperature))
+        return 1 / (1 + np.exp(-logits(head, head_input(split["features"])) / temperature))
 
     metrics = {"backbone": args.backbone, "temperature": temperature, "results": {}}
     # heldout: v1 test (2023-24 generators). heldout2: newer generators held out entirely
@@ -162,7 +173,7 @@ def main():
 
     out = DATA_DIR / f"head_{args.backbone}.pt"
     torch.save({"state_dict": head.state_dict(), "temperature": temperature,
-                "dim": train["features"].shape[1], "backbone": args.backbone}, out)
+                "dim": x_train.shape[1], "backbone": args.backbone}, out)
     Path(f"results_{args.backbone}.json").write_text(json.dumps(metrics, indent=2))
     print("saved", out, "and", f"results_{args.backbone}.json")
 

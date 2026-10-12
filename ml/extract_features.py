@@ -57,6 +57,45 @@ def standardize(img: Image.Image, quality: int, scale: float = 1.0) -> Image.Ima
     return Image.open(buf).convert("RGB")
 
 
+NATIVE_MAX_SHORT = 1024
+CROP = 224
+# Where the four crops sit (fractions of width and height); training draws random spots.
+FIXED_SPOTS = [(0.5, 0.5), (0.25, 0.25), (0.75, 0.25), (0.5, 0.75)]
+
+
+def native_crops(img: Image.Image, quality: int, scale: float = 1.0,
+                 rng: random.Random | None = None) -> list[Image.Image]:
+    """Four 224 px crops at (near) full resolution, for detector v5.
+
+    The image is capped at 1024 px on its short side (times `scale`, as in standardize) and
+    goes through the same JPEG round trip as every other image, then cropped without further
+    resizing, so fine pixel detail survives. Must match backend/app/analyzers/detector.py.
+    """
+    img = img.convert("RGB")
+    w, h = img.size
+    target = min(w, h, NATIVE_MAX_SHORT) * scale
+    if target < min(w, h):
+        r = target / min(w, h)
+        img = img.resize((max(1, round(w * r)), max(1, round(h * r))), Image.BICUBIC)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=quality)
+    buf.seek(0)
+    img = Image.open(buf).convert("RGB")
+    w, h = img.size
+    if min(w, h) < CROP:  # tiny image: upscale just enough for a crop
+        r = CROP / min(w, h)
+        img = img.resize((max(CROP, round(w * r)), max(CROP, round(h * r))), Image.BICUBIC)
+        w, h = img.size
+    crops = []
+    for fx, fy in FIXED_SPOTS:
+        if rng is not None:
+            fx, fy = rng.uniform(0.1, 0.9), rng.uniform(0.1, 0.9)
+        x = min(max(0, round(fx * w - CROP / 2)), w - CROP)
+        y = min(max(0, round(fy * h - CROP / 2)), h - CROP)
+        crops.append(img.crop((x, y, x + CROP, y + CROP)))
+    return crops
+
+
 # Per split: list of (variant name, function picking quality/scale for each image).
 VARIANTS = {
     "train": [("", lambda rng: (rng.randint(65, 95), rng.choice([1.0, 1.0, 0.75, 0.5])))],
@@ -189,28 +228,48 @@ def downloader(items, done: set, have: Counter, q: queue.Queue, tmp: Path, paral
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", required=True, choices=list(VARIANTS))
+    ap.add_argument("--features", default="clip", choices=["clip", "native"],
+                    help="clip: one 256 px view per image, for every backbone (v1-v3). "
+                         "native: that view plus four full-resolution crops, ViT-B/16 only (v5)")
     args = ap.parse_args()
+    native = args.features == "native"
+    # Feature set name -> backbone; "vitb16n" holds 5 views per image (global + 4 crops).
+    feature_sets = {"vitb16n": "vitb16"} if native else {bb: bb for bb in BACKBONES}
 
     items = json.loads((DATA_DIR / f"plan_{args.split}.json").read_text())
     tmp = DATA_DIR / "tmp"
     tmp.mkdir(exist_ok=True)
     outdirs = {}
     for variant, _ in VARIANTS[args.split]:
-        for bb in BACKBONES:
-            d = DATA_DIR / "features" / f"{args.split}{variant}_{bb}"
+        for fset in feature_sets:
+            d = DATA_DIR / "features" / f"{args.split}{variant}_{fset}"
             d.mkdir(parents=True, exist_ok=True)
-            outdirs[(variant, bb)] = d
+            outdirs[(variant, fset)] = d
     # A chunk is done when the last output directory has it.
     last_dir = list(outdirs.values())[-1]
     done = {p.stem for p in last_dir.glob("*.npz")}
-    last_bb = list(BACKBONES)[-1]
-    seen, have = already_extracted([last_dir, DATA_DIR / "features" / f"calib_{last_bb}"])
+    last_set = list(feature_sets)[-1]
+    seen, have = already_extracted([last_dir, DATA_DIR / "features" / f"calib_{last_set}"])
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     models, preprocess = {}, None
-    for bb, (arch, pretrained, _) in BACKBONES.items():
+    for fset, bb in feature_sets.items():
+        arch, pretrained, _ = BACKBONES[bb]
         m, _, preprocess = open_clip.create_model_and_transforms(arch, pretrained=pretrained)
-        models[bb] = m.visual.to(device).eval().half()
+        models[fset] = m.visual.to(device).eval().half()
+    dims = {fset: BACKBONES[bb][2] for fset, bb in feature_sets.items()}
+    views = 1 + len(FIXED_SPOTS) if native else 1
+
+    def embed(batch: list[torch.Tensor]) -> dict[str, np.ndarray]:
+        """(n, views, 3, 224, 224) -> per feature set, (n, dim) or (n, views, dim)."""
+        x = torch.stack(batch).reshape(-1, 3, 224, 224).to(device).half()
+        out = {}
+        with torch.no_grad():
+            for fset, model in models.items():
+                f = torch.nn.functional.normalize(model(x).float(), dim=-1).cpu().numpy()
+                f = f.reshape(len(batch), views, -1)
+                out[fset] = f if native else f[:, 0]
+        return out
 
     q: queue.Queue = queue.Queue(maxsize=4)
     threading.Thread(target=downloader, args=(items, done, have, q, tmp), daemon=True).start()
@@ -250,46 +309,54 @@ def main():
             todo.append((i, sha, to_calib))
 
         for variant, pick in VARIANTS[args.split]:
-            tensors, meta = [], []
+            # Embedded in batches as images are prepared, so a 3,000-image file with five
+            # views each never sits in memory all at once.
+            batch, meta = [], []
+            feats = {fset: [] for fset in models}
             for i, sha, to_calib in todo:
                 try:
                     img = Image.open(io.BytesIO(cols["image_data"][i]))
                     quality, scale = pick(rng)
-                    tensors.append(preprocess(standardize(img, quality, scale)))
+                    stack = [preprocess(standardize(img, quality, scale))]
+                    if native:
+                        crop_rng = rng if args.split == "train" else None
+                        stack += [preprocess(c) for c in native_crops(img, quality, scale, crop_rng)]
+                    batch.append(torch.stack(stack))
                 except Exception:
                     continue
                 meta.append((int(cols["label"][i]), str(cols["model_name"][i] or ""),
                              str(cols["real_source"][i] or ""), bool(to_calib), sha))
-            if not tensors:
+                if len(batch) == BATCH:
+                    for fset, f in embed(batch).items():
+                        feats[fset].append(f)
+                    batch = []
+            if batch:
+                for fset, f in embed(batch).items():
+                    feats[fset].append(f)
+            if not meta:
                 # Nothing new in this chunk (e.g. only duplicates): mark it done anyway.
-                for bb in models:
-                    np.savez_compressed(outdirs[(variant, bb)] / f"{key}.npz",
-                                        features=np.zeros((0, BACKBONES[bb][2]), np.float16),
+                for fset in models:
+                    shape = (0, views, dims[fset]) if native else (0, dims[fset])
+                    np.savez_compressed(outdirs[(variant, fset)] / f"{key}.npz",
+                                        features=np.zeros(shape, np.float16),
                                         label=np.zeros(0, np.int8), model=np.array([], str),
                                         source=np.array([], str), sha=np.array([], str))
                 continue
-            x_all = torch.stack(tensors)
-            for bb, model in models.items():
-                feats = []
-                with torch.no_grad():
-                    for s in range(0, len(x_all), BATCH):
-                        f = model(x_all[s:s + BATCH].to(device).half()).float()
-                        feats.append(torch.nn.functional.normalize(f, dim=-1).cpu().numpy())
-                feats = np.concatenate(feats).astype(np.float16)
-                labels, gens, sources, calib, shas = map(np.array, zip(*meta))
+            labels, gens, sources, calib, shas = map(np.array, zip(*meta))
+            for fset in models:
+                f = np.concatenate(feats[fset]).astype(np.float16)
                 for target, mask in (("main", ~calib), ("calib", calib)):
                     if not mask.any():
                         continue
-                    out_dir = outdirs[(variant, bb)] if target == "main" else \
-                        DATA_DIR / "features" / f"calib_{bb}"
+                    out_dir = outdirs[(variant, fset)] if target == "main" else \
+                        DATA_DIR / "features" / f"calib_{fset}"
                     out_dir.mkdir(parents=True, exist_ok=True)
-                    np.savez_compressed(out_dir / f"{key}.npz", features=feats[mask],
+                    np.savez_compressed(out_dir / f"{key}.npz", features=f[mask],
                                         label=labels[mask].astype(np.int8), model=gens[mask],
                                         source=sources[mask], sha=shas[mask])
         bar.update(item["rows"])
     bar.close()
     print("done")
-
 
 if __name__ == "__main__":
     main()

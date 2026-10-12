@@ -21,7 +21,7 @@ import torch
 from sklearn.metrics import roc_auc_score
 
 from common import BACKBONES, DATA_DIR
-from train import Head, load_split, logits
+from train import Head, head_input, load_split, logits
 
 STRONG, WEAK = 0.95, 0.85
 SPLITS = ["heldout", "heldout-hard", "heldout2", "heldout2-hard", "local", "local-hard"]
@@ -46,7 +46,7 @@ def load_head(path: str):
 
 
 def prob(head, temperature: float, features: np.ndarray) -> np.ndarray:
-    return 1 / (1 + np.exp(-logits(head, features.astype(np.float32)) / temperature))
+    return 1 / (1 + np.exp(-logits(head, head_input(features)) / temperature))
 
 
 def kind_classifier(backbone: str):
@@ -62,7 +62,10 @@ def kind_classifier(backbone: str):
             text.append(torch.nn.functional.normalize(t, dim=-1))
         text = torch.stack(text).numpy()
     names = list(KINDS)
-    return lambda features: np.array(names)[np.argmax(features.astype(np.float32) @ text.T, axis=1)]
+    def kind_of(features: np.ndarray) -> np.ndarray:
+        f = features[:, 0] if features.ndim == 3 else features  # v5: the global view
+        return np.array(names)[np.argmax(f.astype(np.float32) @ text.T, axis=1)]
+    return kind_of
 
 
 def pct(x: np.ndarray) -> str:
@@ -77,41 +80,57 @@ def main():
     for spec in args.heads:
         name, path = spec.split("=", 1)
         heads[name] = load_head(path)
-    backbone = next(iter(heads.values()))[2]
-    kind_of = kind_classifier(backbone)
+    kind_of = kind_classifier("vitb16")
+    cache: dict = {}
 
-    print(f"{'split':14}{'head':>5}{'AUC':>7}{'AI>=.95':>9}{'AI>=.85':>9}"
+    def split_for(split: str, backbone: str):
+        """Each head is scored on its own feature set (v5 extracts its own copy of each split)."""
+        if (split, backbone) not in cache:
+            try:
+                cache[(split, backbone)] = load_split(split, backbone)
+            except SystemExit:
+                cache[(split, backbone)] = None
+        return cache[(split, backbone)]
+
+    print(f"{'split':14}{'head':>5}{'n':>6}{'AUC':>7}{'AI>=.95':>9}{'AI>=.85':>9}"
           f"{'real>=.95':>10}{'real>=.85':>10}   real >=.95 by kind")
     for split in SPLITS:
-        try:
-            s = load_split(split, backbone)
-        except SystemExit:
-            continue
-        y = s["label"]
-        kinds = kind_of(s["features"][y == 0])
-        for name, (head, temp, _) in heads.items():
+        for name, (head, temp, backbone) in heads.items():
+            s = split_for(split, backbone)
+            if s is None:
+                continue
+            y = s["label"]
+            kinds = kind_of(s["features"][y == 0])
             p = prob(head, temp, s["features"])
             ai, real = p[y == 1], p[y == 0]
             by_kind = "  ".join(f"{k} {int(((real >= STRONG) & (kinds == k)).sum())}/{int((kinds == k).sum())}"
                                 for k in KINDS if (kinds == k).any())
-            print(f"{split:14}{name:>5}{roc_auc_score(y, p):7.3f}{pct(ai >= STRONG):>9}"
+            print(f"{split:14}{name:>5}{len(y):6}{roc_auc_score(y, p):7.3f}{pct(ai >= STRONG):>9}"
                   f"{pct(ai >= WEAK):>9}{pct(real >= STRONG):>10}{pct(real >= WEAK):>10}   {by_kind}")
 
     for split in ("heldout2", "local"):
-        try:
-            s = load_split(split, backbone)
-        except SystemExit:
-            continue
-        y = s["label"]
         print(f"\n{split}: AI caught at >=0.95 per generator ({' / '.join(heads)})")
-        ps = {n: prob(h, t, s["features"]) for n, (h, t, _) in heads.items()}
-        for g in sorted(set(s["model"][y == 1])):
-            m = (s["model"] == g) & (y == 1)
-            print(f"  {g:18} n={m.sum():4}  " + " / ".join(f"{(p[m] >= STRONG).mean():4.0%}" for p in ps.values()))
-        for src in sorted(set(s["source"][y == 0])):
-            m = (s["source"] == src) & (y == 0)
-            print(f"  real {src:13} n={m.sum():4}  flagged " +
-                  " / ".join(f"{(p[m] >= STRONG).mean():4.0%}" for p in ps.values()))
+        ps = {}
+        for name, (head, temp, backbone) in heads.items():
+            s = split_for(split, backbone)
+            if s is not None:
+                ps[name] = (s, prob(head, temp, s["features"]))
+        if not ps:
+            continue
+        s0 = next(iter(ps.values()))[0]
+        y0 = s0["label"]
+        for g in sorted(set(s0["model"][y0 == 1])):
+            cells = []
+            for s, p in ps.values():
+                m = (s["model"] == g) & (s["label"] == 1)
+                cells.append(f"{(p[m] >= STRONG).mean():4.0%}" if m.any() else "   -")
+            print(f"  {g:18} n={int(((s0['model'] == g) & (y0 == 1)).sum()):4}  " + " / ".join(cells))
+        for src in sorted(set(s0["source"][y0 == 0])):
+            cells = []
+            for s, p in ps.values():
+                m = (s["source"] == src) & (s["label"] == 0)
+                cells.append(f"{(p[m] >= STRONG).mean():4.0%}" if m.any() else "   -")
+            print(f"  real {src:13} n={int(((s0['source'] == src) & (y0 == 0)).sum()):4}  flagged " + " / ".join(cells))
 
 
 if __name__ == "__main__":
