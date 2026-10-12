@@ -1,0 +1,66 @@
+{
+  "all generators in training|Nano Banana 2|zr-real": {
+    "standard": 0.7249,
+    "native": 0.905
+  },
+  "all generators in training|Nano Banana 2|vision": {
+    "standard": 0.9952,
+    "native": 0.9861
+  },
+  "all generators in training|GPT Image 2|zr-real": {
+    "standard": 0.8902,
+    "native": 0.9796
+  },
+  "all generators in training|GPT Image 2|vision": {
+    "standard": 0.9991,
+    "native": 0.9983
+  },
+  "all generators in training|Qwen Image 2.1|zr-real": {
+    "standard": 0.9843,
+    "native": 0.9917
+  },
+  "all generators in training|Qwen Image 2.1|vision": {
+    "standard": 1.0,
+    "native": 0.9992
+  },
+  "all generators in training|FLUX.2|zr-real": {
+    "standard": 0.9927,
+    "native": 0.9972
+  },
+  "all generators in training|FLUX.2|vision": {
+    "standard": 1.0,
+    "native": 1.0
+  },
+  "tested generator left out|Nano Banana 2|zr-real": {
+    "standard": 0.6456,
+    "native": 0.8365
+  },
+  "tested generator left out|Nano Banana 2|vision": {
+    "standard": 0.9547,
+    "native": 0.9507
+  },
+  "tested generator left out|GPT Image 2|zr-real": {
+    "standard": 0.8249,
+    "native": 0.9728
+  },
+  "tested generator left out|GPT Image 2|vision": {
+    "standard": 0.9977,
+    "native": 0.9974
+  },
+  "tested generator left out|Qwen Image 2.1|zr-real": {
+    "standard": 0.9511,
+    "native": 0.9828
+  },
+  "tested generator left out|Qwen Image 2.1|vision": {
+    "standard": 1.0,
+    "native": 0.9989
+  },
+  "tested generator left out|FLUX.2|zr-real": {
+    "standard": 0.9858,
+    "native": 0.9946
+  },
+  "tested generator left out|FLUX.2|vision": {
+    "standard": 1.0,
+    "native": 1.0
+  }
+}

@@ -144,7 +144,24 @@ JPEG standardization plus CLIP's content-level view leaves too little to tell th
 photorealistic models apart, so they need pixel-level evidence at original resolution, not
 more examples. `ZR_TRAIN` in `sample_plan.py` is empty again. `train.py` now drops training
 images that are byte-identical to a test image; the benchmark stores some real photos twice
-under different names, and 35 such duplicates were caught. The v1 test's real images are now the same kind as the training ones (both LAION),
+under different names, and 35 such duplicates were caught.
+
+**Full-resolution experiment** (`probe_native.py`). A linear classifier on CLIP features
+compares the live 256 px input with four 224 px crops at up to 1024 px, on the same images
+(AUC vs the benchmark's real photos, each generator left out of training):
+
+| Generator | 256 px input | Full-res crops | Crops, AI given the reals' size and JPEG history |
+| --- | --- | --- | --- |
+| Nano Banana 2 | 0.65 | 0.84 | 0.61 → 0.70 |
+| GPT Image 2 | 0.83 | 0.97 | 0.80 → 0.92 |
+| Qwen Image 2.1 | 0.95 | 0.98 | 0.98 → 0.99 |
+| FLUX.2 | 0.99 | 0.995 | 0.995 → 0.997 |
+
+The benchmark's real photos are small, already-compressed web JPEGs, so part of the first
+gain was a size and compression shortcut. The last column (`--match-reals`) shrinks and
+compresses the AI images like them first. A real gain survives there, but Nano Banana 2
+stays hard for frozen CLIP features even at full resolution. Against phone photos everything
+separates near 1.0 on content alone, which says nothing about this question. The v1 test's real images are now the same kind as the training ones (both LAION),
 so the independent heldout2 real photos are the stricter check.
 
 ```bash
