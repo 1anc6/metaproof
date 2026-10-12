@@ -23,8 +23,33 @@ def load_split(split: str, backbone: str) -> dict:
     if not files:
         raise SystemExit(f"no features for {split}/{backbone}; run extract_features.py first")
     parts = [np.load(f) for f in files]
-    keys = set.intersection(*(set(p.files) for p in parts))  # v1 chunks have no "sha"
-    return {k: np.concatenate([p[k] for p in parts]) for k in sorted(keys)}
+    keys = set.intersection(*(set(p.files) for p in parts))
+    out = {k: np.concatenate([p[k] for p in parts]) for k in sorted(keys)}
+    # v1 chunks have no content hash; their rows get an empty one.
+    out["sha"] = np.concatenate([p["sha"] if "sha" in p.files else np.full(len(p["label"]), "")
+                                 for p in parts])
+    return out
+
+
+TEST_SPLITS = ["heldout2", "local"]  # the test splits that record content hashes
+
+
+def drop_test_images(split: dict, backbone: str) -> dict:
+    """Remove training images that are byte-identical to a test image.
+
+    Datasets repeat files under different names (the zr-zhang benchmark has real photos twice),
+    so disjoint file lists are not enough to keep a test honest."""
+    test = set()
+    for name in TEST_SPLITS:
+        try:
+            test.update(load_split(name, backbone)["sha"].tolist())
+        except SystemExit:
+            continue
+    test.discard("")
+    keep = ~np.isin(split["sha"], list(test))
+    if (~keep).any():
+        print(f"dropped {int((~keep).sum())} training images that are also in a test split")
+    return {k: v[keep] for k, v in split.items()}
 
 
 class Head(torch.nn.Module):
@@ -102,8 +127,8 @@ def main():
     args = ap.parse_args()
     torch.manual_seed(SEED)
 
-    train = load_split("train", args.backbone)
-    calib = load_split("calib", args.backbone)
+    train = drop_test_images(load_split("train", args.backbone), args.backbone)
+    calib = drop_test_images(load_split("calib", args.backbone), args.backbone)
     head = Head(train["features"].shape[1])
     fit(head, train["features"].astype(np.float32), train["label"].astype(np.float32))
 

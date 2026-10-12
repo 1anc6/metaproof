@@ -132,7 +132,19 @@ can come down. Chosen on the calibration split to flag no more real images than 
 0.95, the threshold is 0.908. There v3 flags fewer real images on every test and catches
 more AI: 70% of the v1 test, 20% of heldout2, and 5 of 10 Gemini images (v1: 1).
 Next-generation models (GPT Image 2, Nano Banana 2, Qwen 2.1) remain mostly undetected (1–5%
-at 0.95). The v1 test's real images are now the same kind as the training ones (both LAION),
+at 0.95).
+
+**v4 experiment: not shipped.** Training on 1,200 Nano Banana 2 images and 1,200 real photos from
+the same benchmark (other files than the test) did not help: Nano Banana 2 test images caught
+at 0.95 went from 5% to 7%, and false alarms on the benchmark's real photos rose. v4 put
+only 8% of its *own* Nano Banana 2 training images at ≥ 0.95, and even a dedicated linear
+classifier separates Nano Banana 2 from matched real photos at only AUC 0.85 on these
+features (GPT Image 2 0.78, Qwen 0.73). The information isn't in the features. The 256 px
+JPEG standardization plus CLIP's content-level view leaves too little to tell these
+photorealistic models apart, so they need pixel-level evidence at original resolution, not
+more examples. `ZR_TRAIN` in `sample_plan.py` is empty again. `train.py` now drops training
+images that are byte-identical to a test image; the benchmark stores some real photos twice
+under different names, and 35 such duplicates were caught. The v1 test's real images are now the same kind as the training ones (both LAION),
 so the independent heldout2 real photos are the stricter check.
 
 ```bash

@@ -13,7 +13,9 @@ already extracted are reused:
   calibration share is chosen per image by content hash, so a repeated image cannot end up on
   both sides). Role "heldout" (Nano Banana, FLUX.2) goes to a new test split, heldout2.
 - zr-zhang benchmark: GPT Image 2, Nano Banana 2, Qwen Image 2.1, FLUX.2 and real photos, in
-  heldout2 only.
+  heldout2. From v4, other Nano Banana 2 images and other real photos of the same benchmark
+  also join training (the Gemini family is what users upload most); the benchmark's real
+  photos go in too so "benchmark-style image" can't stand in for "AI".
 - About 6,000 more LAION real images keep the training classes roughly balanced. LAION holds
   the polished human-made images (stock and product photos, graphics, screenshots, 3D
   renders) that look like AI output. A first attempt balanced with COCO and Landscapes
@@ -71,6 +73,9 @@ RAW_OVERSAMPLE = 3
 MIN_NEW_IMAGES_PER_GB = 150
 ZR_PER_GENERATOR = 300          # split evenly over its three categories
 ZR_REAL = 900
+# v4: training images from the same benchmark, never the files heldout2 uses.
+# v4 tried {"Nano Banana 2": 1200, "Real": 1200}: no gain, see ml/README.md. Off for now.
+ZR_TRAIN: dict[str, int] = {}  # generator -> images, split evenly over the three categories
 FILES_PER_CHUNK = 50
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LOCAL_AI = REPO_ROOT / "Images" / "AI Images"
@@ -167,6 +172,25 @@ def plan_zr(rng: random.Random) -> list[dict]:
     return items
 
 
+def plan_zr_train(tested: set[str], rng: random.Random) -> list[dict]:
+    """Benchmark images for training, disjoint from the ones heldout2 tests on."""
+    index = json.loads((DATA_DIR / "index_zr.json").read_text())
+    by = defaultdict(list)
+    for r in index:
+        if r["generator"] in ZR_TRAIN and r["file"] not in tested:
+            by[(r["generator"], r["category"])].append(r["file"])
+    items = []
+    for (gen, cat), files in sorted(by.items()):
+        files = sorted(files)
+        rng.shuffle(files)
+        real = gen == "Real"
+        source = f"zr:{cat.removesuffix(' Images')}"
+        items += file_chunks(files[:ZR_TRAIN[gen] // 3], 0 if real else 1, "" if real else gen,
+                             source if real else "", f"zrtrain_{gen}_{cat}",
+                             0.1e6 if real else 1.5e6)
+    return items
+
+
 def plan_local(ai_dir: Path, real_dir: Path) -> list[dict]:
     items = []
     for d, label, model, source in ((ai_dir, 1, "local-ai", ""), (real_dir, 0, "", "local")):
@@ -246,6 +270,9 @@ def main():
         plan["train"].append({**item, "calib_by_hash": CALIB_FRACTION})
     plan["heldout2"] += pick_rapidata(rapidata, "heldout", NEW_FAKES_PER_HELDOUT_GEN, rng2)
     plan["heldout2"] += plan_zr(rng2)
+    tested = {f for item in plan["heldout2"] if item.get("kind") == "files" for f in item["files"]}
+    for item in plan_zr_train(tested, random.Random(f"{SEED}-v4-zr")):
+        plan["train"].append({**item, "calib_by_hash": CALIB_FRACTION})
     plan["local"] += plan_local(args.local_ai, args.local_real)
 
     # Candidate images per new generator, counting repeats; extraction keeps up to the cap.
