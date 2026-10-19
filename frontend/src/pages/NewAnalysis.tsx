@@ -206,7 +206,14 @@ function Uploading({ file, progress, preview }: { file: File; progress: number; 
       <p className="mt-1 text-xs text-faint">
         {done ? 'Uploaded, starting analysis…' : `Uploading ${formatBytes(file.size)}…`}
       </p>
-      <div className="mt-5 h-1 w-full overflow-hidden rounded-full bg-white/10">
+      <div
+        className="mt-5 h-1 w-full overflow-hidden rounded-full bg-white/10"
+        role="progressbar"
+        aria-label="Upload progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress * 100)}
+      >
         <div
           className="h-full rounded-full bg-white transition-[width] duration-300"
           style={{ width: `${Math.max(4, progress * 100)}%` }}

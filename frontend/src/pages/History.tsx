@@ -3,7 +3,8 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatBytes, formatWhen } from '../lib/format'
-import { clearHistory, removeFromHistory, useHistory } from '../lib/history'
+import { useHistory } from '../lib/history'
+import { clearWithUndo, removeWithUndo } from '../lib/undo'
 import { useSummaries } from '../lib/hooks'
 import { VERDICTS } from '../lib/verdicts'
 import { PageHeader, Thumb, VerdictBadge } from '../components/ui'
@@ -47,9 +48,13 @@ export function History() {
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="glass flex flex-1 items-center gap-2.5 rounded-full px-4 py-2.5">
-          <Search className="size-4 text-faint" />
+        <label className="glass flex flex-1 items-center gap-2.5 rounded-full px-4 py-2.5 focus-within:ring-2 focus-within:ring-white/50">
+          <Search className="size-4 text-faint" aria-hidden />
           <input
+            type="search"
+            aria-label="Search by filename"
+            autoComplete="off"
+            spellCheck={false}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by filename…"
@@ -62,6 +67,7 @@ export function History() {
               key={f.key}
               type="button"
               onClick={() => setFilter(f.key)}
+              aria-pressed={filter === f.key}
               className={`shrink-0 rounded-full px-3.5 py-2 text-xs transition ${
                 filter === f.key ? 'bg-white text-black' : 'glass text-muted hover:text-ink'
               }`}
@@ -90,14 +96,14 @@ export function History() {
             <span>Analyzed</span>
             <span />
           </div>
-          <ul>
+          <ul className="stagger">
             {rows.map((entry) => {
               const s = data[entry.jobId]
               return (
-                <li key={entry.jobId} className="group relative border-b border-white/5 last:border-0">
+                <li key={entry.jobId} className="group animate-rise relative border-b border-white/5 last:border-0">
                   <Link
                     to={`/analysis/${entry.jobId}`}
-                    className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 transition hover:bg-white/[0.03] md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
+                    className="grid grid-cols-[1fr_auto_32px] items-center gap-3 px-4 py-3 transition hover:bg-white/[0.03] md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <Thumb sha={entry.sha256} className="size-11 shrink-0 rounded-xl" />
@@ -111,13 +117,13 @@ export function History() {
                     </div>
                     <div>{s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}</div>
                     <span className="text-xs text-faint max-md:hidden">{formatWhen(entry.uploadedAt)}</span>
-                    <span className="max-md:hidden" />
+                    <span />
                   </Link>
                   <button
                     type="button"
-                    onClick={() => removeFromHistory(entry.jobId)}
+                    onClick={() => removeWithUndo(entry.jobId, entry.filename)}
                     aria-label={`Remove ${entry.filename} from history`}
-                    className="absolute top-1/2 right-4 grid size-8 -translate-y-1/2 place-items-center rounded-full text-faint opacity-0 transition group-hover:opacity-100 hover:bg-white/10 hover:text-ink focus:opacity-100 max-md:hidden"
+                    className="absolute top-1/2 right-4 grid size-8 -translate-y-1/2 place-items-center rounded-full text-faint transition hover:bg-white/10 hover:text-ink md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                   >
                     <Trash2 className="size-3.5" />
                   </button>
@@ -131,7 +137,7 @@ export function History() {
       {history.length > 0 && (
         <button
           type="button"
-          onClick={() => window.confirm('Remove all analyses from this device? Reports stay available by link.') && clearHistory()}
+          onClick={clearWithUndo}
           className="mt-4 text-xs text-faint transition hover:text-ink"
         >
           Clear history on this device

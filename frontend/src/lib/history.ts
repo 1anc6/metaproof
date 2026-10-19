@@ -41,12 +41,25 @@ export function addToHistory(entry: HistoryEntry) {
   write([entry, ...rest].slice(0, LIMIT))
 }
 
-export function removeFromHistory(jobId: string) {
+export function removeFromHistory(jobId: string): HistoryEntry[] {
+  const removed = read().filter((e) => e.jobId === jobId)
   write(read().filter((e) => e.jobId !== jobId))
+  return removed
 }
 
-export function clearHistory() {
+export function clearHistory(): HistoryEntry[] {
+  const removed = read()
   write([])
+  return removed
+}
+
+/** Puts removed entries back (Undo), newest first, without duplicating any added since. */
+export function restoreHistory(entries: HistoryEntry[]) {
+  const current = read()
+  const ids = new Set(current.map((e) => e.jobId))
+  const merged = [...current, ...entries.filter((e) => !ids.has(e.jobId))]
+  merged.sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
+  write(merged.slice(0, LIMIT))
 }
 
 function subscribe(listener: () => void) {

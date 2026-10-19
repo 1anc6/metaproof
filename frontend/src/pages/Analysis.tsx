@@ -96,25 +96,25 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Reading the evidence</h1>
       {filename && <p className="mt-2 max-w-full truncate text-sm text-muted">{filename}</p>}
 
-      <ol className="glass mt-8 flex w-full flex-col gap-1 rounded-3xl p-3 text-left">
+      <ol className="glass stagger mt-8 flex w-full flex-col gap-1 rounded-3xl p-3 text-left">
         {STEPS.map((step, i) => {
           const state = i < active ? 'done' : i === active ? 'active' : 'todo'
           return (
-            <li key={step.key} className="flex items-center gap-3 rounded-2xl px-3 py-2.5">
+            <li key={step.key} className="animate-rise flex items-center gap-3 rounded-2xl px-3 py-2.5">
               <span
-                className={`grid size-6 place-items-center rounded-full border ${
+                className={`grid size-6 place-items-center rounded-full border transition-colors duration-300 ${
                   state === 'done' ? 'border-white bg-white text-black' : 'border-white/15 text-muted'
                 }`}
               >
                 {state === 'done' ? (
-                  <Check className="size-3.5" strokeWidth={3} />
+                  <Check className="animate-pop size-3.5" strokeWidth={3} />
                 ) : state === 'active' ? (
                   <LoaderCircle className="size-3.5 animate-spin" />
                 ) : (
                   <span className="size-1 rounded-full bg-current" />
                 )}
               </span>
-              <span className={`text-sm ${state === 'todo' ? 'text-faint' : 'text-ink'}`}>{step.label}</span>
+              <span className={`text-sm transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'text-ink'}`}>{step.label}</span>
             </li>
           )
         })}

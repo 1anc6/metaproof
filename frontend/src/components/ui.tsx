@@ -120,7 +120,7 @@ export function PageHeader({
 export function ErrorPanel({ message, children }: { message: string; children?: ReactNode }) {
   return (
     <div className="glass rounded-3xl p-8 text-center">
-      <p className="font-display text-lg font-semibold">Something went wrong</p>
+      <h1 className="font-display text-lg font-semibold">Something went wrong</h1>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted">{message}</p>
       {children && <div className="mt-6 flex justify-center gap-3">{children}</div>}
     </div>

@@ -16,9 +16,18 @@
   --color-ai: #fda4af;
   --color-neutral: #a1a1aa;
 
+  /* Motion: strong ease-out curves and short durations, so the UI answers at once and settles softly. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+
   --animate-float: float 7s ease-in-out infinite;
   --animate-shimmer: shimmer 2.4s linear infinite;
-  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-rise: rise 0.45s cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-pop: pop 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-grow: grow 0.7s cubic-bezier(0.23, 1, 0.32, 1) 0.15s both;
 
   @keyframes float {
     0%, 100% { transform: translateY(0); }
@@ -28,9 +37,20 @@
     from { background-position: -200% 0; }
     to { background-position: 200% 0; }
   }
+  /* A little blur hides the motion's first frames, so entrances read as focus, not travel. */
   @keyframes rise {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  /* Never from scale(0): nothing in the real world appears from nothing. */
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  /* Bars fill from the left with transform, which the compositor animates without layout. */
+  @keyframes grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
   }
 }
 
@@ -47,6 +67,16 @@
       radial-gradient(60rem 36rem at 50% -12rem, rgb(255 255 255 / 0.09), transparent 70%),
       radial-gradient(40rem 30rem at 100% 110%, rgb(255 255 255 / 0.04), transparent 70%);
     background-attachment: fixed;
+  }
+  /* Film grain over everything: frosted glass needs some texture to read as a material. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   ::selection {
     background: rgb(255 255 255 / 0.2);
@@ -87,6 +117,15 @@
     mask-composite: exclude;
     pointer-events: none;
   }
+  .glass::before {
+    transition: filter 200ms var(--ease-out);
+  }
+  /* Interactive glass catches more light under the pointer. */
+  @media (hover: hover) and (pointer: fine) {
+    :is(a, button).glass:hover::before {
+      filter: brightness(1.6);
+    }
+  }
   .glass-strong {
     background: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.03));
   }
@@ -106,6 +145,15 @@
   }
   .btn-primary:hover {
     @apply bg-zinc-200;
+  }
+  .btn-primary,
+  .btn-ghost {
+    transition-property: color, background-color, box-shadow, transform;
+    transition-duration: 160ms;
+  }
+  .btn-primary:active,
+  .btn-ghost:active {
+    transform: scale(0.97);
   }
   /* Use together with .glass: class="glass btn-ghost". */
   .btn-ghost {
@@ -151,6 +199,34 @@
 .beam {
   background: conic-gradient(from 180deg at 50% 0%, transparent 160deg, rgb(255 255 255 / 0.16) 180deg, transparent 200deg);
   filter: blur(6px);
+}
+
+/* Siblings enter one after another, 50ms apart: enough to read as a sequence, too short to wait on. */
+.stagger > :nth-child(2) { animation-delay: 50ms; }
+.stagger > :nth-child(3) { animation-delay: 100ms; }
+.stagger > :nth-child(4) { animation-delay: 150ms; }
+.stagger > :nth-child(5) { animation-delay: 200ms; }
+.stagger > :nth-child(6) { animation-delay: 250ms; }
+.stagger > :nth-child(n + 7) { animation-delay: 300ms; }
+
+/* Sonner toasts, dressed as the app's frosted bars. */
+[data-sonner-toaster] {
+  --normal-bg: rgb(22 22 24 / 0.82);
+  --normal-border: rgb(255 255 255 / 0.1);
+  --normal-text: var(--color-ink);
+  --border-radius: 18px;
+  font-family: var(--font-sans);
+}
+[data-sonner-toast] {
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 16px 40px -16px rgb(0 0 0 / 0.9) !important;
+}
+[data-sonner-toast] [data-button] {
+  background: #fff !important;
+  color: #000 !important;
+  border-radius: 9999px !important;
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {

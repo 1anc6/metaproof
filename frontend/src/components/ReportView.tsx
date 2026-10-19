@@ -1,5 +1,6 @@
-import { ArrowUpRight, Check, ChevronDown, Compass, Droplets, Fingerprint, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
 import { formatBytes, formatDateTime, formatType, formatWhen, shortHash } from '../lib/format'
@@ -18,7 +19,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
     : v.summary
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       {/* Verdict hero */}
       <section className="glass animate-rise relative overflow-hidden rounded-[32px] p-5 sm:p-8">
         <div
@@ -62,7 +63,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
         <section className="glass animate-rise rounded-[28px] p-5 sm:p-6">
           <p className="eyebrow">Why</p>
           <h2 className="mt-1 font-display text-lg font-semibold">Key findings</h2>
-          <ul className="mt-4 flex flex-col divide-y divide-white/5">
+          <ul className="stagger mt-4 flex flex-col divide-y divide-white/5">
             {verdict.top_reasons.map((f) => (
               <FindingRow key={f.code} finding={f} />
             ))}
@@ -109,7 +110,6 @@ const nativeShare =
   window.matchMedia('(pointer: coarse)').matches
 
 function Actions({ sha, title }: { sha: string; title: string }) {
-  const [copied, setCopied] = useState(false)
   const shareUrl = `${window.location.origin}/report/${sha}`
   const share = async () => {
     if (nativeShare) {
@@ -122,8 +122,7 @@ function Actions({ sha, title }: { sha: string; title: string }) {
     }
     try {
       await navigator.clipboard.writeText(shareUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
+      toast.success('Link copied', { description: 'Anyone with the link can open this report.' })
     } catch {
       window.prompt('Copy this link', shareUrl)
     }
@@ -131,8 +130,8 @@ function Actions({ sha, title }: { sha: string; title: string }) {
   return (
     <div className="no-print relative mt-6 flex flex-wrap gap-2 border-t border-white/5 pt-5">
       <button type="button" onClick={share} className="glass btn-ghost">
-        {copied ? <Check className="size-4" /> : nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
-        {copied ? 'Link copied' : nativeShare ? 'Share report' : 'Copy share link'}
+        {nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
+        {nativeShare ? 'Share report' : 'Copy share link'}
       </button>
       <button type="button" onClick={() => window.print()} className="glass btn-ghost">
         <Printer className="size-4" /> Save as PDF
@@ -147,7 +146,7 @@ function Actions({ sha, title }: { sha: string; title: string }) {
 function FindingRow({ finding }: { finding: Finding }) {
   const s = SIGNALS[finding.signal]
   return (
-    <li className="flex gap-3 py-3.5 first:pt-1 last:pb-1">
+    <li className="animate-rise flex gap-3 py-3.5 first:pt-1 last:pb-1">
       <SignalDot signal={finding.signal} />
       <div className="min-w-0">
         <p className="text-sm leading-relaxed text-ink">{finding.message}</p>
@@ -189,7 +188,7 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
             </div>
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
               <div
-                className="h-full rounded-full transition-[width] duration-700"
+                className="animate-grow h-full origin-left rounded-full"
                 style={{ width: `${(value / max) * 100}%`, background: color, boxShadow: `0 0 12px ${color}` }}
               />
             </div>
@@ -244,9 +243,17 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
             <span className="max-sm:hidden"> · {meta.blurb}</span>
           </p>
         </div>
-        <ChevronDown className={`no-print size-4 text-faint transition ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`no-print size-4 text-faint transition duration-300 ease-(--ease-drawer) ${open ? 'rotate-180' : ''}`} />
       </button>
-      <div className={`${open ? 'block' : 'hidden'} border-t border-white/5 px-4 pt-4 pb-5 sm:px-5 print:block`}>
+      {/* Height animates through grid rows, so the panel opens to its natural size without measuring. */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-(--ease-drawer) print:grid-rows-[1fr] ${
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        }`}
+        inert={!open}
+      >
+      <div className="min-h-0 overflow-hidden">
+      <div className={`border-t border-white/5 px-4 pt-4 pb-5 transition-opacity duration-300 sm:px-5 print:opacity-100 ${open ? 'opacity-100' : 'opacity-0'}`}>
         {!result.ok ? (
           <p className="text-sm text-ai">{result.error}</p>
         ) : result.analyzer === 'metadata' ? (
@@ -260,6 +267,8 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
         ) : (
           <pre className="overflow-x-auto font-mono text-xs text-muted">{JSON.stringify(result.raw, null, 2)}</pre>
         )}
+      </div>
+      </div>
       </div>
     </div>
   )

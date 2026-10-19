@@ -87,7 +87,7 @@ export function Welcome() {
         <Orb size={window.innerHeight < 720 ? 104 : 168} />
       </div>
 
-      <div className="animate-rise text-center">
+      <div className="stagger text-center [&>*]:animate-rise">
         <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-muted">
           <Lock className="size-3" strokeWidth={2} /> No account needed
         </span>

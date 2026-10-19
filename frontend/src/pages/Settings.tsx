@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { api, type ServiceStatus } from '../lib/api'
 import type { ReactNode } from 'react'
 import { formatWhen } from '../lib/format'
-import { clearHistory, useHistory, type HistoryEntry } from '../lib/history'
+import { useHistory, type HistoryEntry } from '../lib/history'
+import { clearWithUndo } from '../lib/undo'
 import { promptInstall, useInstallState } from '../lib/install'
 import { ServerBadge } from '../components/Shell'
 import { GithubMark, PageHeader } from '../components/ui'
@@ -25,7 +26,7 @@ export function Settings() {
         subtitle="There are no accounts: everything here applies to this browser only."
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="stagger grid gap-4 lg:grid-cols-2">
         <InstallCard />
 
         <Card icon={HardDrive} title="This device">
@@ -46,10 +47,7 @@ export function Settings() {
             <button
               type="button"
               disabled={history.length === 0}
-              onClick={() =>
-                window.confirm('Remove all analyses from this device? Reports stay available by link.') &&
-                clearHistory()
-              }
+              onClick={clearWithUndo}
               className="glass btn-ghost text-ai disabled:opacity-40"
             >
               <Trash2 className="size-4" /> Clear history

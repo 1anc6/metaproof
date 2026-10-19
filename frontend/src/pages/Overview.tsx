@@ -8,11 +8,11 @@ import { DEMO_REPORT_PATH } from '../lib/demo'
 import { Orb, Thumb, VerdictBadge } from '../components/ui'
 
 const LAYERS = [
-  { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces', live: true },
-  { icon: ShieldCheck, name: 'Content Credentials', detail: 'Signed C2PA provenance', live: true },
-  { icon: Droplets, name: 'Invisible watermark', detail: 'Marks hidden by Stable Diffusion tools', live: true },
-  { icon: Sparkles, name: 'AI detector', detail: 'CLIP features, tested on unseen generators', live: true },
-  { icon: Copy, name: 'Seen-before search', detail: 'Finds resized or recompressed copies', live: true },
+  { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
+  { icon: ShieldCheck, name: 'Content Credentials', detail: 'Signed C2PA provenance' },
+  { icon: Droplets, name: 'Invisible watermark', detail: 'Marks hidden by Stable Diffusion tools' },
+  { icon: Sparkles, name: 'AI detector', detail: 'CLIP features, tested on unseen generators' },
+  { icon: Copy, name: 'Seen-before search', detail: 'Finds resized or recompressed copies' },
 ]
 
 export function Overview() {
@@ -31,7 +31,7 @@ export function Overview() {
   const recent = history.slice(0, 5)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       {/* Hero */}
       <section className="glass animate-rise relative overflow-hidden rounded-[32px] p-6 sm:p-10">
         <div className="relative z-10 max-w-xl">
@@ -59,13 +59,15 @@ export function Overview() {
         <Orb size={220} className="absolute -right-6 bottom-[-40px] opacity-90 max-sm:hidden lg:right-14" />
       </section>
 
-      {/* Stats from this browser's analyses */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Your analyses">
+      {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing */}
+      {history.length > 0 && (
+      <section className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Your analyses">
         <Stat label="Files analyzed" value={history.length} note="on this device" />
         <Stat label="Flagged" value={n(flagged)} note="edited or AI" accent={flagged > 0 ? 'var(--color-edited)' : undefined} />
         <Stat label="Likely AI" value={n(counts.likely_ai_generated)} accent={counts.likely_ai_generated ? 'var(--color-ai)' : undefined} />
         <Stat label="Inconclusive" value={n(counts.inconclusive)} note="not enough evidence" />
       </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Recent analyses */}
@@ -111,9 +113,9 @@ export function Overview() {
         <section className="glass animate-rise rounded-[28px] p-5">
           <p className="eyebrow">Evidence layers</p>
           <h2 className="mt-1 font-display text-lg font-semibold">Five independent checks</h2>
-          <ul className="mt-5 flex flex-col gap-3">
-            {LAYERS.map(({ icon: Icon, name, detail, live }) => (
-              <li key={name} className="flex items-center gap-3">
+          <ul className="stagger mt-5 flex flex-col gap-3">
+            {LAYERS.map(({ icon: Icon, name, detail }) => (
+              <li key={name} className="animate-rise flex items-center gap-3">
                 <span className="glass grid size-10 shrink-0 place-items-center rounded-2xl">
                   <Icon className="size-4 text-ink" strokeWidth={1.75} />
                 </span>
@@ -121,13 +123,6 @@ export function Overview() {
                   <p className="text-sm font-medium">{name}</p>
                   <p className="text-xs text-faint">{detail}</p>
                 </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 font-mono text-[10px] tracking-wide uppercase ${
-                    live ? 'bg-authentic/10 text-authentic' : 'bg-white/5 text-faint'
-                  }`}
-                >
-                  {live ? 'Live' : 'Soon'}
-                </span>
               </li>
             ))}
           </ul>
@@ -158,7 +153,7 @@ function Stat({ label, value, note, accent }: { label: string; value: number | n
 
 function EmptyRecent() {
   return (
-    <div className="flex flex-col items-center px-6 pt-6 pb-10 text-center">
+    <div className="flex flex-col items-center px-6 pt-6 pb-12 text-center">
       <span className="glass grid size-14 place-items-center rounded-2xl">
         <ScanSearch className="size-6 text-muted" strokeWidth={1.5} />
       </span>
@@ -166,14 +161,6 @@ function EmptyRecent() {
       <p className="mt-1 max-w-xs text-sm text-faint">
         Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
       </p>
-      <div className="mt-5 flex flex-wrap justify-center gap-3">
-        <Link to="/new" className="btn-primary">
-          <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
-        </Link>
-        <Link to={DEMO_REPORT_PATH} className="glass btn-ghost">
-          See an example
-        </Link>
-      </div>
     </div>
   )
 }

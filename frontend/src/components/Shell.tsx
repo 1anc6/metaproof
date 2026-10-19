@@ -1,6 +1,7 @@
 import { BookOpen, History, LayoutGrid, Plus, Settings } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
+import { Toaster } from 'sonner'
 import { useHistory } from '../lib/history'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { GithubMark, Logo } from './ui'
@@ -22,14 +23,22 @@ export function Shell() {
 
   return (
     <div className="min-h-dvh lg:pl-[252px]">
+      <a
+        href="#main"
+        className="btn-primary fixed top-3 left-3 z-[60] -translate-y-20 focus-visible:translate-y-0"
+      >
+        Skip to content
+      </a>
       <Sidebar />
       <MobileTopBar />
       {/* Desktop: 12px from the sidebar and level with its top edge, like a second panel. */}
-      <main className="mx-auto w-full max-w-6xl px-4 pt-6 pb-32 sm:px-8 lg:mx-0 lg:max-w-[1680px] lg:px-3 lg:pt-3 lg:pb-12">
+      <main id="main" tabIndex={-1} className="mx-auto outline-none w-full max-w-6xl px-4 pt-6 pb-32 sm:px-8 lg:mx-0 lg:max-w-[1680px] lg:px-3 lg:pt-3 lg:pb-12">
         <Outlet />
       </main>
       <MobileTabBar />
       <Welcome />
+      {/* Bottom centre on every screen; on phones it clears the floating tab bar. */}
+      <Toaster theme="dark" position="bottom-center" offset={24} mobileOffset={{ bottom: 96 }} />
     </div>
   )
 }
@@ -44,7 +53,7 @@ function Sidebar() {
         </NavLink>
 
         <p className="eyebrow px-3 pb-2">Workspace</p>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-1" aria-label="Main">
           {NAV.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
