@@ -1,4 +1,4 @@
-import { ArrowUpRight, Copy, Droplets, Fingerprint, Plus, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Copy, Droplets, Fingerprint, Layers, Plus, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatWhen } from '../lib/format'
@@ -9,6 +9,7 @@ import { Orb, Thumb, VerdictBadge } from '../components/ui'
 
 const LAYERS = [
   { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
+  { icon: Layers, name: 'File structure', detail: 'JPEG quality, segments and colour profile' },
   { icon: ShieldCheck, name: 'Content Credentials', detail: 'Signed C2PA provenance' },
   { icon: Droplets, name: 'Invisible watermark', detail: 'Marks hidden by Stable Diffusion tools' },
   { icon: Sparkles, name: 'AI detector', detail: 'CLIP features, tested on unseen generators' },
@@ -112,7 +113,7 @@ export function Overview() {
         {/* Evidence layers */}
         <section className="glass animate-rise rounded-[28px] p-5">
           <p className="eyebrow">Evidence layers</p>
-          <h2 className="mt-1 font-display text-lg font-semibold">Five independent checks</h2>
+          <h2 className="mt-1 font-display text-lg font-semibold">Six independent checks</h2>
           <ul className="stagger mt-5 flex flex-col gap-3">
             {LAYERS.map(({ icon: Icon, name, detail }) => (
               <li key={name} className="animate-rise flex items-center gap-3">

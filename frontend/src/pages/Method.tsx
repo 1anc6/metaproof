@@ -1,4 +1,4 @@
-import { BarChart3, Copy, Droplets, Fingerprint, Scale, ShieldCheck, Sparkles } from 'lucide-react'
+import { BarChart3, Copy, Droplets, Fingerprint, Layers, Scale, ShieldCheck, Sparkles } from 'lucide-react'
 import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
 import { PageHeader } from '../components/ui'
 
@@ -8,6 +8,12 @@ const LAYERS = [
     name: 'Metadata',
     status: 'Live',
     text: 'Reads EXIF, XMP and PNG text chunks. Generator settings left by Stable Diffusion tools, the IPTC "AI-generated" source type, editor software tags and camera capture data all become findings. Camera data is weak evidence because it is easy to forge. A file that also keeps its maker data, recorded size and a matching preview has the structure of a camera original, which editors and copied EXIF tend to break; it is still only weak evidence, because a phone\'s own editor keeps it too.',
+  },
+  {
+    icon: Layers,
+    name: 'File structure',
+    status: 'Live',
+    text: 'Walks the file container: JPEG segments and PNG, WebP or HEIC chunks, the JPEG quantization tables and the quality they imply, the ICC colour profile, and any data appended after the image. Standard IJG tables mean common software last saved the file; private chunks and appended data hint at the tools involved. All of it explains the file, and none of it moves the verdict.',
   },
   {
     icon: ShieldCheck,

@@ -12,6 +12,8 @@ dependencies = [
     "alembic>=1.13",
     "python-multipart>=0.0.9",
     "pillow>=11.0",
+    # Decode-only HEIC/HEIF for Pillow (LGPL libheif + libde265; no GPL x265 encoder).
+    "pi-heif>=1.0",
     "filetype>=1.2",
     "c2pa-python>=0.38",
     "numpy>=2.0",

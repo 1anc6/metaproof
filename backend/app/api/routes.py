@@ -83,7 +83,7 @@ def create_analysis(
     session: SessionDep,
     settings: SettingsDep,
 ):
-    """Accepts JPEG, PNG, WebP or TIFF. Returns a job id to poll; the file itself is deleted
+    """Accepts JPEG, PNG, WebP, TIFF or HEIC. Returns a job id to poll; the file itself is deleted
     after analysis. Uploading a file that was already analyzed returns the existing job."""
     try:
         upload_limiter.check(client_ip(request, settings.client_ip_header))
@@ -259,6 +259,7 @@ def _job_out(job: models.AnalysisJob) -> schemas.JobOut:
     m, v = job.media, job.verdict
     return schemas.JobOut(
         job_id=job.id, status=job.status.value, error=job.error,
+        current_step=job.current_step if job.status == models.JobStatus.running else None,
         pipeline_version=job.pipeline_version, created_at=job.created_at,
         finished_at=job.finished_at,
         media=schemas.MediaOut(sha256=m.sha256, mime_type=m.mime_type, size_bytes=m.size_bytes,

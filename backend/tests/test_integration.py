@@ -22,6 +22,7 @@ if TEST_DATABASE_URL:
     from alembic.config import Config
 
     from app import models, retention, worker
+    from app.analyzers.base import AnalyzerResult
     from app.analyzers.c2pa_check import C2paAnalyzer
     from app.analyzers.metadata import MetadataAnalyzer
     from app.api import routes
@@ -121,6 +122,32 @@ def test_upload_is_queued_then_analyzed(client):
     assert thumb.headers["content-type"] == "image/webp"
 
 
+def test_running_job_reports_its_current_step(client, monkeypatch):
+    body = upload(client, unique_jpeg(3)).json()
+    seen: list[tuple[str, str | None]] = []
+
+    class Spy:
+        """Polls the API from inside the worker, the way the progress screen does."""
+        version = "test"
+
+        def __init__(self, name):
+            self.name = name
+
+        def run(self, media):
+            job = client.get(f"/api/analyses/{body['job_id']}").json()
+            seen.append((job["status"], job["current_step"]))
+            return AnalyzerResult()
+
+    monkeypatch.setattr(worker, "ANALYZERS", [Spy("metadata"), Spy("c2pa")])
+    assert client.get(f"/api/analyses/{body['job_id']}").json()["current_step"] is None  # queued
+    drain_queue()
+
+    assert seen == [("running", "metadata"), ("running", "c2pa")]
+    assert client.get(f"/api/analyses/{body['job_id']}").json()["current_step"] is None
+    with SessionLocal() as s:
+        assert s.get(models.AnalysisJob, body["job_id"]).current_step is None  # cleared, not hidden
+
+
 def test_duplicate_upload_reuses_the_existing_job(client):
     data = unique_jpeg(2)
     first = upload(client, data).json()
@@ -173,7 +200,7 @@ def test_job_fails_cleanly_when_its_file_is_gone(client):
         Path(s.get(models.AnalysisJob, body["job_id"]).temp_path).unlink()
     drain_queue()
     job = client.get(f"/api/analyses/{body['job_id']}").json()
-    assert job["status"] == "failed" and job["verdict"] is None
+    assert job["status"] == "failed" and job["verdict"] is None and job["current_step"] is None
 
 
 def test_restart_recovery_requeues_or_fails_interrupted_jobs(client):

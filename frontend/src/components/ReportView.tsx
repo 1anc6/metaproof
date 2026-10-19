@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
@@ -6,6 +6,7 @@ import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, ty
 import { formatBytes, formatDateTime, formatType, formatWhen, shortHash } from '../lib/format'
 import { leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
 import { SignalDot, Thumb, VerdictBadge } from './ui'
+import { ErrorLevel } from './ErrorLevel'
 
 export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   const verdict = job.verdict!
@@ -86,6 +87,8 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
       {verdict.label === 'inconclusive' && <NextSteps />}
 
       <SeenBefore sha={sha} />
+
+      <ErrorLevel job={job} />
 
       {/* Analyzer details */}
       <section className="flex flex-col gap-3">
@@ -216,6 +219,7 @@ function leansRealSummary(job: Job) {
 
 const ANALYZER_META: Record<string, { title: string; icon: typeof Fingerprint; blurb: string }> = {
   metadata: { title: 'Metadata', icon: Fingerprint, blurb: 'EXIF, XMP and text chunks embedded in the file' },
+  structure: { title: 'File structure', icon: Layers, blurb: 'Segments, JPEG quality and colour profile' },
   c2pa: { title: 'Content Credentials (C2PA)', icon: ShieldCheck, blurb: 'Signed provenance manifest' },
   watermark: { title: 'Invisible watermark', icon: Droplets, blurb: 'Marks hidden by Stable Diffusion tools' },
   detector: { title: 'AI-image detector', icon: Sparkles, blurb: 'CLIP features + calibrated classifier' },
@@ -258,6 +262,8 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
           <p className="text-sm text-ai">{result.error}</p>
         ) : result.analyzer === 'metadata' ? (
           <MetadataDetails raw={result.raw} />
+        ) : result.analyzer === 'structure' ? (
+          <StructureDetails raw={result.raw} />
         ) : result.analyzer === 'c2pa' ? (
           <C2paDetails raw={result.raw} />
         ) : result.analyzer === 'watermark' ? (
@@ -328,6 +334,133 @@ function MetadataDetails({ raw }: { raw: Record<string, unknown> }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </details>
+      )}
+    </div>
+  )
+}
+
+type StructureSegment = { name: string; note: string | null; offset: number; length: number; count: number; kind?: string }
+type StructureJpeg = {
+  coding?: string
+  subsampling?: string | null
+  precision?: number
+  scans?: number
+  comments?: string[]
+  quality?: { estimate: number | null; exact: boolean; fit_error?: number }
+  quant_tables?: { id: number; values: number[] }[]
+}
+type StructureIcc = {
+  description?: string | null
+  manufacturer?: string | null
+  model?: string | null
+  color_space?: string | null
+  version?: number | null
+}
+
+const STRUCTURE_UNITS: Record<string, [string, string]> = {
+  segment: ['Segment', 'segments'],
+  chunk: ['Chunk', 'chunks'],
+  box: ['Box', 'boxes'],
+}
+
+function jpegQuality(q: StructureJpeg['quality']) {
+  if (q?.estimate == null) return null
+  if (q.exact) return `${q.estimate} · standard IJG tables`
+  // A poor fit means the encoder has its own tables, so the number is only a rough guide.
+  return `about ${q.estimate} · custom tables${(q.fit_error ?? 0) > 0.25 ? ', rough estimate' : ''}`
+}
+
+function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
+  const segments = (raw.segments as StructureSegment[] | undefined) ?? []
+  const jpeg = raw.jpeg as StructureJpeg | undefined
+  const icc = raw.icc as StructureIcc | null | undefined
+  const trailing = raw.trailing_bytes as number | null | undefined
+  const [unit, units] = STRUCTURE_UNITS[raw.unit as string] ?? STRUCTURE_UNITS.segment
+  const str = (x: unknown) => (x === null || x === undefined || x === '' ? null : String(x))
+  const rows: [string, ReactNode][] = [['Format', str(raw.format)?.toUpperCase() ?? null]]
+  if (jpeg) {
+    rows.push(
+      ['Coding', str([jpeg.coding, jpeg.precision && jpeg.precision !== 8 ? `${jpeg.precision}-bit` : null].filter(Boolean).join(', '))],
+      ['Chroma subsampling', str(jpeg.subsampling)],
+      ['Estimated quality', jpegQuality(jpeg.quality)],
+      ['Scans', str(jpeg.scans)],
+    )
+  }
+  if (raw.brand) rows.push(['Brand', str(raw.brand)])
+  rows.push([
+    'Data after the image',
+    trailing == null ? null : trailing === 0 ? 'None' : `${formatBytes(trailing)}${raw.trailing_signature ? ` (${String(raw.trailing_signature)})` : ''}`,
+  ])
+  rows.push(['Colour profile', icc ? (icc.description ?? 'Embedded, unnamed') : 'None'])
+  if (icc) {
+    rows.push(
+      ['Profile maker', str([icc.manufacturer, icc.model].filter(Boolean).join(' '))],
+      ['Profile colour space', str([icc.color_space, icc.version ? `ICC v${icc.version}` : null].filter(Boolean).join(' · '))],
+    )
+  }
+  if (jpeg?.comments?.length) rows.push(['JPEG comment', jpeg.comments.join(' · ')])
+
+  return (
+    <div className="flex flex-col gap-5">
+      <p className="text-sm text-muted">
+        How the file itself was written. It can show which software last saved it, but on its own it
+        says nothing about whether the picture is real.
+      </p>
+      <Fields rows={rows} />
+      {typeof raw.parse_note === 'string' && <p className="text-xs text-faint">{raw.parse_note}</p>}
+      {segments.length > 0 && (
+        <div className="rounded-2xl border border-white/5 bg-black/20">
+          <p className="px-4 pt-3 text-xs text-muted">
+            {segments.reduce((n, s) => n + s.count, 0)} {units} in file order
+            {typeof raw.segments_truncated === 'number' && `, first ${segments.length} rows shown`}
+          </p>
+          <div className="max-h-80 overflow-auto px-4 pb-3">
+            <table className="w-full font-mono text-[11px]">
+              <thead>
+                <tr className="text-left text-faint">
+                  <th className="py-1.5 pr-4 font-normal">{unit}</th>
+                  <th className="py-1.5 pr-4 font-normal">Contents</th>
+                  <th className="py-1.5 text-right font-normal">Size</th>
+                </tr>
+              </thead>
+              <tbody>
+                {segments.map((s) => (
+                  <tr key={s.offset} className="border-t border-white/5">
+                    <td className="py-1.5 pr-4 align-top whitespace-nowrap text-ink">
+                      {s.name}
+                      {s.count > 1 && <span className="text-faint"> ×{s.count}</span>}
+                    </td>
+                    <td className="py-1.5 pr-4 align-top break-all text-muted">
+                      {s.note ?? (s.kind === 'private' ? 'Private chunk' : s.kind === 'unknown' ? 'Unknown chunk' : '')}
+                    </td>
+                    <td className="py-1.5 text-right align-top whitespace-nowrap text-muted tabular-nums">
+                      {s.length ? formatBytes(s.length) : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {jpeg?.quant_tables && jpeg.quant_tables.length > 0 && (
+        <details className="group rounded-2xl border border-white/5 bg-black/20">
+          <summary className="cursor-pointer list-none px-4 py-3 text-xs text-muted hover:text-ink">
+            {jpeg.quant_tables.length} quantization table{jpeg.quant_tables.length === 1 ? '' : 's'}
+          </summary>
+          <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2">
+            {jpeg.quant_tables.map((t) => (
+              <div key={t.id}>
+                <p className="mb-1.5 text-[11px] text-faint">Table {t.id}</p>
+                <div className="grid grid-cols-8 gap-px font-mono text-[10px] text-muted tabular-nums">
+                  {t.values.map((v, i) => (
+                    <span key={i} className="bg-white/[0.03] py-0.5 text-center">{v}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </details>
       )}

@@ -11,8 +11,9 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app import engine as evidence
 from app import models, retention
@@ -26,7 +27,7 @@ MAINTENANCE_INTERVAL_S = 24 * 3600
 
 CLAIM_SQL = text("""
     UPDATE analysis_jobs
-       SET status = 'running', started_at = now(), attempts = attempts + 1
+       SET status = 'running', started_at = now(), attempts = attempts + 1, current_step = NULL
      WHERE id = (
         SELECT id FROM analysis_jobs
          WHERE status = 'queued'
@@ -128,6 +129,7 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
     all_findings: list[Finding] = []
     embedding: tuple[str, list[float]] | None = None
     for analyzer in ANALYZERS:
+        set_step(job.id, analyzer.name)
         started = time.perf_counter()
         run = models.AnalyzerRun(
             job_id=job.id, analyzer=analyzer.name, analyzer_version=analyzer.version,
@@ -159,6 +161,7 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
         except Exception:
             log.exception("could not store embedding for job %s", job.id)
 
+    set_step(job.id, "verdict")
     decision = evidence.decide(all_findings)
     session.add(models.Verdict(
         job_id=job.id, label=decision.label, confidence=decision.confidence,
@@ -166,7 +169,22 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
         top_reasons=decision.top_reasons,
     ))
     job.status = models.JobStatus.done
+    job.current_step = None
+    flag_modified(job, "current_step")  # set_step wrote it in another session; this one saw NULL
     job.finished_at = datetime.now(UTC)
+
+
+def set_step(job_id, step: str) -> None:
+    """Publish progress for the polling client. A separate, short transaction: the job's own
+    session keeps its results uncommitted until the end, so a failure never leaves half a report."""
+    try:
+        with SessionLocal() as session:
+            session.execute(update(models.AnalysisJob)
+                            .where(models.AnalysisJob.id == job_id)
+                            .values(current_step=step))
+            session.commit()
+    except Exception:  # progress is cosmetic; never fail the analysis over it
+        log.exception("could not record step %s for job %s", step, job_id)
 
 
 UPSERT_EMBEDDING_SQL = text("""
@@ -186,6 +204,8 @@ def save_embedding(session: Session, media_id, model: str, vector: list[float]) 
 def _fail(job: models.AnalysisJob, message: str) -> None:
     job.status = models.JobStatus.failed
     job.error = message
+    job.current_step = None
+    flag_modified(job, "current_step")
     job.finished_at = datetime.now(UTC)
 
 

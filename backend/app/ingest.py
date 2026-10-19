@@ -17,6 +17,7 @@ ALLOWED_TYPES = {
     "image/png": ".png",
     "image/webp": ".webp",
     "image/tiff": ".tif",
+    "image/heic": ".heic",
 }
 THUMBNAIL_SIZE = (320, 320)
 
@@ -74,7 +75,7 @@ def _detect_type(path: Path) -> str:
     # Magic bytes, not the extension or the client's Content-Type header.
     kind = filetype.guess(str(path))
     if kind is None or kind.mime not in ALLOWED_TYPES:
-        raise UploadRejected("Unsupported file type. Upload a JPEG, PNG, WebP or TIFF image.")
+        raise UploadRejected("Unsupported file type. Upload a JPEG, PNG, WebP, TIFF or HEIC image.")
     return kind.mime
 
 

@@ -66,6 +66,7 @@ export function Analysis() {
 const STEPS = [
   { key: 'upload', label: 'File received and hashed' },
   { key: 'metadata', label: 'Reading metadata' },
+  { key: 'structure', label: 'Inspecting the file structure' },
   { key: 'c2pa', label: 'Checking Content Credentials' },
   { key: 'watermark', label: 'Looking for invisible watermarks' },
   { key: 'detector', label: 'Running the AI-image detector' },
@@ -73,13 +74,20 @@ const STEPS = [
 ]
 
 function Progress({ job, filename, preview }: { job: Job | null; filename?: string; preview?: string }) {
-  // The worker runs analyzers in order; light up the steps as time passes while it runs.
+  // The worker reports the step it is on, and runs them in this order, so earlier ones are done.
+  const running = job?.status === 'running'
+  const reported = running ? STEPS.findIndex((s) => s.key === job.current_step) : -1
+  // Servers older than current_step (or a step this build doesn't know): advance on a timer instead.
+  const guessing = running && reported < 0
   const [tick, setTick] = useState(0)
   useEffect(() => {
+    if (!guessing) return
     const t = setInterval(() => setTick((n) => n + 1), 700)
     return () => clearInterval(t)
-  }, [])
-  const active = job?.status === 'running' ? Math.min(1 + tick, STEPS.length - 1) : job ? 1 : 0
+  }, [guessing])
+  const active = reported >= 0 ? reported : guessing ? Math.min(1 + tick, STEPS.length - 1) : job ? 1 : 0
+  // Queued: the file is in, but nothing has started yet.
+  const waiting = job?.status === 'queued'
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center pt-6 text-center sm:pt-12">
@@ -98,7 +106,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
 
       <ol className="glass stagger mt-8 flex w-full flex-col gap-1 rounded-3xl p-3 text-left">
         {STEPS.map((step, i) => {
-          const state = i < active ? 'done' : i === active ? 'active' : 'todo'
+          const state = i < active ? 'done' : i === active && !waiting ? 'active' : 'todo'
           return (
             <li key={step.key} className="animate-rise flex items-center gap-3 rounded-2xl px-3 py-2.5">
               <span

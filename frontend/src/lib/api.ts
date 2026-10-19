@@ -41,9 +41,14 @@ export interface Media {
   first_seen_at: string
 }
 
+/** What a running job is doing: an analyzer, then weighing the evidence. */
+export type AnalysisStep = 'metadata' | 'c2pa' | 'watermark' | 'detector' | 'verdict'
+
 export interface Job {
   job_id: string
   status: JobStatus
+  /** Set only while running. Missing from servers older than this field. */
+  current_step?: AnalysisStep | null
   error: string | null
   pipeline_version: string
   created_at: string

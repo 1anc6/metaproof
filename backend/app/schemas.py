@@ -85,6 +85,9 @@ class ServiceStatus(BaseModel):
 class JobOut(BaseModel):
     job_id: uuid.UUID
     status: str
+    # While running: the analyzer in progress ("metadata", "c2pa", ...) or "verdict".
+    # Analyzers run in report order, so the ones before it have finished.
+    current_step: str | None = None
     error: str | None
     pipeline_version: str
     created_at: datetime

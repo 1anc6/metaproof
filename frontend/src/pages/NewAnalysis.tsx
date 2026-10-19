@@ -10,7 +10,7 @@ import { rememberPreview } from '../lib/preview'
 import { takeSharedImage } from '../lib/share'
 import { PageHeader } from '../components/ui'
 
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff']
+const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff', 'image/heic', 'image/heif']
 const MAX_MB = 25
 
 type State =
@@ -24,7 +24,7 @@ export function NewAnalysis() {
   const [params, setParams] = useSearchParams()
   const [state, setState] = useState<State>(() =>
     params.get('shared') && params.get('shared') !== '1'
-      ? { kind: 'error', message: 'Nothing MetaProof can analyze was shared. Share a JPEG, PNG, WebP or TIFF image.' }
+      ? { kind: 'error', message: 'Nothing MetaProof can analyze was shared. Share a JPEG, PNG, WebP, TIFF or HEIC image.' }
       : { kind: 'idle' },
   )
   const [dragging, setDragging] = useState(false)
@@ -33,7 +33,7 @@ export function NewAnalysis() {
     async (file: File) => {
       // Quick checks for a friendly message; the server re-checks everything.
       if (file.type && !ACCEPTED.includes(file.type)) {
-        setState({ kind: 'error', message: 'Unsupported file type. Use a JPEG, PNG, WebP or TIFF image.' })
+        setState({ kind: 'error', message: 'Unsupported file type. Use a JPEG, PNG, WebP, TIFF or HEIC image.' })
         return
       }
       if (file.size > MAX_MB * 1024 * 1024) {
