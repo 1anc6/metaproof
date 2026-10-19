@@ -43,7 +43,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
               {summary}
             </p>
-            <DetectorChip job={job} verdict={verdict} />
+            <EvidenceChips job={job} verdict={verdict} />
             {filename && <p className="mt-4 truncate text-sm text-ink">{filename}</p>}
             <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[11px] text-faint">
               <div>{formatType(job.media.mime_type)}</div>
@@ -553,9 +553,27 @@ function detectorBands(raw: Record<string, unknown>) {
   return { strong: b.strong * 100, weak: b.weak * 100, real: b.likely_real_below * 100 }
 }
 
-function detectorColor(pct: number, bands: ReturnType<typeof detectorBands>) {
-  return pct >= bands.weak ? 'var(--color-ai)' : pct < bands.real ? 'var(--color-authentic)' : 'var(--color-neutral)'
+type Band = { key: 'strong' | 'weak' | 'unsure' | 'camera'; label: string; color: string }
+
+/** The detector's score in words, cut at the same edges the evidence engine used. */
+function detectorBand(pct: number, bands: ReturnType<typeof detectorBands>): Band {
+  if (pct >= bands.strong) return { key: 'strong', label: 'Strong signs of AI', color: 'var(--color-ai)' }
+  if (pct >= bands.weak) return { key: 'weak', label: 'Some signs of AI', color: 'var(--color-ai)' }
+  if (pct < bands.real) return { key: 'camera', label: 'Looks like a camera photo', color: 'var(--color-authentic)' }
+  return { key: 'unsure', label: 'No clear signs either way', color: 'var(--color-neutral)' }
 }
+
+function detectorReading(job: Job) {
+  const raw = job.analyzers.find((a) => a.analyzer === 'detector')?.raw
+  if (!raw?.available || typeof raw.p_ai !== 'number') return null
+  const pct = Math.round(raw.p_ai * 100)
+  return { pct, band: detectorBand(pct, detectorBands(raw)) }
+}
+
+// Measured on a held-out benchmark (ml/MODEL_CARD.md): the share of each generator's images the
+// detector scores above 0.5. Quoted so a low score on a new generator is not read as "real".
+const KNOWN_GAP =
+  'The pixel detector misses most images from the newest photorealistic generators: it catches about 1 in 5 from Google\'s Nano Banana 2 and OpenAI\'s GPT Image 2. A low score does not mean a photo is real.'
 
 function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
   if (!raw.available || typeof raw.p_ai !== 'number') {
@@ -563,15 +581,15 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
   }
   const pct = Math.round(raw.p_ai * 100)
   const bands = detectorBands(raw)
-  const color = detectorColor(pct, bands)
+  const { label, color } = detectorBand(pct, bands)
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-[11px] text-faint">Probability the pixels are AI-generated</span>
-          <span className="font-display text-2xl font-semibold tabular-nums" style={{ color }}>
-            {pct}%
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="font-display text-lg font-semibold" style={{ color }}>
+            {label}
           </span>
+          <span className="font-mono text-xs text-faint tabular-nums">score {pct}%</span>
         </div>
         <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]">
           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color, boxShadow: `0 0 14px ${color}` }} />
@@ -589,30 +607,59 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
       <p className="text-xs leading-relaxed text-faint">
         A calibrated classifier on CLIP image features, tested on generators it never saw during
         training. It is one signal among several: strong provenance evidence outweighs it, and it
-        cannot detect local edits to real photos.
+        cannot detect local edits to real photos. {KNOWN_GAP}
       </p>
     </div>
   )
 }
 
-function DetectorChip({ job, verdict }: { job: Job; verdict: Verdict }) {
-  const raw = job.analyzers.find((a) => a.analyzer === 'detector')?.raw
-  if (!raw?.available || typeof raw.p_ai !== 'number') return null
-  const pct = Math.round(raw.p_ai * 100)
-  // Say so when stronger evidence settled the verdict the other way, so the number is not read
-  // as contradicting it.
-  const overruled =
-    (verdict.label === 'likely_ai_generated' && pct < 50) || (verdict.label === 'likely_authentic' && pct >= 50)
-  const color = detectorColor(pct, detectorBands(raw))
+// Where the leading finding came from, named for a reader rather than by analyzer.
+const SOURCE: Record<string, string> = {
+  c2pa: 'signed Content Credentials',
+  meta: 'file metadata',
+  watermark: 'an invisible generator watermark',
+  detector: 'the pixel detector',
+  structure: 'the file structure',
+}
+
+/** What decided the verdict, then what the pixel detector saw, in words rather than a bare number. */
+function EvidenceChips({ job, verdict }: { job: Job; verdict: Verdict }) {
+  const top = verdict.top_reasons[0]
+  const source = top && top.signal !== 'neutral' ? SOURCE[top.code.split('.')[0]] : undefined
+  const settled = decisive(verdict)
+  const reading = detectorReading(job)
+  const flagsAi = reading && (reading.band.key === 'strong' || reading.band.key === 'weak')
+  // The detector disagrees with a verdict that other evidence carried.
+  const missedAi = verdict.label === 'likely_ai_generated' && reading && !flagsAi && source !== SOURCE.detector
+  const outweighed = verdict.label === 'likely_authentic' && flagsAi
   return (
-    <span className="glass mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs">
-      <Sparkles className="size-3.5" style={{ color }} />
-      <span className="text-muted">AI detector</span>
-      <span className="font-mono font-semibold tabular-nums" style={{ color }}>
-        {pct}%
-      </span>
-      {overruled && <span className="text-faint">· outweighed by stronger evidence</span>}
-    </span>
+    <div className="mt-4 flex flex-col items-start gap-2">
+      {source && verdict.label !== 'inconclusive' && (
+        <span className="glass inline-flex items-start gap-2 rounded-2xl px-3 py-1.5 text-xs">
+          <ShieldCheck className="mt-px size-3.5 shrink-0" />
+          <span>
+            <span className="text-muted">{settled ? 'Decided by ' : 'Mainly from '}</span>
+            {source}
+          </span>
+        </span>
+      )}
+      {reading && (
+        <span className="glass inline-flex items-start gap-2 rounded-2xl px-3 py-1.5 text-xs">
+          <Sparkles className="mt-px size-3.5 shrink-0" style={{ color: reading.band.color }} />
+          <span>
+            <span className="text-muted">Pixel detector: </span>
+            <span style={{ color: reading.band.color }}>{reading.band.label}</span>
+          </span>
+        </span>
+      )}
+      {missedAi && <p className="max-w-lg text-xs leading-relaxed text-faint">{KNOWN_GAP}</p>}
+      {outweighed && (
+        <p className="max-w-lg text-xs leading-relaxed text-faint">
+          The pixel detector flags this image, but stronger evidence outweighs it. It also flags some real
+          photos, especially heavily filtered ones.
+        </p>
+      )}
+    </div>
   )
 }
 
