@@ -51,9 +51,33 @@ The same detector runs in 0.5 s per image on a laptop CPU (one thread); the free
 fractional CPU is the bottleneck. Peak API memory with the detector loaded and a 12 MP photo
 is ~350 MB, under the 512 MB limit (the fp32 model peaked at 557 MB and did not fit).
 
+### Per-analyzer time, measured locally
+
+Reproduce with [`backend/scripts/benchmark_pipeline.py`](../backend/scripts/benchmark_pipeline.py)
+(throwaway Postgres, real API with the in-process worker, 15 distinct JPEGs per size resized
+from one real photo, detector = the 8-bit ONNX model, one CPU thread; Windows laptop, not the
+Render instance). Analyzer times are the durations the worker stores in `analyzer_runs`
+(whole milliseconds), p50 / p95:
+
+| Image | Upload (POST returns) | Metadata | Structure | C2PA | Watermark | AI detector | Upload to finished report |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 MP (~300 KB) | 105 / 108 ms | 28 / 38 ms | 5 / 8 ms | 2 / 3 ms | 94 / 101 ms | 752 / 780 ms | 1.03 / 1.07 s |
+| 4 MP (~760 KB) | 118 / 253 ms | 22 / 38 ms | 6 / 7 ms | 3 / 4 ms | 367 / 383 ms | 774 / 839 ms | 1.34 / 1.48 s |
+| 12 MP (~1.6 MB) | 165 / 172 ms | 29 / 36 ms | 7 / 8 ms | 6 / 7 ms | 685 / 745 ms | 875 / 952 ms | 1.82 / 1.94 s |
+
+The first upload after startup also loads the model: 1.35 s for the detector (against
+0.75 s warm) and 94 ms for the C2PA library's first call. The detector time barely depends on
+image size because every image is shrunk to 256 px before inference; decoding and resizing add
+the small difference. The watermark analyzer scales with pixel count since it works on the full
+image. The structure analyzer (file-structure checks) was measured from the structure-analyzer
+code that was then uncommitted in a sibling worktree; it is now in `main`. The local detector time is
+higher than the 0.5 s quoted above because here it competes with the polling client and the
+database in one process. The source photo is 0.78 MP, so every size is upsampled
+and the images are timing inputs only, not detection inputs.
+
 ## Tests
 
-52 tests: 41 unit tests plus 11 integration tests that run in CI against a Postgres + pgvector
+100 tests: 77 unit tests plus 23 integration tests that run in CI against a Postgres + pgvector
 service container. They cover the upload → queue → worker → report flow, deduplication, rate
 limits, restart recovery, near-duplicate search and **12 jobs processed by 6 concurrent
 workers with no job claimed twice** (`FOR UPDATE SKIP LOCKED`).

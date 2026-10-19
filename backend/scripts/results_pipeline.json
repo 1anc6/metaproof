@@ -1,0 +1,115 @@
+{
+  "runs": 15,
+  "source_mp": 0.78,
+  "sizes": {
+    "1 MP": {
+      "file_kb": 297,
+      "upload_ms": {
+        "p50": 105.3,
+        "p95": 107.8
+      },
+      "report_ms": {
+        "p50": 1031.6,
+        "p95": 1070.7
+      },
+      "analyzer_ms": {
+        "metadata": {
+          "p50": 28,
+          "p95": 38
+        },
+        "structure": {
+          "p50": 5,
+          "p95": 8
+        },
+        "c2pa": {
+          "p50": 2,
+          "p95": 3
+        },
+        "watermark": {
+          "p50": 94,
+          "p95": 101
+        },
+        "detector": {
+          "p50": 752,
+          "p95": 780
+        }
+      }
+    },
+    "4 MP": {
+      "file_kb": 760,
+      "upload_ms": {
+        "p50": 117.8,
+        "p95": 253.3
+      },
+      "report_ms": {
+        "p50": 1340.8,
+        "p95": 1476.8
+      },
+      "analyzer_ms": {
+        "metadata": {
+          "p50": 22,
+          "p95": 38
+        },
+        "structure": {
+          "p50": 6,
+          "p95": 7
+        },
+        "c2pa": {
+          "p50": 3,
+          "p95": 4
+        },
+        "watermark": {
+          "p50": 367,
+          "p95": 383
+        },
+        "detector": {
+          "p50": 774,
+          "p95": 839
+        }
+      }
+    },
+    "12 MP": {
+      "file_kb": 1587,
+      "upload_ms": {
+        "p50": 164.5,
+        "p95": 172.2
+      },
+      "report_ms": {
+        "p50": 1815.4,
+        "p95": 1939.6
+      },
+      "analyzer_ms": {
+        "metadata": {
+          "p50": 29,
+          "p95": 36
+        },
+        "structure": {
+          "p50": 7,
+          "p95": 8
+        },
+        "c2pa": {
+          "p50": 6,
+          "p95": 7
+        },
+        "watermark": {
+          "p50": 685,
+          "p95": 745
+        },
+        "detector": {
+          "p50": 875,
+          "p95": 952
+        }
+      }
+    }
+  },
+  "first_upload": {
+    "report_ms": 1824.3,
+    "analyzers": {
+      "metadata": 27,
+      "structure": 4,
+      "c2pa": 94,
+      "watermark": 107,
+      "detector": 1351
+    }
+  }
+}

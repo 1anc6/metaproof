@@ -33,7 +33,7 @@ Thumbs.db
 *.pdf
 
 # Personal sample images for experiments (phone photos may carry GPS)
-Images/
+/Images/
 
 # Local tool settings
 .claude/
