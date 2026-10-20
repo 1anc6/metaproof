@@ -236,12 +236,10 @@ export function PageHeader({
   action?: ReactNode
 }) {
   return (
-    <header className="animate-rise mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <header className="animate-rise mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className="mb-3 text-sm text-faint">
-          MetaProof <span aria-hidden>›</span> {eyebrow}
-        </p>
-        <h1 className="text-[40px] leading-[1.02] font-medium tracking-[-0.035em] sm:text-[56px]">
+        <p className="eyebrow">{eyebrow}</p>
+        <h1 className="mt-3 text-[36px] leading-[1.04] font-medium tracking-[-0.035em] sm:mt-4 sm:text-[56px] sm:leading-[1.02]">
           {title}
           {dim && (
             <>
@@ -250,9 +248,10 @@ export function PageHeader({
             </>
           )}
         </h1>
-        {subtitle && <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-muted">{subtitle}</p>}
+        {subtitle && <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted sm:mt-4 sm:text-[17px]">{subtitle}</p>}
       </div>
-      {action && <div className="no-print shrink-0">{action}</div>}
+      {/* On phones the tab bar's centre button covers the action, so it would only repeat it. */}
+      {action && <div className="no-print shrink-0 max-sm:hidden">{action}</div>}
     </header>
   )
 }
@@ -270,11 +269,21 @@ export function PanelTitle({ eyebrow, title, action }: { eyebrow: string; title:
   )
 }
 
-export function ErrorPanel({ message, children }: { message: string; children?: ReactNode }) {
+export function ErrorPanel({
+  message,
+  title = 'Something went wrong',
+  label = 'Error',
+  children,
+}: {
+  message: string
+  title?: string
+  label?: string
+  children?: ReactNode
+}) {
   return (
-    <div className="mesh mesh-graphite rounded-xl p-10 text-center">
-      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">Error</p>
-      <h1 className="mt-2 text-3xl font-medium tracking-[-0.02em]">Something went wrong</h1>
+    <div className="mesh mesh-graphite rounded-xl p-8 text-center sm:p-10">
+      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">{label}</p>
+      <h1 className="mt-2 text-3xl font-medium tracking-[-0.02em]">{title}</h1>
       <p className="mx-auto mt-3 max-w-md text-[15px] text-white/85">{message}</p>
       {children && <div className="mt-7 flex justify-center gap-3">{children}</div>}
     </div>

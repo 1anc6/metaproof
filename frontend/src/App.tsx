@@ -23,7 +23,7 @@ export default function App() {
         <Route
           path="*"
           element={
-            <ErrorPanel message="This page does not exist.">
+            <ErrorPanel label="404" title="Page not found" message="There is nothing at this address.">
               <Link to="/" className="btn-primary">Go to overview</Link>
             </ErrorPanel>
           }

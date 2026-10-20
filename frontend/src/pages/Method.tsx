@@ -60,15 +60,17 @@ export function Method() {
       <section className="flex flex-col gap-3">
         {LAYERS.map(({ icon: Icon, name, status, text }) => (
           <article key={name} className="panel animate-rise flex gap-4 rounded-xl p-5">
-            <span className="panel grid size-11 shrink-0 place-items-center rounded-lg">
+            {/* On phones the icon sits beside the title, so the text gets the card's full width. */}
+            <span className="well size-11 max-sm:hidden">
               <Icon className="size-5" strokeWidth={1.5} />
             </span>
-            <div>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-semibold tracking-[-0.02em]">{name}</h2>
+                <Icon className="size-[18px] text-muted sm:hidden" strokeWidth={1.75} />
+                <h2 className="text-[17px] font-semibold tracking-[-0.02em]">{name}</h2>
                 <span
-                  className={`rounded px-1.5 py-0.5 font-mono text-[11px] tracking-wide uppercase ${
-                    status === 'Live' ? 'bg-authentic/10 text-authentic' : 'bg-raised text-faint'
+                  className={`tag ${
+                    status === 'Live' ? 'bg-authentic/10 text-authentic' : ''
                   }`}
                 >
                   {status}
