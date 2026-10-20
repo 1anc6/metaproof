@@ -1,6 +1,6 @@
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatBytes, formatWhen } from '../lib/format'
 import { useHistory } from '../lib/history'
@@ -10,10 +10,11 @@ import { useSummaries } from '../lib/hooks'
 import { VERDICTS } from '../lib/verdicts'
 import { PageHeader, Thumb, VerdictBadge } from '../components/ui'
 
-type Filter = 'all' | VerdictLabel
+type Filter = 'all' | 'flagged' | VerdictLabel
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'All' },
+  { key: 'flagged', label: 'Flagged' },
   { key: 'likely_ai_generated', label: VERDICTS.likely_ai_generated.short },
   { key: 'edited', label: VERDICTS.edited.short },
   { key: 'likely_authentic', label: VERDICTS.likely_authentic.short },
@@ -25,13 +26,18 @@ export function History() {
   const prefs = usePrefs()
   const { data, error } = useSummaries(history)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
+  // ?filter= lets the overview's counts open this list already filtered.
+  const [params, setParams] = useSearchParams()
+  const filter: Filter = FILTERS.some((f) => f.key === params.get('filter')) ? (params.get('filter') as Filter) : 'all'
+  const setFilter = (next: Filter) => setParams(next === 'all' ? {} : { filter: next }, { replace: true })
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
     return history.filter((e) => {
       if (q && !e.filename.toLowerCase().includes(q)) return false
-      if (filter !== 'all' && data[e.jobId]?.label !== filter) return false
+      const label = data[e.jobId]?.label
+      if (filter === 'flagged' ? label !== 'edited' && label !== 'likely_ai_generated' : filter !== 'all' && label !== filter)
+        return false
       return true
     })
   }, [history, data, query, filter])

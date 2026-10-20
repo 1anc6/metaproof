@@ -134,13 +134,15 @@ const SERVER_LABEL: Record<ServerState, { text: string; dot: string }> = {
   offline: { text: 'API offline', dot: 'bg-ai' },
 }
 
-export function ServerBadge() {
+/** `compact` shows only the dot while the API is up, and words once something needs saying. */
+export function ServerBadge({ compact = false }: { compact?: boolean }) {
   const state = useServerStatus()
   const s = SERVER_LABEL[state]
+  const quiet = compact && state === 'online'
   return (
-    <span className="flex items-center gap-2 text-[13px] font-medium text-faint">
+    <span className="flex items-center gap-2 text-[13px] font-medium text-faint" title={s.text}>
       <span className={`size-2 rounded-full ${s.dot}`} />
-      {s.text}
+      <span className={quiet ? 'sr-only' : ''}>{s.text}</span>
     </span>
   )
 }
@@ -153,7 +155,7 @@ function MobileTopBar({ theme }: { theme: 'light' | 'dark' }) {
           <Logo />
         </NavLink>
         <div className="flex items-center gap-3">
-          <ServerBadge />
+          <ServerBadge compact />
           <ThemeToggle resolved={theme} />
         </div>
       </div>
