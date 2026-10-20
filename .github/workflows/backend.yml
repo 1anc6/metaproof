@@ -1,6 +1,6 @@
 name: Backend
 
-# Render deploys main by itself once these checks pass (Auto-Deploy: After CI Checks Pass).
+# Render deploys main by itself on every push (Auto-Deploy: On Commit), alongside these checks.
 
 on:
   push:
