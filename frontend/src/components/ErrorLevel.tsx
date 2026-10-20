@@ -1,4 +1,5 @@
-import { FileSearch, LoaderCircle, ScanEye } from 'lucide-react'
+import { FileSearch, ScanEye } from 'lucide-react'
+import { ThinkingPill } from './ThinkingOrb'
 import { useRef, useState } from 'react'
 import type { Job } from '../lib/api'
 import { previewFor } from '../lib/preview'
@@ -50,12 +51,12 @@ export function ErrorLevel({ job }: { job: Job }) {
   }
 
   return (
-    <section className="glass animate-rise no-print rounded-[28px] p-5 sm:p-6">
+    <section className="panel animate-rise no-print rounded-xl p-5 sm:p-6">
       <div className="flex items-start gap-3">
         <ScanEye className="mt-0.5 size-5 shrink-0" strokeWidth={1.5} />
         <div>
-          <h2 className="font-display text-lg font-semibold">Error level view</h2>
-          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-faint">
+          <h2 className="text-[17px] font-semibold tracking-[-0.02em]">Error level view</h2>
+          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-faint">
             Re-saves the image as JPEG and shows where it changed most. Edges and fine texture are
             always bright; look for one area that glows differently from similar surroundings.
             It is a way to look closer, not an AI detector, and it does not affect the verdict.
@@ -67,20 +68,20 @@ export function ErrorLevel({ job }: { job: Job }) {
       {state.kind === 'ready' ? (
         <div className="mt-5">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="glass inline-flex rounded-full p-1" role="group" aria-label="Image shown">
+            <div className="panel inline-flex rounded-md p-0.5" role="group" aria-label="Image shown">
               {(['ela', 'original'] as const).map((v) => (
                 <button
                   key={v}
                   type="button"
                   aria-pressed={view === v}
                   onClick={() => setView(v)}
-                  className={`rounded-full px-3.5 py-1.5 text-xs transition ${view === v ? 'bg-white text-black' : 'text-muted hover:text-ink'}`}
+                  className={`rounded px-3 py-1.5 text-[13px] transition ${view === v ? 'selected font-medium' : 'text-muted hover:text-ink'}`}
                 >
                   {v === 'ela' ? 'Error levels' : 'Original'}
                 </button>
               ))}
             </div>
-            <label className="flex items-center gap-2 text-xs text-muted">
+            <label className="flex items-center gap-2 text-[13px] text-muted">
               Amplify
               <input
                 type="range"
@@ -89,7 +90,7 @@ export function ErrorLevel({ job }: { job: Job }) {
                 step={5}
                 value={amplify}
                 onChange={(e) => setAmplify(Number(e.target.value))}
-                className="w-28 accent-white"
+                className="w-28 accent-signal"
               />
               <span className="w-8 font-mono tabular-nums text-faint">{amplify}×</span>
             </label>
@@ -100,28 +101,26 @@ export function ErrorLevel({ job }: { job: Job }) {
             width={job.media.width}
             height={job.media.height}
             style={view === 'ela' ? { filter: `brightness(${amplify})` } : undefined}
-            className="mt-4 h-auto max-h-[70vh] w-full rounded-2xl bg-black object-contain ring-1 ring-white/10"
+            className="mt-4 h-auto max-h-[70vh] w-full rounded-lg bg-black object-contain ring-1 ring-line"
           />
           {state.scaled && (
-            <p className="mt-2 text-[11px] text-faint">Scaled down to {MAX_SIDE} px on the long side for the browser.</p>
+            <p className="mt-2 text-[12px] text-faint">Scaled down to {MAX_SIDE} px on the long side for the browser.</p>
           )}
         </div>
       ) : (
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {state.kind === 'working' ? (
-            <span className="flex items-center gap-2 text-sm text-muted">
-              <LoaderCircle className="size-4 animate-spin" /> Computing error levels…
-            </span>
+            <ThinkingPill label="Computing error levels…" />
           ) : preview ? (
-            <button type="button" onClick={takePreview} className="glass btn-ghost">
+            <button type="button" onClick={takePreview} className="btn-ghost">
               <ScanEye className="size-4" /> Show error levels
             </button>
           ) : (
             <>
-              <button type="button" onClick={() => input.current?.click()} className="glass btn-ghost">
+              <button type="button" onClick={() => input.current?.click()} className="btn-ghost">
                 <FileSearch className="size-4" /> Choose the file on this device
               </button>
-              <span className="text-xs text-faint">It stays on your device; nothing is uploaded.</span>
+              <span className="text-[13px] text-faint">It stays on your device; nothing is uploaded.</span>
             </>
           )}
           <input

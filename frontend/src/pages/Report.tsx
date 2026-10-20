@@ -37,15 +37,15 @@ export function Report() {
 export function ReportSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy>
-      <div className="glass flex flex-col gap-6 rounded-[32px] p-6 sm:flex-row sm:p-8">
-        <div className="skeleton aspect-square w-full max-w-[200px] rounded-3xl" />
+      <div className="panel flex flex-col gap-6 rounded-xl p-6 sm:flex-row sm:p-8">
+        <div className="skeleton aspect-square w-full max-w-[200px] rounded-xl" />
         <div className="flex flex-1 flex-col gap-3 pt-2">
           <div className="skeleton h-3 w-20" />
           <div className="skeleton h-10 w-2/3" />
           <div className="skeleton h-4 w-full max-w-md" />
         </div>
       </div>
-      <div className="glass h-56 rounded-[28px]" />
+      <div className="panel h-56 rounded-xl" />
     </div>
   )
 }

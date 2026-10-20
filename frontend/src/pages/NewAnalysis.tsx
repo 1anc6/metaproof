@@ -1,4 +1,5 @@
-import { CloudUpload, Lock, LoaderCircle, MoonStar, WifiOff } from 'lucide-react'
+import { CloudUpload, Lock, MoonStar, WifiOff } from 'lucide-react'
+import { ThinkingOrb } from '../components/ThinkingOrb'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
@@ -120,35 +121,53 @@ export function NewAnalysis() {
           const file = e.dataTransfer.files[0]
           if (file && !busy) start(file)
         }}
-        className={`glass animate-rise group relative flex min-h-[340px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[32px] p-8 text-center transition sm:min-h-[400px] ${
-          dragging ? 'glass-strong scale-[1.01]' : ''
+        className={`panel animate-rise group relative flex min-h-[380px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl p-8 text-center transition sm:min-h-[440px] ${
+          dragging ? 'panel-raised scale-[1.01]' : ''
         }`}
       >
-        {/* dashed inner frame */}
-        <div className="pointer-events-none absolute inset-3 rounded-[24px] border border-dashed border-white/10 transition group-hover:border-white/20" />
-        {/* soft light that follows the drop state */}
-        <div
-          className={`pointer-events-none absolute top-1/2 left-1/2 size-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.06] blur-3xl transition-opacity ${
-            dragging || busy ? 'opacity-100' : 'opacity-40'
+        {/* measuring grid and viewfinder corners; both turn lime while a file is held over */}
+        {/* dotted orbit rings around the drop target; they spin up while a file is held over */}
+        <svg
+          viewBox="0 0 400 400"
+          className={`pointer-events-none absolute top-1/2 left-1/2 size-[560px] -translate-x-1/2 -translate-y-1/2 text-ink transition-opacity ${
+            dragging ? 'opacity-60' : 'opacity-25'
           }`}
-        />
+          fill="none"
+          stroke="currentColor"
+          aria-hidden
+        >
+          <circle cx="200" cy="200" r="190" strokeDasharray="1 8" strokeLinecap="round" />
+          <circle cx="200" cy="200" r="140" strokeDasharray="1 7" strokeLinecap="round" />
+          <g className={`origin-center [transform-box:fill-box] ${dragging ? 'animate-orbit' : ''}`}>
+            <circle cx="200" cy="200" r="140" strokeWidth="1.5" strokeDasharray="160 720" strokeLinecap="round" />
+          </g>
+          <circle cx="200" cy="200" r="92" strokeDasharray="1 6" strokeLinecap="round" />
+        </svg>
 
         {busy ? (
           <Uploading file={state.file} progress={state.progress} preview={state.preview} />
         ) : (
           <div className="relative flex flex-col items-center">
-            <span className="glass glass-strong grid size-16 place-items-center rounded-full shadow-[0_0_40px_rgba(255,255,255,0.12)] transition group-hover:scale-105">
-              <CloudUpload className="size-6" strokeWidth={1.5} />
+            <span
+              className={`grid size-20 place-items-center rounded-full transition duration-300 ${
+                dragging
+                  ? 'scale-110 bg-signal text-signal-ink shadow-[0_16px_36px_-12px_rgb(170_190_20/0.8)]'
+                  : 'selected text-ink group-hover:scale-105'
+              }`}
+            >
+              <CloudUpload className="size-7" strokeWidth={1.5} />
             </span>
-            <p className="mt-6 font-display text-xl font-semibold">
+            <p className="mt-7 text-[26px] font-medium tracking-[-0.03em]">
               {dragging ? 'Release to analyze' : 'Drop an image to analyze'}
             </p>
-            <p className="mt-2 text-sm text-muted">
-              or <span className="text-ink underline decoration-white/30 underline-offset-4">browse your device</span>
+            <p className="mt-2 text-[15px] text-muted">
+              or <span className="text-ink underline decoration-faint underline-offset-4">browse your device</span>
               <span className="max-sm:hidden"> · or paste with Ctrl+V</span>
             </p>
-            <p className="mt-6 font-mono text-[11px] tracking-widest text-faint uppercase">
-              JPEG · PNG · WebP · TIFF · max {MAX_MB} MB
+            <p className="mt-6 flex flex-wrap justify-center gap-1.5">
+              {['JPEG', 'PNG', 'WebP', 'TIFF', 'HEIC', `≤ ${MAX_MB} MB`].map((t) => (
+                <span key={t} className="tag">{t}</span>
+              ))}
             </p>
           </div>
         )}
@@ -167,19 +186,33 @@ export function NewAnalysis() {
       </div>
 
       {state.kind === 'error' && (
-        <p role="alert" className="animate-rise mt-4 rounded-2xl border border-ai/20 bg-ai/5 px-4 py-3 text-sm text-ai">
+        <p role="alert" className="animate-rise mt-4 rounded-lg bg-ai/10 px-5 py-3 text-[15px] font-medium text-ai">
           {state.message}
         </p>
       )}
 
-      <p className="mt-5 flex items-start gap-2 text-xs leading-relaxed text-faint">
+      <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+        {[
+          ['Hash and read', 'A SHA-256 fingerprint, then metadata and file structure.'],
+          ['Six checks', 'Credentials, watermark, AI detector and seen-before search.'],
+          ['Delete the file', 'Only the hash, a thumbnail and the findings remain.'],
+        ].map(([title, text], i) => (
+          <li key={title} className={`mesh ${['mesh-rust', 'mesh-sage', 'mesh-coral'][i]} rounded-xl p-5`}>
+            <p className="font-dot text-[28px] leading-none font-bold">{String(i + 1).padStart(2, '0')}</p>
+            <p className="mt-4 text-[17px] font-medium">{title}</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-white/85">{text}</p>
+          </li>
+        ))}
+      </ol>
+
+      <p className="mt-6 flex items-start gap-2 text-[13px] leading-relaxed text-faint">
         <Lock className="mt-0.5 size-3.5 shrink-0" />
         Your file is deleted as soon as it is analyzed. MetaProof keeps only its SHA-256 hash, a small
         thumbnail and the findings, so the report can be shared by link. GPS coordinates are never stored.
       </p>
-      <p className="mt-3 text-xs text-faint">
+      <p className="mt-3 text-[13px] text-faint">
         No image at hand?{' '}
-        <Link to={DEMO_REPORT_PATH} className="text-ink underline decoration-white/30 underline-offset-4">
+        <Link to={DEMO_REPORT_PATH} className="text-ink underline decoration-faint underline-offset-4">
           See an example report
         </Link>
         .
@@ -194,20 +227,20 @@ function Uploading({ file, progress, preview }: { file: File; progress: number; 
     <div className="relative flex w-full max-w-sm flex-col items-center">
       {preview ? (
         <div className="relative">
-          <img src={preview} alt="" className="max-h-40 max-w-56 rounded-2xl object-contain ring-1 ring-white/10" />
-          <div className="absolute inset-0 grid place-items-center rounded-2xl bg-black/40">
-            <LoaderCircle className="size-8 animate-spin text-white" strokeWidth={1.5} />
+          <img src={preview} alt="" className="max-h-44 max-w-60 rounded-lg object-contain shadow-[0_20px_40px_-20px_rgb(60_40_30/0.5)]" />
+          <div className="absolute inset-0 grid place-items-center rounded-lg bg-black/30">
+            <ThinkingOrb size={44} variant="lines" className="text-white" />
           </div>
         </div>
       ) : (
-        <LoaderCircle className="size-8 animate-spin text-muted" strokeWidth={1.5} />
+        <ThinkingOrb size={44} variant="lines" className="text-ink" />
       )}
       <p className="mt-5 max-w-full truncate font-medium">{file.name}</p>
       <p className="mt-1 text-xs text-faint">
         {done ? 'Uploaded, starting analysis…' : `Uploading ${formatBytes(file.size)}…`}
       </p>
       <div
-        className="mt-5 h-1 w-full overflow-hidden rounded-full bg-white/10"
+        className="mt-5 h-[3px] w-full overflow-hidden rounded-full bg-line-strong"
         role="progressbar"
         aria-label="Upload progress"
         aria-valuemin={0}
@@ -215,7 +248,7 @@ function Uploading({ file, progress, preview }: { file: File; progress: number; 
         aria-valuenow={Math.round(progress * 100)}
       >
         <div
-          className="h-full rounded-full bg-white transition-[width] duration-300"
+          className="h-full rounded-full bg-signal-deep transition-[width] duration-300"
           style={{ width: `${Math.max(4, progress * 100)}%` }}
         />
       </div>
@@ -231,8 +264,8 @@ function ServerNotice({ state }: { state: ReturnType<typeof useServerStatus> }) 
   return (
     <div
       role="status"
-      className={`animate-rise mb-4 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${
-        waking ? 'border-edited/20 bg-edited/5 text-edited' : 'border-ai/20 bg-ai/5 text-ai'
+      className={`animate-rise mb-4 flex items-start gap-3 rounded-lg px-5 py-3 text-[15px] font-medium ${
+        waking ? 'bg-edited/10 text-edited' : 'bg-ai/10 text-ai'
       }`}
     >
       <Icon className="mt-0.5 size-4 shrink-0" />

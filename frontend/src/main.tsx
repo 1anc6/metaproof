@@ -1,5 +1,6 @@
 import '@fontsource-variable/inter'
-import '@fontsource-variable/sora'
+import '@fontsource-variable/urbanist'
+import '@fontsource-variable/doto'
 import '@fontsource-variable/jetbrains-mono'
 import './index.css'
 
