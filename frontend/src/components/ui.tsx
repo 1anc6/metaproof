@@ -10,7 +10,7 @@ export function Mark({ className = 'size-6' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
       <path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="12" r="3.2" fill="var(--color-signal-deep)" />
+      <circle cx="12" cy="12" r="3.2" fill="var(--color-accent)" />
     </svg>
   )
 }
@@ -53,7 +53,7 @@ export function EvidenceMap({
   src,
   title = 'Evidence map',
   to,
-  mesh = 'mesh-rust',
+  mesh = 'mesh-gold',
   score = 0.62,
 }: {
   className?: string
@@ -136,7 +136,7 @@ export function Meter({
   ticks?: number[]
 }) {
   const pct = Math.max(0, Math.min(1, value)) * 100
-  const fill = color ?? (onDark ? '#f1d54a' : 'var(--color-signal-deep)')
+  const fill = color ?? (onDark ? '#efd9a6' : 'var(--color-accent)')
   return (
     <div className={className}>
       <div className="relative h-5">
@@ -159,7 +159,7 @@ export function Meter({
           style={{ left: `${pct}%` }}
           aria-hidden
         >
-          <path d="M10 2 L18 16 H2 Z" fill="white" stroke={onDark ? '#9a5040' : 'var(--color-ink)'} strokeWidth="1.5" strokeLinejoin="round" />
+          <path d="M10 2 L18 16 H2 Z" fill="white" stroke={onDark ? '#6f5232' : 'var(--color-ink)'} strokeWidth="1.5" strokeLinejoin="round" />
         </svg>
       </div>
       <div
@@ -272,7 +272,7 @@ export function PanelTitle({ eyebrow, title, action }: { eyebrow: string; title:
 
 export function ErrorPanel({ message, children }: { message: string; children?: ReactNode }) {
   return (
-    <div className="mesh mesh-mauve rounded-xl p-10 text-center">
+    <div className="mesh mesh-graphite rounded-xl p-10 text-center">
       <p className="font-dot text-[15px] font-bold text-white/80">Error</p>
       <h1 className="mt-2 text-3xl font-medium tracking-[-0.02em]">Something went wrong</h1>
       <p className="mx-auto mt-3 max-w-md text-[15px] text-white/85">{message}</p>
@@ -289,7 +289,7 @@ export function GithubMark({ className = '' }: { className?: string }) {
   )
 }
 
-/** Pill switch: a soft track with a white knob that slides right and turns the track lime. */
+/** Pill switch: a soft track with a white knob that slides right and turns the track gold. */
 export function Toggle({
   checked,
   onChange,
@@ -308,7 +308,7 @@ export function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-signal' : 'bg-line-strong'} ${className}`}
+      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-line-strong'} ${className}`}
     >
       <span
         className={`absolute top-[3px] left-[3px] size-[22px] rounded-full bg-white shadow-[0_2px_6px_rgb(60_40_30/0.3)] transition-transform duration-300 ease-[var(--ease-out)] ${

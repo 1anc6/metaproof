@@ -151,7 +151,7 @@ export function NewAnalysis() {
             <span
               className={`grid size-20 place-items-center rounded-full transition duration-300 ${
                 dragging
-                  ? 'scale-110 bg-signal text-signal-ink shadow-[0_16px_36px_-12px_rgb(170_190_20/0.8)]'
+                  ? 'scale-110 bg-primary text-on-primary shadow-[0_16px_36px_-14px_rgb(0_0_0/0.55)]'
                   : 'selected text-ink group-hover:scale-105'
               }`}
             >
@@ -197,10 +197,10 @@ export function NewAnalysis() {
           ['Six checks', 'Credentials, watermark, AI detector and seen-before search.'],
           ['Delete the file', 'Only the hash, a thumbnail and the findings remain.'],
         ].map(([title, text], i) => (
-          <li key={title} className={`mesh ${['mesh-rust', 'mesh-sage', 'mesh-coral'][i]} rounded-xl p-5`}>
-            <p className="font-dot text-[28px] leading-none font-bold">{String(i + 1).padStart(2, '0')}</p>
+          <li key={title} className="panel rounded-xl p-5">
+            <p className="font-dot text-[28px] leading-none font-bold text-accent">{String(i + 1).padStart(2, '0')}</p>
             <p className="mt-4 text-[17px] font-medium">{title}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-white/85">{text}</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-faint">{text}</p>
           </li>
         ))}
       </ol>
@@ -248,7 +248,7 @@ function Uploading({ file, progress, preview }: { file: File; progress: number; 
         aria-valuenow={Math.round(progress * 100)}
       >
         <div
-          className="h-full rounded-full bg-signal-deep transition-[width] duration-300"
+          className="h-full rounded-full bg-accent transition-[width] duration-300"
           style={{ width: `${Math.max(4, progress * 100)}%` }}
         />
       </div>

@@ -1,7 +1,7 @@
 # MetaProof web
 
 React + TypeScript + Vite + Tailwind CSS v4. "Soft studio" interface in light and dark (frosted
-glass panels over drifting colour glows, gradient cards, a lime accent; tokens in `src/index.css`),
+glass panels over drifting colour glows, gradient cards; ink, champagne gold and warm greys; tokens in `src/index.css`),
 responsive from
 phone to desktop.
 

@@ -6,8 +6,9 @@
   --font-dot: 'Doto Variable', ui-monospace, monospace; /* dot-matrix numerals and labels */
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
-  /* Soft studio light: a pale warm canvas with a blush glow, frosted white panels, and rich
-     gradient cards carrying the important numbers. One lime-yellow action colour. */
+  /* Three roles and nothing else. Primary: ink, for the one main action on a screen.
+     Secondary: champagne gold, for highlights and the hero card. Neutral: warm greys for
+     everything else. Verdict colours carry meaning and appear only on verdicts. */
   --color-canvas: #e9e7e4;
   --color-raised: rgb(31 28 26 / 0.045); /* wells, tracks */
   --color-hover: rgb(255 255 255 / 0.55); /* list rows and nav items under the pointer */
@@ -16,13 +17,14 @@
   --color-ink: #1f1c1a;
   --color-muted: #4f4a47;
   --color-faint: #6b6460; /* 4.6:1 on the canvas, above WCAG AA */
-  --color-signal: #dcef45;
-  --color-signal-deep: #c9df2a;
-  --color-signal-ink: #222605; /* text and icons on signal */
+  --color-primary: #1c1a18;
+  --color-on-primary: #fbfaf8; /* text and icons on primary */
+  --color-accent: #b98a3c; /* champagne gold: decoration, not text */
+  --color-accent-soft: rgb(185 138 60 / 0.16);
 
   /* Verdict colours, dark enough to read as text on the light canvas. */
   --color-authentic: #2e7a6b;
-  --color-edited: #a8630c;
+  --color-edited: #b4561f; /* copper, kept apart from the gold accent */
   --color-ai: #be2f6a;
   --color-neutral: #6b6460;
 
@@ -106,9 +108,13 @@
   --color-muted: #c9c3bf;
   --color-faint: #9b9490; /* 6.6:1 on the canvas */
   --color-authentic: #6fd6bf;
-  --color-edited: #f2b65c;
+  --color-edited: #f0965a;
   --color-ai: #ff80b0;
   --color-neutral: #aaa39f;
+  --color-primary: #f3f1ef;
+  --color-on-primary: #141210;
+  --color-accent: #d8b062;
+  --color-accent-soft: rgb(216 176 98 / 0.16);
 
   --panel-bg: linear-gradient(160deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.025));
   --panel-hover: linear-gradient(160deg, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.05));
@@ -168,7 +174,7 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   ::selection {
-    background: rgb(220 239 69 / 0.55);
+    background: var(--color-accent-soft);
   }
   :focus-visible {
     outline: 2px solid var(--color-ink);
@@ -219,43 +225,44 @@
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  /* Maroon through ochre to pale straw: the "Top products" card. */
-  .mesh-rust {
+  /* Champagne through bronze: the one brand card, for the hero. */
+  .mesh-gold {
     background:
-      radial-gradient(60% 70% at 10% 15%, #6a3530, transparent 70%),
-      radial-gradient(55% 60% at 90% 20%, #c39260, transparent 70%),
-      radial-gradient(70% 60% at 95% 100%, #ddd8a6, transparent 70%),
-      radial-gradient(60% 60% at 15% 100%, #b57a5c, transparent 70%),
-      linear-gradient(135deg, #8a4a3a, #c79a68);
+      radial-gradient(60% 70% at 10% 15%, #5a4128, transparent 70%),
+      radial-gradient(55% 60% at 90% 20%, #c9a466, transparent 70%),
+      radial-gradient(70% 60% at 95% 100%, #e6d6ae, transparent 70%),
+      radial-gradient(60% 60% at 15% 100%, #8f6a3f, transparent 70%),
+      linear-gradient(135deg, #6f5232, #b8935a);
   }
-  .mesh-magenta {
+  /* Charcoal through silver: neutral, and the inconclusive verdict. */
+  .mesh-graphite {
     background:
-      radial-gradient(60% 70% at 10% 10%, #9b2f78, transparent 70%),
-      radial-gradient(60% 60% at 90% 30%, #d95fa6, transparent 70%),
-      radial-gradient(70% 60% at 80% 110%, #efb2c4, transparent 70%),
-      linear-gradient(135deg, #b23f8a, #e48ab3);
+      radial-gradient(60% 70% at 10% 15%, #2c2b2c, transparent 70%),
+      radial-gradient(55% 60% at 90% 20%, #77736f, transparent 70%),
+      radial-gradient(70% 60% at 95% 100%, #b9b4ad, transparent 70%),
+      linear-gradient(135deg, #3b3938, #8a857f);
   }
-  /* Grey-green with a warm sand corner: the "Brake pads" card. */
-  .mesh-sage {
+  /* Verdict cards, each a muted version of its verdict colour. */
+  .mesh-teal {
     background:
-      radial-gradient(60% 70% at 10% 20%, #5f716e, transparent 70%),
-      radial-gradient(45% 50% at 85% 10%, #b89a6e, transparent 70%),
-      radial-gradient(70% 60% at 90% 100%, #c9ccc4, transparent 70%),
-      linear-gradient(135deg, #6c7c78, #a3aca4);
+      radial-gradient(60% 70% at 10% 20%, #24524b, transparent 70%),
+      radial-gradient(50% 50% at 85% 15%, #6a9a8e, transparent 70%),
+      radial-gradient(70% 60% at 90% 100%, #b7cfc6, transparent 70%),
+      linear-gradient(135deg, #2f655c, #7fa79b);
   }
-  .mesh-coral {
+  .mesh-copper {
     background:
-      radial-gradient(60% 70% at 10% 20%, #d9735a, transparent 70%),
-      radial-gradient(60% 60% at 90% 30%, #ef9f82, transparent 70%),
-      radial-gradient(70% 60% at 90% 110%, #f3dccd, transparent 70%),
-      linear-gradient(135deg, #e0806a, #f0b9a0);
+      radial-gradient(60% 70% at 10% 15%, #5e2a17, transparent 70%),
+      radial-gradient(55% 60% at 90% 20%, #c27a4a, transparent 70%),
+      radial-gradient(70% 60% at 95% 100%, #e3c3a5, transparent 70%),
+      linear-gradient(135deg, #7d3a1f, #c58a5e);
   }
-  .mesh-mauve {
+  .mesh-rose {
     background:
-      radial-gradient(60% 70% at 10% 15%, #6f5d66, transparent 70%),
-      radial-gradient(60% 60% at 90% 25%, #a99099, transparent 70%),
-      radial-gradient(70% 60% at 90% 110%, #d8ccc8, transparent 70%),
-      linear-gradient(135deg, #7d6a72, #b9a9ab);
+      radial-gradient(60% 70% at 10% 10%, #6b2245, transparent 70%),
+      radial-gradient(60% 60% at 90% 30%, #c4628f, transparent 70%),
+      radial-gradient(70% 60% at 80% 110%, #e6b8c8, transparent 70%),
+      linear-gradient(135deg, #8a3460, #cf8aa8);
   }
   /* A frosted pill on a gradient card: labels, values, controls. */
   .frost {
@@ -269,11 +276,11 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-signal px-5 py-2.5 text-[15px] font-semibold text-signal-ink;
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 12px 28px -12px rgb(170 190 20 / 0.7);
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[15px] font-semibold text-on-primary;
+    box-shadow: 0 12px 28px -14px rgb(0 0 0 / 0.5);
   }
   .btn-primary:hover {
-    background: #e5f560;
+    background: color-mix(in srgb, var(--color-primary) 86%, var(--color-canvas));
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[15px] font-medium text-ink;
@@ -348,8 +355,8 @@
   box-shadow: 0 20px 40px -20px rgb(0 0 0 / 0.4) !important;
 }
 [data-sonner-toast] [data-button] {
-  background: var(--color-signal) !important;
-  color: var(--color-signal-ink) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
   border-radius: 9999px !important;
   font-weight: 600;
 }

@@ -90,7 +90,7 @@ export function ErrorLevel({ job }: { job: Job }) {
                 step={5}
                 value={amplify}
                 onChange={(e) => setAmplify(Number(e.target.value))}
-                className="w-28 accent-signal"
+                className="w-28 accent-primary"
               />
               <span className="w-8 font-mono tabular-nums text-faint">{amplify}×</span>
             </label>

@@ -68,10 +68,10 @@ export function Overview() {
       {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing */}
       {history.length > 0 && (
         <section className="stagger grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Your analyses">
-          <Stat mesh="mesh-sage" label="Files analyzed" value={history.length} note="on this device" />
-          <Stat mesh="mesh-rust" label="Flagged" value={n(flagged)} note="edited or AI" />
-          <Stat mesh="mesh-magenta" label="Likely AI" value={n(counts.likely_ai_generated)} note="AI-generated verdicts" />
-          <Stat mesh="mesh-mauve" label="Inconclusive" value={n(counts.inconclusive)} note="not enough evidence" />
+          <Stat label="Files analyzed" value={history.length} note="on this device" />
+          <Stat label="Flagged" value={n(flagged)} note="edited or AI" tone={flagged ? 'text-edited' : undefined} />
+          <Stat label="Likely AI" value={n(counts.likely_ai_generated)} note="AI-generated verdicts" tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
+          <Stat label="Inconclusive" value={n(counts.inconclusive)} note="not enough evidence" />
         </section>
       )}
 
@@ -153,19 +153,20 @@ export function Overview() {
   )
 }
 
-function Stat({ mesh, label, value, note }: { mesh: string; label: string; value: number | null; note?: string }) {
+/** A count on neutral glass. Only a count that needs attention takes its verdict colour. */
+function Stat({ label, value, note, tone }: { label: string; value: number | null; note?: string; tone?: string }) {
   return (
-    <div className={`mesh ${mesh} animate-rise flex flex-col rounded-xl p-4 sm:p-5`}>
-      <p className="text-[15px] font-medium text-white/90">{label}</p>
-      <div className="frost mt-6 flex items-end justify-between gap-2 rounded-lg px-4 py-3">
+    <div className="panel animate-rise flex flex-col rounded-xl p-4 sm:p-5">
+      <p className="text-[15px] font-medium text-muted">{label}</p>
+      <div className="mt-6 flex items-end justify-between gap-2 rounded-lg bg-raised px-4 py-3">
         {value === null ? (
-          <span className="h-10 w-10 animate-pulse rounded-full bg-white/25" />
+          <span className="skeleton h-10 w-10" />
         ) : (
-          <span className="font-dot text-[40px] leading-none font-bold">{value}</span>
+          <span className={`font-dot text-[40px] leading-none font-bold ${tone ?? 'text-ink'}`}>{value}</span>
         )}
-        <span className="mb-1 h-[3px] w-5 rounded-full bg-white/80" aria-hidden />
+        <span className="mb-1 h-[3px] w-5 rounded-full bg-accent" aria-hidden />
       </div>
-      {note && <p className="mt-2 px-1 text-[12px] text-white/75">{note}</p>}
+      {note && <p className="mt-2 px-1 text-[12px] text-faint">{note}</p>}
     </div>
   )
 }
@@ -180,7 +181,7 @@ function EmptyRecent() {
       <p className="mt-1 max-w-xs text-[15px] text-faint">
         Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
       </p>
-      <Link to="/new" className="btn-primary mt-6">
+      <Link to="/new" className="btn-ghost mt-6">
         <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
       </Link>
     </div>

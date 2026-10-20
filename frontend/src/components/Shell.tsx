@@ -69,8 +69,8 @@ function Sidebar() {
         <Logo />
       </NavLink>
 
-      <NavLink to="/new" className="btn-primary mb-8 justify-start py-3 pl-3">
-        <span className="grid size-7 place-items-center rounded-full bg-signal-ink/10">
+      <NavLink to="/new" className="btn-ghost mb-8 justify-start py-2.5 pl-2.5 font-semibold">
+        <span className="grid size-8 place-items-center rounded-full bg-primary text-on-primary">
           <Plus className="size-4" strokeWidth={2.5} />
         </span>
         <span className="flex-1">New analysis</span>
@@ -102,9 +102,9 @@ function Sidebar() {
       </nav>
 
       <div className="mt-auto flex flex-col gap-4">
-        <div className="mesh mesh-sage rounded-lg p-4">
-          <p className="font-dot text-[13px] font-bold text-white/75">Privacy</p>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-white/90">
+        <div className="panel rounded-lg p-4">
+          <p className="eyebrow text-[13px]">Privacy</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
             Files are analyzed, then deleted. Only a hash, a thumbnail and the findings are kept, for
             90 days.
           </p>
@@ -130,7 +130,7 @@ function Sidebar() {
 const SERVER_LABEL: Record<ServerState, { text: string; dot: string }> = {
   checking: { text: 'Connecting', dot: 'bg-faint animate-pulse' },
   waking: { text: 'Waking server…', dot: 'bg-edited animate-pulse' },
-  online: { text: 'API online', dot: 'bg-signal-deep' },
+  online: { text: 'API online', dot: 'bg-authentic' },
   offline: { text: 'API offline', dot: 'bg-ai' },
 }
 
@@ -177,7 +177,7 @@ function MobileTabBar() {
         <NavLink
           to="/new"
           aria-label="New analysis"
-          className="mx-1 grid size-14 shrink-0 place-items-center rounded-full bg-signal text-signal-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.6),0_12px_28px_-10px_rgb(170_190_20/0.8)] transition active:scale-95"
+          className="mx-1 grid size-14 shrink-0 place-items-center rounded-full bg-primary text-on-primary shadow-[0_12px_28px_-12px_rgb(0_0_0/0.55)] transition active:scale-95"
         >
           <Plus className="size-6" strokeWidth={2} />
         </NavLink>

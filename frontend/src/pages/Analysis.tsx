@@ -126,7 +126,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
               >
                 <span
                   className={`grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
-                    state === 'done' ? 'bg-signal text-signal-ink' : 'bg-raised text-faint'
+                    state === 'done' ? 'bg-accent-soft text-accent' : 'bg-raised text-faint'
                   }`}
                 >
                   {state === 'done' ? (

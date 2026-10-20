@@ -126,8 +126,8 @@ function DetectorResults() {
         <div className="flex items-center justify-between text-[12px] text-faint">
           <span>AI images detected, per unseen generator</span>
           <span className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-signal" /> as uploaded</span>
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-signal/40" /> recompressed</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-accent" /> as uploaded</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-accent/40" /> recompressed</span>
           </span>
         </div>
         <ul className="mt-3 flex flex-col gap-2.5">
@@ -136,10 +136,10 @@ function DetectorResults() {
               <span className="truncate text-[13px] text-muted">{g.name}</span>
               <div className="flex flex-col gap-1">
                 <div className="h-1.5 overflow-hidden rounded-full bg-line">
-                  <div className="h-full rounded-full bg-signal" style={{ width: `${g.clean * 100}%` }} />
+                  <div className="h-full rounded-full bg-accent" style={{ width: `${g.clean * 100}%` }} />
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-line">
-                  <div className="h-full rounded-full bg-signal/40" style={{ width: `${g.recompressed * 100}%` }} />
+                  <div className="h-full rounded-full bg-accent/40" style={{ width: `${g.recompressed * 100}%` }} />
                 </div>
               </div>
               <span className="text-right font-mono text-[13px] tabular-nums text-ink">{Math.round(g.clean * 100)}%</span>
@@ -155,7 +155,7 @@ function DetectorResults() {
             <li key={g.name} className="grid grid-cols-[110px_1fr_44px] items-center gap-3 sm:grid-cols-[130px_1fr_48px]">
               <span className="truncate text-[13px] text-muted">{g.name}</span>
               <div className="h-1.5 overflow-hidden rounded-full bg-line">
-                <div className="h-full rounded-full bg-signal" style={{ width: `${g.clean * 100}%` }} />
+                <div className="h-full rounded-full bg-accent" style={{ width: `${g.clean * 100}%` }} />
               </div>
               <span className="text-right font-mono text-[13px] tabular-nums text-ink">{Math.round(g.clean * 100)}%</span>
             </li>

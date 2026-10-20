@@ -50,7 +50,7 @@ export function History() {
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="panel flex flex-1 items-center gap-2.5 rounded-md px-3.5 py-2 focus-within:border-signal">
+        <label className="panel flex flex-1 items-center gap-2.5 rounded-md px-3.5 py-2 focus-within:border-primary">
           <Search className="size-4 text-faint" aria-hidden />
           <input
             type="search"
