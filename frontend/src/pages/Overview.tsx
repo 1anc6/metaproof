@@ -66,9 +66,10 @@ export function Overview() {
         <EvidenceMap to={DEMO_REPORT_PATH} title="Example findings" />
       </section>
 
-      {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing */}
+      {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing. Two by
+          two on phones, where four columns would wrap the labels and misalign the numbers. */}
       {history.length > 0 && (
-        <section className="panel animate-rise grid grid-cols-4 divide-x divide-line rounded-xl" aria-label="Your analyses">
+        <section className="panel animate-rise grid grid-cols-2 rounded-xl sm:grid-cols-4" aria-label="Your analyses">
           <Stat label="Files analyzed" value={history.length} note="on this device" />
           <Stat label="Flagged" value={n(flagged)} note="edited or AI" tone={flagged ? 'text-edited' : undefined} />
           <Stat label="Likely AI" value={n(counts.likely_ai_generated)} note="AI-generated verdicts" tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
@@ -88,12 +89,12 @@ export function Overview() {
             )}
           </div>
           {history.length > 0 && (
-            <div className="flex flex-wrap gap-x-5 gap-y-2 px-4 pb-3 sm:px-5">
-              <label className="flex items-center gap-2.5 text-sm text-muted">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 px-4 pb-3 sm:gap-x-5 sm:px-5">
+              <label className="flex items-center gap-2 text-[13px] text-muted sm:gap-2.5 sm:text-sm">
                 <Toggle label="Blur previews" checked={prefs.blurPreviews} onChange={(v) => setPref('blurPreviews', v)} />
                 Blur previews
               </label>
-              <label className="flex items-center gap-2.5 text-sm text-muted">
+              <label className="flex items-center gap-2 text-[13px] text-muted sm:gap-2.5 sm:text-sm">
                 <Toggle label="Only flagged" checked={prefs.onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
                 Only flagged
               </label>
@@ -157,12 +158,12 @@ export function Overview() {
 /** One cell of the counts strip. Only a count that needs attention takes its verdict colour. */
 function Stat({ label, value, note, tone }: { label: string; value: number | null; note?: string; tone?: string }) {
   return (
-    <div className="flex min-w-0 flex-col px-3 py-3.5 sm:px-6 sm:py-5">
-      <p className="text-[12px] leading-tight font-medium text-muted sm:text-[15px]">{label}</p>
+    <div className="flex min-w-0 flex-col border-line px-4 py-4 max-sm:odd:border-r max-sm:nth-[-n+2]:border-b sm:px-6 sm:py-5 sm:not-last:border-r">
+      <p className="truncate text-[13px] leading-tight font-medium whitespace-nowrap text-muted sm:text-[15px]">{label}</p>
       {value === null ? (
-        <span className="skeleton mt-3 h-8 w-10 sm:mt-4 sm:h-11 sm:w-14" />
+        <span className="skeleton mt-3 h-9 w-12 sm:mt-4 sm:h-11 sm:w-14" />
       ) : (
-        <span className={`num mt-2 text-[30px] leading-none sm:mt-3 sm:text-[48px] ${tone ?? 'text-ink'}`}>{value}</span>
+        <span className={`num mt-2.5 text-[36px] leading-none sm:mt-3 sm:text-[48px] ${tone ?? 'text-ink'}`}>{value}</span>
       )}
       {note && <p className="mt-2 text-[12px] text-faint max-sm:hidden">{note}</p>}
     </div>
