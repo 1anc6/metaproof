@@ -78,15 +78,15 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
         <Logo />
       </NavLink>
 
-      <NavLink to="/new" className="btn-ghost mb-8 justify-start py-2.5 pl-2.5 font-semibold">
+      {/* Same height, padding, gap and icon disc as the nav rows below, so everything lines up. */}
+      <NavLink to="/new" className="btn-ghost mb-8 h-12 justify-start gap-3 py-0 pr-4 pl-2 font-semibold">
         <span className="grid size-8 place-items-center rounded-full bg-primary text-on-primary">
           <Plus className="size-4" strokeWidth={2.5} />
         </span>
-        <span className="flex-1">New analysis</span>
-        <kbd className="mr-1 rounded-md bg-raised px-1.5 py-0.5 text-[11px] font-semibold text-faint">N</kbd>
+        New analysis
       </NavLink>
 
-      <p className="eyebrow px-3 pb-3">Workspace</p>
+      <p className="eyebrow px-2 pb-3">Workspace</p>
       <nav className="flex flex-col gap-1" aria-label="Main">
         {NAV.filter((n) => n.to !== '/new').map(({ to, label, icon: Icon, end }) => (
           <NavLink
@@ -94,7 +94,7 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-full py-2 pr-4 pl-2 text-[15px] transition ${
+              `flex h-12 items-center gap-3 rounded-full pr-4 pl-2 text-[15px] transition ${
                 isActive ? 'selected font-semibold' : 'text-muted hover:bg-hover hover:text-ink'
               }`
             }
@@ -110,35 +110,38 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
         ))}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-4">
-        <div className="panel rounded-lg p-4">
+      {/* One card for everything below the nav: privacy, theme, status. Every row is full width. */}
+      <div className="panel mt-auto flex flex-col gap-3 rounded-lg p-3">
+        <div className="px-1 pt-1">
           <p className="eyebrow">Privacy</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-            Files are analyzed, then deleted. Only a hash, a thumbnail and the findings are kept, for
+            Files are deleted after analysis. Only a hash, a thumbnail and the findings are kept, for
             90 days.
           </p>
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <ThemeSwitch />
-          <button
-            type="button"
-            onClick={onShortcuts}
-            className="rounded-full px-2 py-1 text-[12px] text-faint transition hover:text-ink"
-          >
-            Press <kbd className="rounded-md bg-raised px-1.5 py-0.5 font-semibold">?</kbd>
-          </button>
-        </div>
-        <div className="flex items-center justify-between px-2">
+        <ThemeSwitch stretch />
+        <div className="flex items-center justify-between gap-2 border-t border-line px-1 pt-3">
           <ServerBadge />
-          <a
-            href="https://github.com/1anc6/metaproof"
-            target="_blank"
-            rel="noreferrer"
-            className="text-faint transition hover:text-ink"
-            aria-label="Source code on GitHub"
-          >
-            <GithubMark className="size-4" />
-          </a>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onShortcuts}
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts (?)"
+              className="grid size-8 place-items-center rounded-full text-[13px] font-semibold text-faint transition hover:bg-hover hover:text-ink"
+            >
+              ?
+            </button>
+            <a
+              href="https://github.com/1anc6/metaproof"
+              target="_blank"
+              rel="noreferrer"
+              className="grid size-8 place-items-center rounded-full text-faint transition hover:bg-hover hover:text-ink"
+              aria-label="Source code on GitHub"
+            >
+              <GithubMark className="size-4" />
+            </a>
+          </div>
         </div>
       </div>
     </aside>
