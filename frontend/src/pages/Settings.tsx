@@ -26,15 +26,15 @@ export function Settings() {
         subtitle="There are no accounts: everything here applies to this browser only."
       />
 
-      <div className="stagger grid gap-4 lg:grid-cols-2">
+      {/* Source order is the phone order and the reading order. On desktop CSS columns split the
+          cards into two stacks of about equal height, without changing that order. */}
+      <div className="flex flex-col gap-4 lg:block lg:columns-2 lg:gap-4 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
         <Card icon={Palette} title="Appearance">
           <p className="text-sm text-muted">
             Light, dark, or follow this device's setting. Saved in this browser.
           </p>
           <ThemeSwitch labels className="mt-5" />
         </Card>
-
-        <InstallCard />
 
         <Card icon={HardDrive} title="This device">
           <p className="text-sm text-muted">
@@ -62,11 +62,9 @@ export function Settings() {
           </div>
         </Card>
 
-        <Card icon={Server} title="Server">
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-muted">Status</span>
-            <ServerBadge />
-          </div>
+        <InstallCard />
+
+        <Card icon={Server} title="Server" action={<ServerBadge />}>
           <ServiceFigures />
           <p className="mt-4 text-[13px] text-faint">
             The API runs on a free instance that sleeps when idle, so the first upload after a quiet
@@ -82,11 +80,11 @@ export function Settings() {
           </a>
         </Card>
 
-        <Card icon={ShieldCheck} title="Privacy and data" className="lg:col-span-2">
+        <Card icon={ShieldCheck} title="Privacy and data">
           <ul className="flex flex-col gap-2.5">
             {PRIVACY.map((line) => (
               <li key={line} className="flex gap-3 text-sm text-muted">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-faint" aria-hidden />
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
                 {line}
               </li>
             ))}
@@ -116,15 +114,15 @@ function ServiceFigures() {
     }
   }, [])
 
-  if (failed) return <p className="mt-4 text-sm text-muted">Storage figures are unavailable while the server is unreachable.</p>
-  if (!status) return <div className="skeleton mt-4 h-24" aria-label="Loading storage figures" />
+  if (failed) return <p className="text-sm text-muted">Storage figures are unavailable while the server is unreachable.</p>
+  if (!status) return <div className="skeleton h-24" aria-label="Loading storage figures" />
 
   const { database_mb: used, storage_limit_mb: limit, storage_warn_mb: warn } = status
   const share = Math.min(1, used / limit)
   const level = LEVELS[used >= limit * 0.95 ? 'full' : used >= warn ? 'warn' : 'ok']
   const Icon = level.icon
   return (
-    <div className="mt-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div>
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <span className="text-muted">Database storage</span>
@@ -177,7 +175,7 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
 function InstallCard() {
   const state = useInstallState()
   return (
-    <Card icon={Smartphone} title="Install the app" className="lg:col-span-2">
+    <Card icon={Smartphone} title="Install the app">
       {state === 'installed' && (
         <p className="text-sm text-muted">
           MetaProof is installed on this device. On Android, share any photo to it from your gallery,
@@ -212,22 +210,31 @@ function InstallCard() {
   )
 }
 
+/** A settings card: icon disc and title on one line, an optional status on the right. */
 function Card({
   icon: Icon,
   title,
+  action,
   className = '',
   children,
 }: {
   icon: typeof Server
   title: string
+  action?: ReactNode
   className?: string
   children: ReactNode
 }) {
   return (
-    <section className={`panel animate-rise rounded-xl p-6 ${className}`}>
-      <h2 className="mb-4 flex items-center gap-2.5 font-semibold tracking-[-0.02em]">
-        <Icon className="size-4 text-faint" strokeWidth={1.75} /> {title}
-      </h2>
+    <section className={`panel animate-rise rounded-xl p-5 sm:p-6 ${className}`}>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-3 text-[17px] font-semibold tracking-[-0.02em]">
+          <span className="well size-9">
+            <Icon className="size-4" strokeWidth={1.75} />
+          </span>
+          {title}
+        </h2>
+        {action}
+      </div>
       {children}
     </section>
   )
