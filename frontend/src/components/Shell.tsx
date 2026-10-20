@@ -74,7 +74,7 @@ function Sidebar() {
           <Plus className="size-4" strokeWidth={2.5} />
         </span>
         <span className="flex-1">New analysis</span>
-        <kbd className="mr-1 font-dot text-[13px] font-bold opacity-60">N</kbd>
+        <kbd className="mr-1 rounded-md bg-raised px-1.5 py-0.5 text-[11px] font-semibold text-faint">N</kbd>
       </NavLink>
 
       <p className="eyebrow px-3 pb-3">Workspace</p>
@@ -95,7 +95,7 @@ function Sidebar() {
             </span>
             <span className="flex-1">{label}</span>
             {to === '/history' && history.length > 0 && (
-              <span className="font-dot text-[14px] font-bold text-faint">{history.length}</span>
+              <span className="text-[13px] font-medium text-faint tabular-nums">{history.length}</span>
             )}
           </NavLink>
         ))}
@@ -103,7 +103,7 @@ function Sidebar() {
 
       <div className="mt-auto flex flex-col gap-4">
         <div className="panel rounded-lg p-4">
-          <p className="eyebrow text-[13px]">Privacy</p>
+          <p className="eyebrow">Privacy</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
             Files are analyzed, then deleted. Only a hash, a thumbnail and the findings are kept, for
             90 days.
@@ -191,7 +191,13 @@ function MobileTabBar() {
 
 function TabLink({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
   return (
-    <NavLink to={to} end={end} aria-label={label} className="flex min-w-0 flex-1 basis-0 justify-center">
+    <NavLink
+      to={to}
+      end={end}
+      aria-label={label}
+      // The focus ring goes round the icon disc, not the whole tab-wide hit area.
+      className="flex min-w-0 flex-1 basis-0 justify-center outline-none [&:focus-visible>span]:outline-2 [&:focus-visible>span]:outline-offset-2 [&:focus-visible>span]:outline-ink"
+    >
       {({ isActive }) => (
         <span
           className={`grid size-12 place-items-center rounded-full transition ${

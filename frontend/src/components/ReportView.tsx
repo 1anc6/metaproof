@@ -24,12 +24,12 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
       {/* Verdict hero */}
       {/* The verdict on a gradient card in its own hue. */}
       <section className={`mesh ${v.mesh} animate-rise rounded-xl`}>
-        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8">
+        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8 sm:pb-6">
           <div className="frost w-full max-w-[220px] shrink-0 rounded-xl p-2 max-sm:mx-auto max-sm:max-w-[200px]">
             <Thumb sha={sha} className="aspect-square w-full rounded-lg" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-dot text-[15px] font-bold text-white/80">Verdict</p>
+            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">Verdict</p>
             <h1 className="print-dark mt-2 text-[44px] leading-[1] font-medium tracking-[-0.04em] sm:text-[64px]">
               {v.title}
             </h1>
@@ -44,7 +44,8 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <EvidenceChips job={job} verdict={verdict} />
           </div>
         </div>
-        <dl className="frost mx-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg px-5 py-4 sm:mx-5 sm:grid-cols-3 lg:grid-cols-6">
+        <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
+        <dl className="frost mx-3 mb-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg px-5 py-4 sm:mx-5 sm:mb-5 sm:grid-cols-3 lg:grid-cols-6">
           {[
             ['File', filename ?? '—'],
             ['Type', formatType(job.media.mime_type)],
@@ -55,11 +56,10 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
           ].map(([k, val]) => (
             <div key={k} className="min-w-0" title={k === 'SHA-256' ? sha : val}>
               <dt className="text-[12px] text-white/70">{k}</dt>
-              <dd className="mt-0.5 truncate font-dot text-[16px] font-bold">{val}</dd>
+              <dd className="mt-0.5 truncate text-[15px] font-medium tabular-nums">{val}</dd>
             </div>
           ))}
         </dl>
-        <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -138,7 +138,7 @@ function Actions({ sha, title }: { sha: string; title: string }) {
     }
   }
   return (
-    <div className="no-print flex flex-wrap gap-2 px-3 pt-4 pb-5 sm:px-5">
+    <div className="no-print flex flex-wrap gap-2 px-3 pb-4 sm:px-5 sm:pb-5">
       <button type="button" onClick={share} className="btn-ghost">
         {nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
         {nativeShare ? 'Share report' : 'Copy share link'}
@@ -193,7 +193,7 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
           <li key={key}>
             <div className="flex items-baseline justify-between text-[15px]">
               <span className="font-medium text-muted">{label}</span>
-              <span className="font-dot text-[18px] font-bold text-ink">
+              <span className="num text-[22px] leading-none text-ink">
                 {key === settled ? 'conclusive' : value.toFixed(1)}
               </span>
             </div>
@@ -594,7 +594,7 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
           <span className="text-lg font-semibold tracking-tight" style={{ color }}>
             {label}
           </span>
-          <span className="font-dot text-[18px] font-bold text-ink">{pct}%</span>
+          <span className="num text-[22px] leading-none text-ink">{pct}%</span>
         </div>
         {/* ticks mark the band edges the evidence engine used */}
         <Meter
