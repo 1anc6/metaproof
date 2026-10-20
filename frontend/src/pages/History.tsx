@@ -8,7 +8,7 @@ import { usePrefs } from '../lib/prefs'
 import { clearWithUndo, removeWithUndo } from '../lib/undo'
 import { useSummaries } from '../lib/hooks'
 import { VERDICTS } from '../lib/verdicts'
-import { PageHeader, Thumb, VerdictBadge } from '../components/ui'
+import { OrbitGlyph, PageHeader, Thumb, VerdictBadge } from '../components/ui'
 
 type Filter = 'all' | 'flagged' | VerdictLabel
 
@@ -89,9 +89,13 @@ export function History() {
       {error && <p className="mb-4 text-sm text-ai">{error}</p>}
 
       {history.length === 0 ? (
-        <div className="panel rounded-xl px-6 py-16 text-center">
-          <p className="font-medium">Nothing here yet</p>
-          <p className="mt-1 text-sm text-faint">Analyses you run on this device will appear here.</p>
+        <div className="panel flex flex-col items-center rounded-xl px-6 py-14 text-center">
+          <OrbitGlyph className="h-14 w-28 text-faint" />
+          <p className="mt-4 text-[17px] font-semibold">Nothing here yet</p>
+          <p className="mt-1 max-w-xs text-[15px] text-faint">Analyses you run on this device will appear here.</p>
+          <Link to="/new" className="btn-ghost mt-6">
+            <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
+          </Link>
         </div>
       ) : rows.length === 0 ? (
         <div className="panel rounded-xl px-6 py-12 text-center text-sm text-faint">No analyses match.</div>
