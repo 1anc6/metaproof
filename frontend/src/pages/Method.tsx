@@ -57,8 +57,21 @@ export function Method() {
         subtitle="MetaProof combines independent checks and shows its working. It never claims absolute truth."
       />
 
-      <section className="flex flex-col gap-3">
-        {LAYERS.map(({ icon: Icon, name, status, text }) => (
+      <nav aria-label="On this page" className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+        {[
+          ['#checks', 'The six checks'],
+          ['#verdict', 'The verdict'],
+          ['#privacy', 'Privacy'],
+          ['#accuracy', 'Detector accuracy'],
+        ].map(([href, label]) => (
+          <a key={href} href={href} className="btn-ghost shrink-0 !py-1.5 !text-[13px]">
+            {label}
+          </a>
+        ))}
+      </nav>
+
+      <section id="checks" className="flex scroll-mt-24 flex-col gap-3">
+        {LAYERS.map(({ icon: Icon, name, status, text }, i) => (
           <article key={name} className="panel animate-rise flex gap-4 rounded-xl p-5">
             {/* On phones the icon sits beside the title, so the text gets the card's full width. */}
             <span className="well size-11 max-sm:hidden">
@@ -66,6 +79,7 @@ export function Method() {
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
+                <span className="num text-[20px] leading-none text-accent">{String(i + 1).padStart(2, '0')}</span>
                 <Icon className="size-[18px] text-muted sm:hidden" strokeWidth={1.75} />
                 <h2 className="text-[17px] font-semibold tracking-[-0.02em]">{name}</h2>
                 <span
@@ -82,7 +96,7 @@ export function Method() {
         ))}
       </section>
 
-      <section className="panel animate-rise mt-6 rounded-xl p-6">
+      <section id="verdict" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
         <div className="flex items-center gap-3">
           <Scale className="size-5" strokeWidth={1.5} />
           <h2 className="text-[17px] font-semibold tracking-[-0.02em]">How the verdict is decided</h2>
@@ -99,7 +113,7 @@ export function Method() {
 
       <DetectorResults />
 
-      <section className="mt-6 px-1 text-sm leading-relaxed text-faint">
+      <section id="privacy" className="mt-6 scroll-mt-24 px-1 text-sm leading-relaxed text-faint">
         <h2 className="mb-2 font-semibold tracking-[-0.02em] text-ink">Privacy</h2>
         Uploaded files are deleted right after analysis. MetaProof stores the file's SHA-256 hash, a
         small thumbnail and the findings so a report can be shared by link; these are deleted 90 days
@@ -112,7 +126,7 @@ export function Method() {
 
 function DetectorResults() {
   return (
-    <section className="panel animate-rise mt-6 rounded-xl p-6">
+    <section id="accuracy" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
       <div className="flex items-center gap-3">
         <BarChart3 className="size-5" strokeWidth={1.5} />
         <h2 className="text-[17px] font-semibold tracking-[-0.02em]">How well the detector works</h2>

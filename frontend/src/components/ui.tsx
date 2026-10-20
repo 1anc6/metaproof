@@ -35,6 +35,22 @@ export function CardArrow({ to, label }: { to: string; label: string }) {
   )
 }
 
+/** Three linked orbits, the evidence map in miniature. Takes currentColor. */
+export function OrbitGlyph({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" className={className} aria-hidden>
+      <path d="M28 30H92" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.8" />
+      <circle cx="28" cy="30" r="22" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.7" />
+      <path d="M28 8a22 22 0 0 1 22 22" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="60" cy="30" r="13" strokeWidth="1.5" />
+      <circle cx="92" cy="30" r="22" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.7" />
+      <path d="M92 52a22 22 0 0 1-22-22" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="28" cy="30" r="2.5" fill="currentColor" stroke="none" />
+      <circle cx="92" cy="30" r="2.5" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 /** A label pill floating over the evidence map. */
 function MapLabel({ children, className }: { children: ReactNode; className: string }) {
   return (
@@ -55,7 +71,6 @@ export function EvidenceMap({
   to,
   mesh = 'mesh-gold',
   score = 0.62,
-  meterOnPhones = true,
 }: {
   className?: string
   src?: string
@@ -63,8 +78,6 @@ export function EvidenceMap({
   to?: string
   mesh?: string
   score?: number
-  /** false drops the slider below the small breakpoint, for a shorter card on phones */
-  meterOnPhones?: boolean
 }) {
   return (
     <div className={`mesh ${mesh} flex flex-col rounded-xl p-6 sm:p-7 ${className}`}>
@@ -115,7 +128,7 @@ export function EvidenceMap({
       </div>
 
       {/* mt-auto pins the slider to the bottom when the card is stretched beside a taller panel */}
-      <Meter value={score} className={`mt-auto pt-5 ${meterOnPhones ? '' : 'max-sm:hidden'}`} onDark />
+      <Meter value={score} className="mt-auto pt-5" onDark />
     </div>
   )
 }

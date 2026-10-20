@@ -25,7 +25,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
       {/* The verdict on a gradient card in its own hue. */}
       <section className={`mesh ${v.mesh} animate-rise rounded-xl`}>
         <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8 sm:pb-6">
-          <div className="frost w-full max-w-[220px] shrink-0 rounded-xl p-2 max-sm:mx-auto max-sm:max-w-[200px]">
+          <div className="frost w-28 shrink-0 rounded-lg p-1.5 sm:w-44 sm:rounded-xl sm:p-2">
             <Thumb sha={sha} className="aspect-square w-full rounded-lg" />
           </div>
           <div className="min-w-0 flex-1">

@@ -1,6 +1,6 @@
-import { BookOpen, History, LayoutGrid, Plus, Settings } from 'lucide-react'
+import { BookOpen, History, LayoutGrid, Plus, Settings, X } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Toaster } from 'sonner'
 import { useHistory } from '../lib/history'
 import { useServerStatus, type ServerState } from '../lib/hooks'
@@ -24,13 +24,21 @@ export function Shell() {
     window.scrollTo(0, 0)
   }, [pathname])
 
-  // N starts a new analysis from anywhere, unless the keystroke is meant for a text field.
+  const [shortcuts, setShortcuts] = useState(false)
+
+  // Keyboard shortcuts, unless the keystroke is meant for a text field: N starts a new analysis,
+  // ? lists the shortcuts, Escape closes that list.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
       const el = e.target as HTMLElement
       if (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return
-      navigate('/new')
+      if (e.key === 'Escape') setShortcuts(false)
+      else if (e.key === '?') setShortcuts((open) => !open)
+      else if (e.key.toLowerCase() === 'n') {
+        setShortcuts(false)
+        navigate('/new')
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -44,7 +52,7 @@ export function Shell() {
       >
         Skip to content
       </a>
-      <Sidebar />
+      <Sidebar onShortcuts={() => setShortcuts(true)} />
       <MobileTopBar theme={theme} />
       <main
         id="main"
@@ -55,13 +63,14 @@ export function Shell() {
       </main>
       <MobileTabBar />
       <Welcome />
+      {shortcuts && <Shortcuts onClose={() => setShortcuts(false)} />}
       {/* Bottom centre on every screen; on phones it clears the tab bar. */}
       <Toaster theme={theme} position="bottom-center" offset={24} mobileOffset={{ bottom: 104 }} />
     </div>
   )
 }
 
-function Sidebar() {
+function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
   const history = useHistory()
   return (
     <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col px-5 pt-7 pb-6 lg:flex">
@@ -109,7 +118,16 @@ function Sidebar() {
             90 days.
           </p>
         </div>
-        <ThemeSwitch className="self-start" />
+        <div className="flex items-center justify-between gap-2">
+          <ThemeSwitch />
+          <button
+            type="button"
+            onClick={onShortcuts}
+            className="rounded-full px-2 py-1 text-[12px] text-faint transition hover:text-ink"
+          >
+            Press <kbd className="rounded-md bg-raised px-1.5 py-0.5 font-semibold">?</kbd>
+          </button>
+        </div>
         <div className="flex items-center justify-between px-2">
           <ServerBadge />
           <a
@@ -210,5 +228,51 @@ function TabLink({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
         </span>
       )}
     </NavLink>
+  )
+}
+
+const SHORTCUTS = [
+  ['N', 'New analysis'],
+  ['?', 'Show or hide this list'],
+  ['Esc', 'Close this list'],
+] as const
+
+/** The keyboard shortcuts, as a small dialog. Opened with ? or the sidebar hint. */
+function Shortcuts({ onClose }: { onClose: () => void }) {
+  const close = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null
+    close.current?.focus()
+    return () => before?.focus()
+  }, [])
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-title"
+        onClick={(e) => e.stopPropagation()}
+        className="panel panel-raised animate-pop w-full max-w-sm rounded-xl p-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 id="shortcuts-title" className="text-[17px] font-semibold tracking-[-0.02em]">
+            Keyboard shortcuts
+          </h2>
+          <button ref={close} type="button" onClick={onClose} className="well size-9" aria-label="Close">
+            <X className="size-4" />
+          </button>
+        </div>
+        <dl className="mt-4 flex flex-col">
+          {SHORTCUTS.map(([key, what]) => (
+            <div key={key} className="flex items-center justify-between border-t border-line py-3 first:border-t-0">
+              <dt className="text-[15px] text-muted">{what}</dt>
+              <dd>
+                <kbd className="rounded-md bg-raised px-2 py-1 text-[13px] font-semibold">{key}</kbd>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
   )
 }

@@ -56,12 +56,18 @@ export function ErrorLevel({ job }: { job: Job }) {
         <ScanEye className="mt-0.5 size-5 shrink-0" strokeWidth={1.5} />
         <div>
           <h2 className="text-[17px] font-semibold tracking-[-0.02em]">Error level view</h2>
-          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-faint">
-            Re-saves the image as JPEG and shows where it changed most. Edges and fine texture are
-            always bright; look for one area that glows differently from similar surroundings.
-            It is a way to look closer, not an AI detector, and it does not affect the verdict.
-            {!isJpeg && ' This file is not a JPEG, so differences mostly reflect texture.'}
-          </p>
+          <p className="mt-1 text-[13px] text-faint">A way to look closer. It does not affect the verdict.</p>
+          <details className="group mt-1.5 text-[13px] text-faint">
+            <summary className="cursor-pointer list-none text-muted underline decoration-line-strong underline-offset-4 hover:text-ink">
+              How to read it
+            </summary>
+            <p className="mt-2 max-w-2xl leading-relaxed">
+              The image is re-saved as JPEG and the difference is amplified. Edges and fine texture are
+              always bright; look for one area that glows differently from similar surroundings. It is
+              not an AI detector.
+              {!isJpeg && ' This file is not a JPEG, so differences mostly reflect texture.'}
+            </p>
+          </details>
         </div>
       </div>
 

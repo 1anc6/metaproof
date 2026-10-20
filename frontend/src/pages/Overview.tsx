@@ -1,4 +1,4 @@
-import { ArrowUpRight, Copy, Droplets, EyeOff, Filter, Fingerprint, Layers, Plus, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Copy, Droplets, EyeOff, Filter, Fingerprint, Layers, Plus, ShieldCheck, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatWhen } from '../lib/format'
@@ -6,7 +6,7 @@ import { useHistory } from '../lib/history'
 import { useSummaries } from '../lib/hooks'
 import { setPref, usePrefs } from '../lib/prefs'
 import { DEMO_REPORT_PATH } from '../lib/demo'
-import { Chip, EvidenceMap, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
+import { Chip, EvidenceMap, OrbitGlyph, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
 
 const LAYERS = [
   { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
@@ -66,7 +66,18 @@ export function Overview() {
             </Link>
           </div>
         </div>
-        <EvidenceMap to={DEMO_REPORT_PATH} title="Example findings" meterOnPhones={false} />
+        <EvidenceMap to={DEMO_REPORT_PATH} title="Example findings" className="max-sm:hidden" />
+        {/* On phones a compact version, so the whole hero fits above the tab bar. */}
+        <Link to={DEMO_REPORT_PATH} className="mesh mesh-gold flex items-center gap-4 rounded-xl p-4 sm:hidden">
+          <OrbitGlyph className="h-11 w-[88px] shrink-0 text-white" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[17px] font-medium tracking-[-0.01em]">Example findings</span>
+            <span className="block text-[13px] text-white/80">Open a real report</span>
+          </span>
+          <span className="frost grid size-10 shrink-0 place-items-center rounded-full">
+            <ArrowUpRight className="size-4" strokeWidth={1.75} />
+          </span>
+        </Link>
       </section>
 
       {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing. Two by
@@ -177,9 +188,7 @@ function Stat({ to, label, value, note, tone }: { to: string; label: string; val
 function EmptyRecent() {
   return (
     <div className="flex flex-col items-center px-6 pt-6 pb-10 text-center">
-      <span className="well size-16">
-        <ScanSearch className="size-6 text-muted" strokeWidth={1.5} />
-      </span>
+      <OrbitGlyph className="h-14 w-28 text-faint" />
       <p className="mt-4 text-[17px] font-semibold">No analyses yet</p>
       <p className="mt-1 max-w-xs text-[15px] text-faint">
         Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
