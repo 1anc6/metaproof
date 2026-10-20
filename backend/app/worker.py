@@ -46,9 +46,9 @@ class Worker:
         self._last_maintenance: float | None = None
 
     def start(self) -> None:
-        recover_interrupted_jobs()
+        # Recovery reads the database, so it runs on the worker thread: the API must answer
+        # /health right away even while Neon wakes up or is unreachable.
         self._thread.start()
-        self._wake.set()  # drain anything queued before startup
 
     def stop(self) -> None:
         self._stop.set()
@@ -59,6 +59,11 @@ class Worker:
         self._wake.set()
 
     def _loop(self) -> None:
+        try:
+            recover_interrupted_jobs()
+        except Exception:
+            log.exception("could not recover interrupted jobs")
+        self._wake.set()  # drain anything queued before startup
         while not self._stop.is_set():
             self._wake.wait()
             self._wake.clear()

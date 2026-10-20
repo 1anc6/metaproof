@@ -21,6 +21,24 @@ test('upload sends no filename, then shows the report and remembers it on this d
   await expect(page.getByText('my holiday.jpg')).toBeVisible()
 })
 
+test('a sleeping server is waited for, not reported as a failure', async ({ page }) => {
+  const api = await mockApi(page)
+  // Render's proxy answers 503 while the free instance wakes up, then the API takes over.
+  let waking = 2
+  await page.route('**/api/analyses', (route) =>
+    route.request().method() === 'POST' && waking-- > 0
+      ? route.fulfill({ status: 503, body: 'waking up' })
+      : route.fallback(),
+  )
+  await skipWelcome(page)
+  await page.goto('/new')
+  await page.locator('input[type=file]').setInputFiles(PHOTO)
+
+  await expect(page).toHaveURL(new RegExp(`/analysis/${JOB_ID}$`), { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: 'Inconclusive' })).toBeVisible()
+  expect(api.uploads).toHaveLength(1)
+})
+
 test('a report that leans real explains why in plain words', async ({ page }) => {
   await mockApi(page)
   await skipWelcome(page)
@@ -82,7 +100,7 @@ test('a Gemini-style report: the AI-generated original, decisive bars, an overru
   await page.goto(`/analysis/${JOB_ID}`)
   await expect(page.getByRole('heading', { name: 'Likely AI-generated' })).toBeVisible()
   // The detector's low score is qualified, and the bars agree with the verdict.
-  await expect(page.getByText('· outweighed by stronger evidence')).toBeVisible()
+  await expect(page.getByText(/A low score does not mean a photo is real/).first()).toBeVisible()
   await expect(page.getByText('conclusive', { exact: true })).toBeVisible()
   await expect(page.getByText(/Decided by conclusive evidence/)).toBeVisible()
   await page.getByRole('button', { name: /Content Credentials/ }).click()
