@@ -198,7 +198,7 @@ export function NewAnalysis() {
           ['Delete the file', 'Only the hash, a thumbnail and the findings remain.'],
         ].map(([title, text], i) => (
           <li key={title} className="panel rounded-xl p-5">
-            <p className="font-dot text-[28px] leading-none font-bold text-accent">{String(i + 1).padStart(2, '0')}</p>
+            <p className="num text-[34px] leading-none text-accent">{String(i + 1).padStart(2, '0')}</p>
             <p className="mt-4 text-[17px] font-medium">{title}</p>
             <p className="mt-1 text-[13px] leading-relaxed text-faint">{text}</p>
           </li>

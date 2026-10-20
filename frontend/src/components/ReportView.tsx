@@ -29,7 +29,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <Thumb sha={sha} className="aspect-square w-full rounded-lg" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-dot text-[15px] font-bold text-white/80">Verdict</p>
+            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">Verdict</p>
             <h1 className="print-dark mt-2 text-[44px] leading-[1] font-medium tracking-[-0.04em] sm:text-[64px]">
               {v.title}
             </h1>
@@ -55,7 +55,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
           ].map(([k, val]) => (
             <div key={k} className="min-w-0" title={k === 'SHA-256' ? sha : val}>
               <dt className="text-[12px] text-white/70">{k}</dt>
-              <dd className="mt-0.5 truncate font-dot text-[16px] font-bold">{val}</dd>
+              <dd className="mt-0.5 truncate text-[15px] font-medium tabular-nums">{val}</dd>
             </div>
           ))}
         </dl>
@@ -193,7 +193,7 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
           <li key={key}>
             <div className="flex items-baseline justify-between text-[15px]">
               <span className="font-medium text-muted">{label}</span>
-              <span className="font-dot text-[18px] font-bold text-ink">
+              <span className="num text-[22px] leading-none text-ink">
                 {key === settled ? 'conclusive' : value.toFixed(1)}
               </span>
             </div>
@@ -594,7 +594,7 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
           <span className="text-lg font-semibold tracking-tight" style={{ color }}>
             {label}
           </span>
-          <span className="font-dot text-[18px] font-bold text-ink">{pct}%</span>
+          <span className="num text-[22px] leading-none text-ink">{pct}%</span>
         </div>
         {/* ticks mark the band edges the evidence engine used */}
         <Meter

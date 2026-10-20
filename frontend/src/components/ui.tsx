@@ -117,8 +117,8 @@ export function EvidenceMap({
 }
 
 /**
- * A slider-style meter: a yellow fill up to a triangle marker, over a dotted scale with
- * dot-matrix labels. `onDark` draws it in white for gradient cards.
+ * A slider-style meter: a gold fill up to a triangle marker, over a dotted scale with
+ * labels. `onDark` draws it in white for gradient cards.
  */
 export function Meter({
   value,
@@ -166,7 +166,7 @@ export function Meter({
         className={`mt-1 h-px bg-[length:8px_1px] bg-repeat-x ${onDark ? 'opacity-50' : 'opacity-40'}`}
         style={{ backgroundImage: `radial-gradient(circle, ${onDark ? 'white' : 'var(--color-ink)'} 0.8px, transparent 1px)` }}
       />
-      <div className={`mt-2 flex justify-between font-dot text-[13px] font-bold ${onDark ? 'text-white/75' : 'text-faint'}`}>
+      <div className={`mt-2 flex justify-between text-[12px] font-medium tabular-nums ${onDark ? 'text-white/75' : 'text-faint'}`}>
         {labels.map((l) => (
           <span key={l}>{l}</span>
         ))}
@@ -257,7 +257,7 @@ export function PageHeader({
   )
 }
 
-/** Section heading inside a panel: a dot-matrix label over a short title. */
+/** Section heading inside a panel: a small capitals label over a short title. */
 export function PanelTitle({ eyebrow, title, action }: { eyebrow: string; title: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-end justify-between gap-4">
@@ -273,7 +273,7 @@ export function PanelTitle({ eyebrow, title, action }: { eyebrow: string; title:
 export function ErrorPanel({ message, children }: { message: string; children?: ReactNode }) {
   return (
     <div className="mesh mesh-graphite rounded-xl p-10 text-center">
-      <p className="font-dot text-[15px] font-bold text-white/80">Error</p>
+      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">Error</p>
       <h1 className="mt-2 text-3xl font-medium tracking-[-0.02em]">Something went wrong</h1>
       <p className="mx-auto mt-3 max-w-md text-[15px] text-white/85">{message}</p>
       {children && <div className="mt-7 flex justify-center gap-3">{children}</div>}

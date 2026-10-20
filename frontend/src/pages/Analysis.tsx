@@ -134,7 +134,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
                   ) : state === 'active' ? (
                     <ThinkingOrb size={18} className="text-ink" />
                   ) : (
-                    <span className="font-dot text-[13px] font-bold">{i + 1}</span>
+                    <span className="text-[13px] font-semibold tabular-nums">{i + 1}</span>
                   )}
                 </span>
                 <span className={`text-[15px] transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>

@@ -158,14 +158,11 @@ function Stat({ label, value, note, tone }: { label: string; value: number | nul
   return (
     <div className="panel animate-rise flex flex-col rounded-xl p-4 sm:p-5">
       <p className="text-[15px] font-medium text-muted">{label}</p>
-      <div className="mt-6 flex items-end justify-between gap-2 rounded-lg bg-raised px-4 py-3">
-        {value === null ? (
-          <span className="skeleton h-10 w-10" />
-        ) : (
-          <span className={`font-dot text-[40px] leading-none font-bold ${tone ?? 'text-ink'}`}>{value}</span>
-        )}
-        <span className="mb-1 h-[3px] w-5 rounded-full bg-accent" aria-hidden />
-      </div>
+      {value === null ? (
+        <span className="skeleton mt-5 h-11 w-14" />
+      ) : (
+        <span className={`num mt-4 text-[48px] leading-none ${tone ?? 'text-ink'}`}>{value}</span>
+      )}
       {note && <p className="mt-2 px-1 text-[12px] text-faint">{note}</p>}
     </div>
   )
