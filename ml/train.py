@@ -41,7 +41,9 @@ def head_input(features: np.ndarray) -> np.ndarray:
     return f
 
 
-TEST_SPLITS = ["heldout2", "local"]  # the test splits that record content hashes
+# The test splits that record content hashes. realcal: camera originals (real_photos.py),
+# testing only; the training pull of camera photos must never contain one of them.
+TEST_SPLITS = ["heldout2", "local", "realcal", "realcal-social"]
 
 
 def drop_test_images(split: dict, backbone: str) -> dict:

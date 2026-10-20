@@ -1,0 +1,1494 @@
+{
+  "backbone": "vitb16n",
+  "temperature": 1.1167247295379639,
+  "results": {
+    "calib": {
+      "n": 4245,
+      "accuracy": 0.9406360424028268,
+      "ece": 0.00885739476717265,
+      "auc": 0.9871298137460415,
+      "per_group": {
+        "1mohitmanoj/surya": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "AACEE/textual_inversion_cat": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "AACEE/textual_inversion_sksship": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Crosstyan/BPModel": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "DFGAN": {
+          "n": 49,
+          "detected": 0.8775510204081632
+        },
+        "Dalle2": {
+          "n": 75,
+          "detected": 0.9466666666666667
+        },
+        "DeciDiffusionV2": {
+          "n": 51,
+          "detected": 0.9607843137254902
+        },
+        "Dhruvii24/neighbourhoods-global-infrastructure-toronto": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "EnD-Diffusers/Porcelain-Dusk-Mix-V1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Firefly_Image2": {
+          "n": 75,
+          "detected": 1.0
+        },
+        "GALIP": {
+          "n": 51,
+          "detected": 0.9019607843137255
+        },
+        "GPT-4o-image": {
+          "n": 57,
+          "detected": 1.0
+        },
+        "Grok-Aurora": {
+          "n": 56,
+          "detected": 0.9107142857142857
+        },
+        "Haya44/shrt-finetune": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "HiDream-I1": {
+          "n": 41,
+          "detected": 1.0
+        },
+        "Hourglass": {
+          "n": 75,
+          "detected": 0.6266666666666667
+        },
+        "HunyuanImage2.1": {
+          "n": 9,
+          "detected": 1.0
+        },
+        "IDK-ab0ut/Yiffymix_v36": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "IDK-ab0ut/Yiffymix_v40": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "IDK-ab0ut/Yiffymix_v41": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "IdeogramV1": {
+          "n": 50,
+          "detected": 0.98
+        },
+        "IdeogramV3": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Imagen4-Ultra-2505": {
+          "n": 53,
+          "detected": 1.0
+        },
+        "Imagen4-Ultra-2507": {
+          "n": 28,
+          "detected": 0.9642857142857143
+        },
+        "JamesFlare/pastel-mix": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "Janus-7B": {
+          "n": 52,
+          "detected": 0.9423076923076923
+        },
+        "KORguy/textual_inversion_shirt": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "LCM_lora_sdv15": {
+          "n": 51,
+          "detected": 1.0
+        },
+        "LCM_lora_ssd1b": {
+          "n": 50,
+          "detected": 0.96
+        },
+        "LieDeath/MergeStove2.5D": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Linaqruf/animagine-xl": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Linaqruf/animagine-xl-2.0": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Lumina": {
+          "n": 26,
+          "detected": 1.0
+        },
+        "Masagin/Deliberate": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "MidjourneyV5_2": {
+          "n": 50,
+          "detected": 1.0
+        },
+        "MohitSK/RealisticComicBook": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "OFT/MODEL_SD15_RockRaiderRuby_v01": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "RecraftV2": {
+          "n": 55,
+          "detected": 0.9818181818181818
+        },
+        "RecraftV3": {
+          "n": 22,
+          "detected": 1.0
+        },
+        "Reve-Halfmoon": {
+          "n": 34,
+          "detected": 0.9705882352941176
+        },
+        "Roy61/textual_inversion_H3D": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Roy61/textual_inversion_H3D_numVector5": {
+          "n": 4,
+          "detected": 0.5
+        },
+        "Runway-Frames": {
+          "n": 50,
+          "detected": 0.96
+        },
+        "Ryzan/fantasy-diffusion-v0": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Ryzan/fantasy-diffusion-v1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "SD3": {
+          "n": 59,
+          "detected": 0.9491525423728814
+        },
+        "Seedream3": {
+          "n": 42,
+          "detected": 1.0
+        },
+        "Seedream4": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Shaleny/my-pet-dog-xzg": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Sygil/Sygil-Diffusion": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "TopdeckingLands/ArtOfMtg_V1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "VegaKH/Ultraskin": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Wan2.2": {
+          "n": 6,
+          "detected": 1.0
+        },
+        "WarriorMama777/AbyssOrangeMix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "WarriorMama777/AbyssOrangeMix2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/3DKX2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/3DKXv11": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/526": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Abased": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/AbsoluteReality": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/AnythingRemix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/AnythingV3-768": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/AnythingV4-768": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/ArcticFowl": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Aurora": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/BaronMix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/BeenYou": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/CuteFurry": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/CutesyAnime": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/DaintyMix": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Darkside": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/DeliShaper": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/Deliberate2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/DreamAnything": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/DreamWorks": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Dreamscapes_n_Dragonfire_v2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Dreamsphere": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/DucHaiten-FANCYxFANCY": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/DucHaiten-GoldenLife": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/DucHaitenAnime768": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/FotoPhoto": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/GOLDFish": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Gacha": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "Yntec/GalenaVAE": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/HassanBlend12": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/Hassanim": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/IdleFancy": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/IsThisArt": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Jackpot": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/KIDSILLUSTRATIONS": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Kitsch-In-Sync": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/KomowataHaruka": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/La-dee-dah-.-_": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/LeyLines": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Looking-Glass": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/LuckyStrike": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/MeinaAlter": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/NaughtyChildren": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/Nostalgic": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/NovelAIRemix": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/PotaytoPotahto": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/QToriReloaded": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Reddit": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "Yntec/Reliberate": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/SQUEE": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "Yntec/SamaritanDoesArt": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Shirayuki": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/SillySymphonies": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Splash": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Stuff": {
+          "n": 5,
+          "detected": 0.8
+        },
+        "Yntec/SuperCuteRemix": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Tantrum": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "Yntec/TheDarkNight": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Toonify2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/Wonderland": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/WoopWoopRemix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/YiffyMix": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "Yntec/Yuzu": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/animeTWO": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/edgeOfRealism": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/epiCCartoon": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/humu": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/iComixRemix": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "Yntec/iffyMix": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/photoMovieRealistic": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "Yntec/photoMovieX": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/pineappleAnimeMix": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "Yntec/sexyToons": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "alea31415/onimai-characters": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "aliyualisa/model": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "arpita22/my-pet-dog-rog": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "ashishwaghule/my-pet-dog-ash": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "bguisard/stable-diffusion-nano-2-1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "briannlongzhao/0": {
+          "n": 5,
+          "detected": 0.8
+        },
+        "briannlongzhao/2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "briannlongzhao/textual_inversion": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "cgburgos/sdxl-1-0-base": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "chaitanyakusumanchi/chaitanya_photorealism": {
+          "n": 5,
+          "detected": 0.8
+        },
+        "cosc/sketchstyle-cutesexyrobutts": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "danbochman/ccxl": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "deepghs/animefull-latest": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "divyansh-jain3/my-pet-dog-xzg": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "doohickey/neopian-diffusion": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "dream-textures/texture-diffusion": {
+          "n": 5,
+          "detected": 0.8
+        },
+        "employelalisa/min": {
+          "n": 6,
+          "detected": 1.0
+        },
+        "gsdf/Counterfeit-V2.0": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "gsdf/Counterfeit-V2.5": {
+          "n": 2,
+          "detected": 1.0
+        },
+        "hangeol/textual_inversion_cat": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "haor/Evt_V4-preview": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "kalebanana/textual_inversion_mvtec": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "kamillaova/epiCRealism": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "kandinsky_2_2": {
+          "n": 75,
+          "detected": 0.9866666666666667
+        },
+        "kvikontent_midjourney_v6": {
+          "n": 75,
+          "detected": 0.9333333333333333
+        },
+        "lewdryuna/A-Rainier": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "liaobh/textual_inversion_cat": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "livingbox/bedroom-model-v2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "livingbox/bugatti-evo-03": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "livingbox/modern-08-feb": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "livingbox/modern-29-jan": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "livingbox/modern-style-v3": {
+          "n": 2,
+          "detected": 0.5
+        },
+        "livingbox/modern-style-v4": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "mlpc-lab/TokenCompose_SD14_A": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "naclbit/trinart_characters_19.2m_stable_diffusion_v1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "naclbit/trinart_stable_diffusion_v2": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "nota-ai/bk-sdm-small": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "selshiya/teapot": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "sheshenin/shshnnphoto": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "simbolo-ai/enchanted-bagan-small": {
+          "n": 3,
+          "detected": 0.3333333333333333
+        },
+        "sohamm/my-pet-dog": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "soltustik/textual_inversion_cat": {
+          "n": 4,
+          "detected": 0.75
+        },
+        "steb6/textual_inversion_cat": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "swl-models/toooajk-yagurumagiku-v3-dreambooth": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "swl-models/xiaolxl-guofeng-v1": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "swl-models/xiaolxl-guofeng-v2": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "swl-models/xiaolxl-guofeng-v3": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "tensor-diffusion/AsianRealistic_SDLife_ChiasedammeV9.0": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "tensor-diffusion/Dark-Sushi-2.5D": {
+          "n": 3,
+          "detected": 1.0
+        },
+        "tensor-diffusion/chilloutmix-NI": {
+          "n": 5,
+          "detected": 1.0
+        },
+        "vseetharamamugeraya/panda-artist": {
+          "n": 4,
+          "detected": 1.0
+        },
+        "yehiaserag/anime-pencil-diffusion": {
+          "n": 3,
+          "detected": 0.6666666666666666
+        },
+        "real:Commons:Asus Zenfone 9": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Canon EOS 200D": {
+          "n": 1,
+          "correct": 0.0
+        },
+        "real:Commons:Canon EOS 250D": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Canon EOS 80D": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Canon EOS 850D": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Canon EOS R": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Canon EOS R5 Mark II": {
+          "n": 2,
+          "correct": 0.5
+        },
+        "real:Commons:Canon PowerShot G5 X Mark II": {
+          "n": 2,
+          "correct": 0.0
+        },
+        "real:Commons:Canon PowerShot G7 X Mark III": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Fairphone 3": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Fairphone 5": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Fujifilm X-E4": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Fujifilm X-H2": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Fujifilm X-T100": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Fujifilm X-T30": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Fujifilm X100V": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 10 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 2": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 3a": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 4": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 4a": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 5": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 5a": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 7a": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 8": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 8a": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 9": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 9 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Google Pixel 9 Pro XL": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Honor 90": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Huawei Mate 10 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Huawei P20": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Huawei P20 Pro": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Huawei P30": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Huawei P30 Lite": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Huawei P40 Pro": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Huawei Pura 70 Ultra": {
+          "n": 1,
+          "correct": 0.0
+        },
+        "real:Commons:Motorola Edge 60 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Motorola Moto G7": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Motorola Moto G9 Plus": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Nikon D3500": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Nikon D500": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Nikon D780": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Nikon Z 6 II": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Nikon Z fc": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Nokia 7 Plus": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Nokia 8": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Nothing Phone (2)": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:OM System OM-1": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Olympus E-M10 Mark III": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Olympus E-M10 Mark IV": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Olympus PEN-F": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:OnePlus 12R": {
+          "n": 4,
+          "correct": 1.0
+        },
+        "real:Commons:OnePlus 6T": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:OnePlus 7T": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:OnePlus 8": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:OnePlus 8 Pro": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:OnePlus 8T": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Oppo Find X5 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Panasonic Lumix DC-GX9": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Realme GT 2 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Ricoh GR IIIx": {
+          "n": 1,
+          "correct": 0.0
+        },
+        "real:Commons:Samsung Galaxy A16": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy A20": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy A34 5G": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy A35 5G": {
+          "n": 3,
+          "correct": 0.6666666666666666
+        },
+        "real:Commons:Samsung Galaxy A50": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy A52": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy A52s 5G": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy A71": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy A72": {
+          "n": 2,
+          "correct": 0.5
+        },
+        "real:Commons:Samsung Galaxy M31": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy Note 10+": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy Note 20 Ultra 5G": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy Note 8": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy Note 9": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S10": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S10+": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S10e": {
+          "n": 1,
+          "correct": 0.0
+        },
+        "real:Commons:Samsung Galaxy S20 FE": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S20 Ultra 5G": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S21 FE 5G": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S23 FE": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S24 FE": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S25": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S25 Edge": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S8": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy S9+": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy Z Flip3 5G": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Samsung Galaxy Z Fold4": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Sony ILCE-7M3": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Sony Xperia 1 IV": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Sony Xperia 5 II": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Sony Xperia XZ1": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Vivo X100 Pro": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi 12": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi 13T": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi 13T Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi 15": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Mi 10": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Mi 9": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Mi 9T": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Redmi 10A": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Redmi Note 10 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Redmi Note 11": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Redmi Note 7": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:Xiaomi Redmi Note 9 Pro": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 11": {
+          "n": 4,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 11 Pro": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 12": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 13 Pro": {
+          "n": 3,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 14 Plus": {
+          "n": 2,
+          "correct": 0.5
+        },
+        "real:Commons:iPhone 15 Plus": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 15 Pro": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 16": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 16 Pro Max": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 17": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 17 Pro Max": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone 8 Plus": {
+          "n": 1,
+          "correct": 0.0
+        },
+        "real:Commons:iPhone Air": {
+          "n": 2,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone SE (3rd generation)": {
+          "n": 1,
+          "correct": 0.0
+        },
+        "real:Commons:iPhone X": {
+          "n": 2,
+          "correct": 0.5
+        },
+        "real:Commons:iPhone XR": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone XS": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:Commons:iPhone XS Max": {
+          "n": 1,
+          "correct": 1.0
+        },
+        "real:LAION": {
+          "n": 826,
+          "correct": 0.9249394673123487
+        },
+        "real:N/A": {
+          "n": 1200,
+          "correct": 0.9675
+        },
+        "real:coco": {
+          "n": 25,
+          "correct": 1.0
+        },
+        "real:ffhq": {
+          "n": 50,
+          "correct": 0.52
+        },
+        "real:imagenet": {
+          "n": 49,
+          "correct": 0.9591836734693877
+        }
+      }
+    },
+    "heldout": {
+      "n": 4219,
+      "accuracy": 0.9616022754207159,
+      "ece": 0.007761099110228313,
+      "auc": 0.9916879757680862,
+      "per_group": {
+        "Dalle3": {
+          "n": 301,
+          "detected": 1.0
+        },
+        "FLUX-dev": {
+          "n": 300,
+          "detected": 0.9666666666666667
+        },
+        "FLUX-schnell": {
+          "n": 301,
+          "detected": 0.9435215946843853
+        },
+        "Firefly_Image3": {
+          "n": 302,
+          "detected": 0.9933774834437086
+        },
+        "IdeogramV2": {
+          "n": 300,
+          "detected": 0.9366666666666666
+        },
+        "Imagen3": {
+          "n": 300,
+          "detected": 0.98
+        },
+        "LCM_lora_sdxl": {
+          "n": 300,
+          "detected": 0.9266666666666666
+        },
+        "MidjourneyV6_1": {
+          "n": 323,
+          "detected": 0.978328173374613
+        },
+        "stable_cascade": {
+          "n": 300,
+          "detected": 0.9966666666666667
+        },
+        "real:LAION": {
+          "n": 1492,
+          "correct": 0.9477211796246648
+        }
+      }
+    },
+    "heldout-hard": {
+      "n": 4219,
+      "accuracy": 0.9336335624555582,
+      "ece": 0.01596615544199572,
+      "auc": 0.9784534753743471,
+      "per_group": {
+        "Dalle3": {
+          "n": 301,
+          "detected": 0.9800664451827242
+        },
+        "FLUX-dev": {
+          "n": 300,
+          "detected": 0.8833333333333333
+        },
+        "FLUX-schnell": {
+          "n": 301,
+          "detected": 0.8770764119601329
+        },
+        "Firefly_Image3": {
+          "n": 302,
+          "detected": 0.9801324503311258
+        },
+        "IdeogramV2": {
+          "n": 300,
+          "detected": 0.9233333333333333
+        },
+        "Imagen3": {
+          "n": 300,
+          "detected": 0.98
+        },
+        "LCM_lora_sdxl": {
+          "n": 300,
+          "detected": 0.9866666666666667
+        },
+        "MidjourneyV6_1": {
+          "n": 323,
+          "detected": 0.9597523219814241
+        },
+        "stable_cascade": {
+          "n": 300,
+          "detected": 0.9966666666666667
+        },
+        "real:LAION": {
+          "n": 1492,
+          "correct": 0.9001340482573726
+        }
+      }
+    },
+    "heldout2": {
+      "n": 2313,
+      "accuracy": 0.6502377864245569,
+      "ece": 0.2573598502417225,
+      "auc": 0.852208895591684,
+      "per_group": {
+        "FLUX.2": {
+          "n": 300,
+          "detected": 0.42
+        },
+        "FLUX.2-dev": {
+          "n": 41,
+          "detected": 1.0
+        },
+        "FLUX.2-flex": {
+          "n": 40,
+          "detected": 1.0
+        },
+        "FLUX.2-pro": {
+          "n": 66,
+          "detected": 0.9848484848484849
+        },
+        "GPT Image 2": {
+          "n": 300,
+          "detected": 0.30333333333333334
+        },
+        "Nano Banana 2": {
+          "n": 300,
+          "detected": 0.4066666666666667
+        },
+        "NanoBanana": {
+          "n": 40,
+          "detected": 0.9
+        },
+        "NanoBananaPro": {
+          "n": 36,
+          "detected": 0.9722222222222222
+        },
+        "Qwen Image 2.1": {
+          "n": 300,
+          "detected": 0.3433333333333333
+        },
+        "real:zr:Hybrid": {
+          "n": 300,
+          "correct": 0.9766666666666667
+        },
+        "real:zr:Structure": {
+          "n": 292,
+          "correct": 0.9965753424657534
+        },
+        "real:zr:Texture": {
+          "n": 298,
+          "correct": 0.8758389261744967
+        }
+      }
+    },
+    "heldout2-hard": {
+      "n": 2313,
+      "accuracy": 0.5793341980112409,
+      "ece": 0.31731537823237954,
+      "auc": 0.6594258055856042,
+      "per_group": {
+        "FLUX.2": {
+          "n": 300,
+          "detected": 0.35
+        },
+        "FLUX.2-dev": {
+          "n": 41,
+          "detected": 1.0
+        },
+        "FLUX.2-flex": {
+          "n": 40,
+          "detected": 1.0
+        },
+        "FLUX.2-pro": {
+          "n": 66,
+          "detected": 0.9393939393939394
+        },
+        "GPT Image 2": {
+          "n": 300,
+          "detected": 0.15
+        },
+        "Nano Banana 2": {
+          "n": 300,
+          "detected": 0.3566666666666667
+        },
+        "NanoBanana": {
+          "n": 40,
+          "detected": 0.95
+        },
+        "NanoBananaPro": {
+          "n": 36,
+          "detected": 0.9722222222222222
+        },
+        "Qwen Image 2.1": {
+          "n": 300,
+          "detected": 0.27
+        },
+        "real:zr:Hybrid": {
+          "n": 300,
+          "correct": 0.9866666666666667
+        },
+        "real:zr:Structure": {
+          "n": 292,
+          "correct": 0.934931506849315
+        },
+        "real:zr:Texture": {
+          "n": 298,
+          "correct": 0.7281879194630873
+        }
+      }
+    },
+    "local": {
+      "n": 21,
+      "accuracy": 0.9047619047619048,
+      "ece": 0.15897470712661743,
+      "auc": 0.9363636363636363,
+      "per_group": {
+        "local-ai": {
+          "n": 10,
+          "detected": 1.0
+        },
+        "real:local": {
+          "n": 11,
+          "correct": 0.8181818181818182
+        }
+      }
+    },
+    "local-hard": {
+      "n": 21,
+      "accuracy": 0.8571428571428571,
+      "ece": 0.06405885446639287,
+      "auc": 0.9454545454545454,
+      "per_group": {
+        "local-ai": {
+          "n": 10,
+          "detected": 0.8
+        },
+        "real:local": {
+          "n": 11,
+          "correct": 0.9090909090909091
+        }
+      }
+    }
+  }
+}

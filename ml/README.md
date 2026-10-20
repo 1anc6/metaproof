@@ -174,6 +174,153 @@ python extract_features.py --split local
 python train.py --backbone vitb16            # reports heldout, heldout2 and local
 ```
 
+### Real camera photos: v5 does not ship
+
+The test sets above hold small web JPEGs, so they say little about what users upload most:
+original files straight from a phone or camera. `real_photos.py` builds a calibration set
+of them, and `eval_realcal.py` scores it. This set is for testing only; never train on it.
+
+| Source | Licence | Devices | Photos |
+| --- | --- | --- | --- |
+| [VISION](https://lesc.dinfo.unifi.it/VISION/) (Shullani et al. 2017), "nat" images | CC BY-SA 4.0 | 35 phones, 2012–16 | 770 (22 per phone, seeded sample) |
+| [Wikimedia Commons](https://commons.wikimedia.org/), "Taken with …" categories | per file: CC BY-SA 4.0 (437), CC BY 4.0 (81), CC0 (75), PD (26), other CC BY/BY-SA (66) | 48 phones 2020–26 (iPhone 12–17, Galaxy S21–S26, Pixel 6–8, 7 OnePlus, Xiaomi, Honor, Huawei, Nothing, …), 14 cameras | 685 |
+
+Commons files must name the device in EXIF, have no editing software in it (Photoshop,
+Lightroom, Picasa, Snapseed, …), be at least 3,000 px on the long side and have a size that
+recurs for that device (crops have sizes of their own), with at most a third from one
+photographer. `manifest.jsonl` next to the files records each one's URL, licence, author and
+device. VISION is partly in Community Forensics' training data: 151 VISION photos nearly match
+a training image (CLIP cosine ≥ 0.95), so they are dropped, leaving **1,304 originals from 97
+devices**. Each also gets a social-media copy (long side 1,080 px, JPEG quality 75).
+Dresden (2009 compact cameras) and RAISE (three Nikon DSLRs, 2014) were not needed: the
+gap that matters is recent devices, which Commons covers with clear per-file licences.
+
+**v5 flags modern camera photos.** Real originals at or above each score:
+
+| Score ≥ | v3 originals | v3 social copies | v5 originals | v5 social copies |
+| --- | --- | --- | --- | --- |
+| 0.79 | 2.8% | 1.5% | 16.6% | 2.0% |
+| 0.91 | **0.6%** (≤ 1.2%) | **0.7%** (≤ 1.3%) | 9.4% | 0.8% |
+| 0.95 | 0.5% | 0.1% | 5.8% | 0.2% |
+| 0.99 | 0% | 0% | 1.3% | 0.1% |
+
+(Parentheses: upper end of the 95% Clopper-Pearson interval.) VISION's 2012–16 phones are never
+flagged by either model. The problem is recent hardware: at ≥ 0.95, v5 flags 8.5% of the
+2020–26 phone photos and 22% of the mirrorless/DSLR photos (Lumix G9 56%, Nikon Z 8 50%,
+OnePlus 12 27%), against 1.1% and 1.5% for v3 at its 0.91 threshold. Social copies are
+fine, because shrinking to 1,080 px removes the very detail the crops look at. So the
+crops learned "clean, sharp, noise-free pixels mean AI": every real image v5 trained on was
+a web-sized JPEG, while modern sensors and phone pipelines produce exactly that clean look
+at full size. This also explains the 2 of 11 OnePlus photos seen earlier.
+
+**No stricter rule rescues it.** Thresholds were chosen on half of the devices (by hash)
+and checked on the other half, requiring the zr real photos to stay at v3's level too:
+
+| Strong rule | Real originals flagged (all) | Social copies | Nano Banana 2 / GPT Image 2 / Qwen 2.1 / FLUX.2 caught | v1 test caught |
+| --- | --- | --- | --- | --- |
+| v3 ≥ 0.91 (live) | 0.6% (≤ 1.2%) | 0.7% (≤ 1.3%) | **8% / 5% / 5% / 18%** | 70% |
+| v5 ≥ 0.995 and v3 ≥ 0.5 (global and crops agree) | 0.5% (≤ 1.0%) | 0% | 5% / 4% / 2% / 8% | 59% |
+| v5 ≥ 0.995 alone | 0.6% (≤ 1.2%) | ≤ 0.1% | 5% / 4% / 2% / 8% | — |
+| v5 ≥ 0.95 alone (what was proposed) | 5.8% (≤ 7.2%) | 0.2% | 16% / 16% / 18% / 26% | — |
+
+Requiring every crop to agree found no threshold within the bar on the first half. Brought
+to v3's false-alarm rate on camera photos, v5 catches *fewer* new-generator images than v3,
+not more. Against camera originals (rather than the benchmark's web JPEGs) v5's AUC on the
+newest generators is 0.65–0.67, where v3 has 0.53–0.73: neither separates them, and the
+0.770 → 0.885 gain measured against web JPEGs does not hold for camera files. The live
+model, scored end to end on all 1,455 files with the backend's preprocessing, flags 0.5%
+(≤ 1.1%) of originals and 0.5% of social copies at 0.91: v3's band edges hold on camera
+photos and stay as they are.
+
+**Cost** (`bench_cpu.py`, ONNX Runtime, one thread, 10 photos of 5–50 MP): v3 takes 0.94 s
+on a laptop core, v5 2.67 s (2.9×; the forward passes dominate, the extra resize and JPEG
+round trip add about 0.15 s), and two crops 1.86 s (2.0×). With v3 at about 5 s on Render's
+free instance, v5 would take about 14 s and two crops about 10 s. Running crops only when
+v3 ≥ 0.5 would skip them for 90% of real photos but also for 75% of the newest generators'
+images, so it saves time only by giving up most of what the crops were for.
+
+**Recommendation: don't ship v5, with or without a stricter rule.** Keep v3 with its current
+bands. A full-resolution model is still the right direction (`probe_native.py`), but its head
+must learn from full-resolution *camera* photos as real examples: a disjoint Commons pull
+(other devices or other files than this set; `real_photos.py` already filters for unedited
+originals) plus the AI images at full size. Retrain v5 that way and re-run `eval_realcal.py`
+before considering it again. For Gemini/Nano Banana images, the signed C2PA credential
+remains the evidence that decides.
+
+```bash
+python real_photos.py vision --per-device 22    # ~3 GB, slow server (~1 hour)
+python real_photos.py commons --per-device 15   # ~4 GB
+python real_photos.py social                    # social-media copies
+python real_photos.py plan
+python extract_features.py --split realcal --features native
+python extract_features.py --split realcal-social --features native
+python eval_realcal.py --onnx                   # writes results_realcal.json
+python bench_cpu.py <photos...>
+```
+
+### v6: v5 retrained with camera originals as real examples, still does not ship
+
+`real_photos.py commons-train` pulls **2,067 unedited camera originals from 189 other
+devices** (1,711 phone photos, 356 camera photos; 2017–26; 950 photographers; same filters
+as above), none of them a device, file or photographer of the calibration set (the script
+checks all three against its manifests). `plan-train` adds them to `plan_train.json` as one
+`trainreal_` chunk per device, a tenth by content hash going to the calibration split, and
+`extract_features.py --split train --features native --only trainreal_` extracts them like
+every training image (random crop spots, JPEG quality and scale). So 1,867 of v6's ~21,200
+real training images and 199 of its calibration images are full-size camera files; nothing
+else changed. `train.py`'s duplicate guard now covers the realcal splits as well.
+
+**The camera false alarms are mostly gone:**
+
+| Real originals ≥ 0.95 | v5 | v6 |
+| --- | --- | --- |
+| All 1,304 | 5.8% | 0.8% (10, ≤ 1.4%) |
+| Mirrorless/DSLR (131) | 22% | 3.8% |
+| 2020–26 phones (554) | 8.5% | 0.9% |
+| Social copies (1,325) | 0.2% | 0.2% |
+
+**But the bar is not cleared.** With the same protocol (threshold chosen on half A of the
+devices, also requiring the benchmark's 890 real photos to stay at v3's rate), v6's strong
+threshold is 0.98:
+
+| Strong rule | Real originals flagged | Social copies | NB2 / GPT2 / Qwen 2.1 / FLUX.2 caught | Recompressed | v1 test caught / real flagged |
+| --- | --- | --- | --- | --- | --- |
+| v3 ≥ 0.91 (live) | 0.6% (≤ 1.2%) | 0.7% (≤ 1.3%) | **8% / 5% / 5% / 18%** | 18% / 4% / 4% / 8% | 70% / 1.3% |
+| v6 ≥ 0.98 | 0.2% (≤ 0.6%) | 0.1% (≤ 0.4%) | 7% / 7% / 7% / 15% | 6% / 1% / 0% / 0% | 73% / 0.3% |
+| v6 ≥ 0.97 (not chosen) | 0.4% (≤ 0.9%) | 0.1% (≤ 0.4%) | 11% / 10% / 10% / 19% | 8% / 1% / 1% / 1% | — |
+
+v6 at 0.98 catches more GPT Image 2 and Qwen images than v3 but fewer Nano Banana 2 and
+FLUX.2 images. At 0.97 it would catch more of all four, but the protocol rejects 0.97: it
+flags 3 of the 890 benchmark real photos where v3 flags 2. Take that as a tie, not a
+pass. The 0.97 gains are 1 to 5 points on 300 images per generator, within noise, and
+were found by looking at the whole test set. The recompressed copies (long side halved, JPEG
+quality 60) are where v6 clearly loses: 0–8% caught against v3's 4–18%. Once crops of real
+photos can be clean too, the full-resolution view stops helping on images whose detail
+has been compressed away. v6 does separate camera originals from the new generators better than
+either earlier model (AUC 0.76 / 0.70 / 0.81 / 0.78 for NB2 / GPT2 / Qwen / FLUX.2,
+against v5's 0.65–0.67 and v3's 0.53–0.73). The extra separation sits below the strong band,
+so at a threshold that keeps camera photos safe, little of it is left.
+
+`compare_heads.py` (≥ 0.95 on the web-image tests): v6 keeps most of v5's gains (heldout2
+AUC 0.852 vs v5 0.885 and v3 0.770; new generators 11–24% caught vs v5's 16–26% and v3's
+1–12%), and no longer flags your own real photos (`local`: 0 of 11, v5 2 of 11).
+
+**Recommendation: keep v3.** v6 is a much safer full-resolution model than v5, but it does not
+beat v3 where it counts. Not exported, and the backend is unchanged. Next steps, if
+the full-resolution path is pursued: more camera originals (a few thousand more, weighted
+up, so the head learns the camera look rather than ~10% of reals); full-size outputs of the
+newest generators for training; and a
+larger test set of the newest generators, so a 3-point gain can be told from noise.
+
+```bash
+python real_photos.py commons-train --per-device 14   # ~8 GB, ~3 hours (API-throttled)
+python real_photos.py plan-train                       # appends trainreal_ chunks to plan_train.json
+python extract_features.py --split train --features native --only trainreal_
+python train.py --backbone vitb16n                     # -> head_vitb16n.pt (kept as head_vitb16n.v6.pt)
+python eval_realcal.py --v5 head_vitb16n.v6.pt --out results_realcal_v6.json
+python compare_heads.py --heads v3=head_vitb16.v3.pt v5=head_vitb16n.v5.pt v6=head_vitb16n.v6.pt
+```
+
 Large files go to `D:/metaproof/data` (override with `METAPROOF_DATA`). Trained on an RTX 4050
 laptop GPU (6 GB); feature extraction is download-bound (~1 hour at 5 MB/s).
 

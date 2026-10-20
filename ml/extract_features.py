@@ -105,6 +105,10 @@ VARIANTS = {
 }
 VARIANTS["heldout2"] = VARIANTS["heldout"]  # newer generators, never seen in training
 VARIANTS["local"] = VARIANTS["heldout"]     # your own images
+# Real-photo calibration set (real_photos.py): original files and their social-media copies,
+# each exactly as the API would see it.
+VARIANTS["realcal"] = [("", lambda rng: (90, 1.0))]
+VARIANTS["realcal-social"] = VARIANTS["realcal"]
 
 
 def as_table(data: list[bytes], label: list[int], model: list[str], source: list[str]):
@@ -231,12 +235,15 @@ def main():
     ap.add_argument("--features", default="clip", choices=["clip", "native"],
                     help="clip: one 256 px view per image, for every backbone (v1-v3). "
                          "native: that view plus four full-resolution crops, ViT-B/16 only (v5)")
+    ap.add_argument("--only", default="",
+                    help="extract only chunks whose key starts with this, e.g. trainreal_")
     args = ap.parse_args()
     native = args.features == "native"
     # Feature set name -> backbone; "vitb16n" holds 5 views per image (global + 4 crops).
     feature_sets = {"vitb16n": "vitb16"} if native else {bb: bb for bb in BACKBONES}
 
     items = json.loads((DATA_DIR / f"plan_{args.split}.json").read_text())
+    items = [i for i in items if chunk_key(i).startswith(args.only)]
     tmp = DATA_DIR / "tmp"
     tmp.mkdir(exist_ok=True)
     outdirs = {}
