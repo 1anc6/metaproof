@@ -88,10 +88,11 @@
   --soft-bg: rgb(255 255 255 / 0.6); /* ghost buttons, wells */
   --soft-hover: rgb(255 255 255 / 0.9);
   --selected-bg: #fff;
-  --glow-1: rgb(240 140 170 / 0.55); /* pink, top right */
-  --glow-2: rgb(165 150 235 / 0.45); /* lilac, left */
-  --glow-3: rgb(250 190 130 / 0.5); /* peach, bottom */
-  --glow-4: rgb(205 235 80 / 0.3); /* lime, centre right */
+  /* Warm studio light on silver: champagne gold, a white haze, warm sand, a cool glint. */
+  --glow-1: rgb(226 186 110 / 0.55); /* champagne gold, top right */
+  --glow-2: rgb(255 255 255 / 0.75); /* white haze, left */
+  --glow-3: rgb(206 168 120 / 0.45); /* warm sand, bottom */
+  --glow-4: rgb(160 180 230 / 0.28); /* cool glint, centre right */
   --grain: 0.05;
 }
 :root[data-theme='dark'] {
@@ -117,10 +118,11 @@
   --soft-bg: rgb(255 255 255 / 0.08);
   --soft-hover: rgb(255 255 255 / 0.14);
   --selected-bg: rgb(255 255 255 / 0.14);
-  --glow-1: rgb(215 40 125 / 0.55); /* magenta */
-  --glow-2: rgb(110 70 230 / 0.4); /* violet */
-  --glow-3: rgb(30 175 95 / 0.45); /* green */
-  --glow-4: rgb(200 230 60 / 0.16); /* lime */
+  /* Charcoal lit by a gold lamp, with silver haze and a faint iridescent blue glint. */
+  --glow-1: rgb(218 170 82 / 0.45); /* gold, top right */
+  --glow-2: rgb(205 205 212 / 0.16); /* silver haze, left */
+  --glow-3: rgb(176 120 56 / 0.34); /* amber, bottom */
+  --glow-4: rgb(130 160 235 / 0.14); /* cool glint */
   --grain: 0.07;
 }
 
