@@ -23,7 +23,8 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 upload_limiter = SlidingWindowLimiter(get_settings().uploads_per_ip_per_hour)
 
 
-@router.get("/health", tags=["System"], summary="Health check")
+# HEAD too: uptime monitors (UptimeRobot) check with HEAD, and a 405 reads as an outage.
+@router.api_route("/health", methods=["GET", "HEAD"], tags=["System"], summary="Health check")
 def health() -> dict:
     return {"status": "ok"}
 
