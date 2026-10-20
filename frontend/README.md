@@ -1,6 +1,8 @@
 # MetaProof web
 
-React + TypeScript + Vite + Tailwind CSS v4. Dark "liquid glass" interface, responsive from
+React + TypeScript + Vite + Tailwind CSS v4. "Soft studio" interface in light and dark (frosted
+glass panels over drifting colour glows, gradient cards; ink, champagne gold and warm greys; tokens in `src/index.css`),
+responsive from
 phone to desktop.
 
 ```bash

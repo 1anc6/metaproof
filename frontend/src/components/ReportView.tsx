@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
 import { formatBytes, formatDateTime, formatType, formatWhen, shortHash } from '../lib/format'
 import { leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
-import { SignalDot, Thumb, VerdictBadge } from './ui'
+import { Meter, PanelTitle, SignalDot, Thumb, VerdictBadge } from './ui'
 import { ErrorLevel } from './ErrorLevel'
 
 export function ReportView({ job, filename }: { job: Job; filename?: string }) {
@@ -22,61 +22,68 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   return (
     <div className="stagger flex flex-col gap-6">
       {/* Verdict hero */}
-      <section className="glass animate-rise relative overflow-hidden rounded-[32px] p-5 sm:p-8">
-        <div
-          className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full opacity-25 blur-3xl"
-          style={{ background: v.color }}
-          aria-hidden
-        />
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
-          <Thumb sha={sha} className="aspect-square w-full max-w-[200px] shrink-0 rounded-3xl ring-1 ring-white/10 max-sm:mx-auto max-sm:max-w-[180px]" />
+      {/* The verdict on a gradient card in its own hue. */}
+      <section className={`mesh ${v.mesh} animate-rise rounded-xl`}>
+        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8">
+          <div className="frost w-full max-w-[220px] shrink-0 rounded-xl p-2 max-sm:mx-auto max-sm:max-w-[200px]">
+            <Thumb sha={sha} className="aspect-square w-full rounded-lg" />
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="eyebrow">Verdict</p>
-            <h1 className={`mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl ${v.text} print-dark`}>
+            <p className="font-dot text-[15px] font-bold text-white/80">Verdict</p>
+            <h1 className="print-dark mt-2 text-[44px] leading-[1] font-medium tracking-[-0.04em] sm:text-[64px]">
               {v.title}
             </h1>
             {lean && (
-              <p className="mt-2 font-display text-lg font-medium" style={{ color: lean.color }}>
+              <p className="frost mt-3 inline-flex rounded-full px-3.5 py-1 text-[15px] font-semibold">
                 leaning {lean.label}
               </p>
             )}
-            <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
+            <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-white/90">
               {summary}
             </p>
             <EvidenceChips job={job} verdict={verdict} />
-            {filename && <p className="mt-4 truncate text-sm text-ink">{filename}</p>}
-            <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[11px] text-faint">
-              <div>{formatType(job.media.mime_type)}</div>
-              <div>
-                {job.media.width}×{job.media.height}
-              </div>
-              <div>{formatBytes(job.media.size_bytes)}</div>
-              <div title={sha}>sha256 {shortHash(sha)}</div>
-              {job.finished_at && <div>{formatDateTime(job.finished_at)}</div>}
-            </dl>
           </div>
         </div>
+        <dl className="frost mx-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg px-5 py-4 sm:mx-5 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            ['File', filename ?? '—'],
+            ['Type', formatType(job.media.mime_type)],
+            ['Pixels', `${job.media.width}×${job.media.height}`],
+            ['Size', formatBytes(job.media.size_bytes)],
+            ['SHA-256', shortHash(sha)],
+            ['Analyzed', job.finished_at ? formatDateTime(job.finished_at) : '—'],
+          ].map(([k, val]) => (
+            <div key={k} className="min-w-0" title={k === 'SHA-256' ? sha : val}>
+              <dt className="text-[12px] text-white/70">{k}</dt>
+              <dd className="mt-0.5 truncate font-dot text-[16px] font-bold">{val}</dd>
+            </div>
+          ))}
+        </dl>
         <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Key findings */}
-        <section className="glass animate-rise rounded-[28px] p-5 sm:p-6">
-          <p className="eyebrow">Why</p>
-          <h2 className="mt-1 font-display text-lg font-semibold">Key findings</h2>
-          <ul className="stagger mt-4 flex flex-col divide-y divide-white/5">
-            {verdict.top_reasons.map((f) => (
-              <FindingRow key={f.code} finding={f} />
-            ))}
-          </ul>
+        <section className="panel animate-rise rounded-xl p-5 sm:p-6">
+          <PanelTitle eyebrow="Why" title="Key findings" />
+          {verdict.top_reasons.length === 0 ? (
+            <p className="mt-4 text-sm text-faint">
+              No single finding stood out. Every check is listed under analyzer details below.
+            </p>
+          ) : (
+            <ul className="stagger mt-4 flex flex-col divide-y divide-line">
+              {verdict.top_reasons.map((f) => (
+                <FindingRow key={f.code} finding={f} />
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* Evidence balance */}
-        <section className="glass animate-rise rounded-[28px] p-5 sm:p-6">
-          <p className="eyebrow">Evidence weight</p>
-          <h2 className="mt-1 font-display text-lg font-semibold">Balance of signals</h2>
+        <section className="panel animate-rise rounded-xl p-5 sm:p-6">
+          <PanelTitle eyebrow="Evidence weight" title="Balance of signals" />
           <EvidenceBars verdict={verdict} />
-          <p className="mt-5 text-xs leading-relaxed text-faint">
+          <p className="mt-5 text-[13px] leading-relaxed text-faint">
             {decisive(verdict)
               ? 'Decided by conclusive evidence, which outweighs everything else on its own.'
               : 'Weights add up the findings for each outcome. A verdict needs enough weight and a clear lead; otherwise MetaProof says inconclusive.'}
@@ -92,13 +99,13 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
 
       {/* Analyzer details */}
       <section className="flex flex-col gap-3">
-        <p className="eyebrow px-1">Analyzer details</p>
+        <p className="eyebrow px-2 pt-2">Analyzer details</p>
         {job.analyzers.map((a) => (
           <AnalyzerPanel key={a.analyzer} result={a} />
         ))}
       </section>
 
-      <p className="px-1 text-xs leading-relaxed text-faint">
+      <p className="px-1 text-[13px] leading-relaxed text-faint">
         MetaProof reports evidence, not absolute truth. Missing metadata or credentials are never
         counted against a file. Engine {verdict.engine_version} · pipeline {job.pipeline_version}.
       </p>
@@ -131,12 +138,12 @@ function Actions({ sha, title }: { sha: string; title: string }) {
     }
   }
   return (
-    <div className="no-print relative mt-6 flex flex-wrap gap-2 border-t border-white/5 pt-5">
-      <button type="button" onClick={share} className="glass btn-ghost">
+    <div className="no-print flex flex-wrap gap-2 px-3 pt-4 pb-5 sm:px-5">
+      <button type="button" onClick={share} className="btn-ghost">
         {nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
         {nativeShare ? 'Share report' : 'Copy share link'}
       </button>
-      <button type="button" onClick={() => window.print()} className="glass btn-ghost">
+      <button type="button" onClick={() => window.print()} className="btn-ghost">
         <Printer className="size-4" /> Save as PDF
       </button>
       <Link to="/new" className="btn-primary ml-auto max-sm:w-full">
@@ -152,9 +159,10 @@ function FindingRow({ finding }: { finding: Finding }) {
     <li className="animate-rise flex gap-3 py-3.5 first:pt-1 last:pb-1">
       <SignalDot signal={finding.signal} />
       <div className="min-w-0">
-        <p className="text-sm leading-relaxed text-ink">{finding.message}</p>
-        <p className="mt-1 font-mono text-[10px] tracking-wide text-faint uppercase">
-          {s.label} · {STRENGTH_LABEL[finding.strength]}
+        <p className="text-[15px] leading-relaxed text-ink">{finding.message}</p>
+        <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] font-medium text-faint">
+          {s.label}
+          <span className="tag">{STRENGTH_LABEL[finding.strength]}</span>
         </p>
       </div>
     </li>
@@ -183,17 +191,14 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
         const color = SIGNALS[key].color
         return (
           <li key={key}>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted">{label}</span>
-              <span className="font-mono text-faint tabular-nums">
+            <div className="flex items-baseline justify-between text-[15px]">
+              <span className="font-medium text-muted">{label}</span>
+              <span className="font-dot text-[18px] font-bold text-ink">
                 {key === settled ? 'conclusive' : value.toFixed(1)}
               </span>
             </div>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-              <div
-                className="animate-grow h-full origin-left rounded-full"
-                style={{ width: `${(value / max) * 100}%`, background: color, boxShadow: `0 0 12px ${color}` }}
-              />
+            <div className="relative mt-2 h-2.5 overflow-hidden rounded-full bg-line">
+              <div className="animate-grow h-full origin-left rounded-full" style={{ width: `${(value / max) * 100}%`, background: color }} />
             </div>
           </li>
         )
@@ -230,19 +235,19 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
   const meta = ANALYZER_META[result.analyzer] ?? { title: result.analyzer, icon: Fingerprint, blurb: '' }
   const Icon = meta.icon
   return (
-    <div className="glass animate-rise rounded-3xl">
+    <div className="panel animate-rise rounded-xl">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className="flex w-full items-center gap-3 p-4 text-left sm:p-5"
       >
-        <span className="glass grid size-10 shrink-0 place-items-center rounded-2xl">
+        <span className="well size-11">
           <Icon className="size-4" strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{meta.title}</p>
-          <p className="truncate text-xs text-faint">
+          <p className="text-[16px] font-semibold">{meta.title}</p>
+          <p className="truncate text-[13px] text-faint">
             {result.ok ? `${result.findings.length} finding${result.findings.length === 1 ? '' : 's'} · ${result.duration_ms} ms` : 'Analyzer error'}
             <span className="max-sm:hidden"> · {meta.blurb}</span>
           </p>
@@ -257,7 +262,7 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
         inert={!open}
       >
       <div className="min-h-0 overflow-hidden">
-      <div className={`border-t border-white/5 px-4 pt-4 pb-5 transition-opacity duration-300 sm:px-5 print:opacity-100 ${open ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`border-t border-line px-4 pt-4 pb-5 transition-opacity duration-300 sm:px-5 print:opacity-100 ${open ? 'opacity-100' : 'opacity-0'}`}>
         {!result.ok ? (
           <p className="text-sm text-ai">{result.error}</p>
         ) : result.analyzer === 'metadata' ? (
@@ -271,7 +276,7 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
         ) : result.analyzer === 'detector' ? (
           <DetectorDetails raw={result.raw} />
         ) : (
-          <pre className="overflow-x-auto font-mono text-xs text-muted">{JSON.stringify(result.raw, null, 2)}</pre>
+          <pre className="overflow-x-auto font-mono text-[13px] text-muted">{JSON.stringify(result.raw, null, 2)}</pre>
         )}
       </div>
       </div>
@@ -285,7 +290,7 @@ function Fields({ rows }: { rows: [string, ReactNode][] }) {
     <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
       {rows.map(([k, v]) => (
         <div key={k} className="min-w-0">
-          <dt className="text-[11px] text-faint">{k}</dt>
+          <dt className="text-[12px] text-faint">{k}</dt>
           <dd className="mt-0.5 truncate text-sm text-ink" title={typeof v === 'string' ? v : undefined}>
             {v ?? <span className="text-faint">—</span>}
           </dd>
@@ -319,15 +324,15 @@ function MetadataDetails({ raw }: { raw: Record<string, unknown> }) {
         ]}
       />
       {exiftool && Object.keys(exiftool).length > 0 && (
-        <details className="group rounded-2xl border border-white/5 bg-black/20">
-          <summary className="cursor-pointer list-none px-4 py-3 text-xs text-muted hover:text-ink">
+        <details className="group rounded-lg border border-line bg-canvas">
+          <summary className="cursor-pointer list-none px-4 py-3 text-[13px] text-muted hover:text-ink">
             All {Object.keys(exiftool).length} ExifTool tags
           </summary>
           <div className="max-h-80 overflow-auto px-4 pb-4">
-            <table className="w-full font-mono text-[11px]">
+            <table className="w-full font-mono text-[12px]">
               <tbody>
                 {Object.entries(exiftool).map(([k, v]) => (
-                  <tr key={k} className="border-t border-white/5">
+                  <tr key={k} className="border-t border-line">
                     <td className="py-1.5 pr-4 align-top text-faint">{k}</td>
                     <td className="py-1.5 break-all text-muted">{String(v)}</td>
                   </tr>
@@ -409,15 +414,15 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
         says nothing about whether the picture is real.
       </p>
       <Fields rows={rows} />
-      {typeof raw.parse_note === 'string' && <p className="text-xs text-faint">{raw.parse_note}</p>}
+      {typeof raw.parse_note === 'string' && <p className="text-[13px] text-faint">{raw.parse_note}</p>}
       {segments.length > 0 && (
-        <div className="rounded-2xl border border-white/5 bg-black/20">
-          <p className="px-4 pt-3 text-xs text-muted">
+        <div className="rounded-lg border border-line bg-canvas">
+          <p className="px-4 pt-3 text-[13px] text-muted">
             {segments.reduce((n, s) => n + s.count, 0)} {units} in file order
             {typeof raw.segments_truncated === 'number' && `, first ${segments.length} rows shown`}
           </p>
           <div className="max-h-80 overflow-auto px-4 pb-3">
-            <table className="w-full font-mono text-[11px]">
+            <table className="w-full font-mono text-[12px]">
               <thead>
                 <tr className="text-left text-faint">
                   <th className="py-1.5 pr-4 font-normal">{unit}</th>
@@ -427,7 +432,7 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
               </thead>
               <tbody>
                 {segments.map((s) => (
-                  <tr key={s.offset} className="border-t border-white/5">
+                  <tr key={s.offset} className="border-t border-line">
                     <td className="py-1.5 pr-4 align-top whitespace-nowrap text-ink">
                       {s.name}
                       {s.count > 1 && <span className="text-faint"> ×{s.count}</span>}
@@ -446,17 +451,17 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
         </div>
       )}
       {jpeg?.quant_tables && jpeg.quant_tables.length > 0 && (
-        <details className="group rounded-2xl border border-white/5 bg-black/20">
-          <summary className="cursor-pointer list-none px-4 py-3 text-xs text-muted hover:text-ink">
+        <details className="group rounded-lg border border-line bg-canvas">
+          <summary className="cursor-pointer list-none px-4 py-3 text-[13px] text-muted hover:text-ink">
             {jpeg.quant_tables.length} quantization table{jpeg.quant_tables.length === 1 ? '' : 's'}
           </summary>
           <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2">
             {jpeg.quant_tables.map((t) => (
               <div key={t.id}>
-                <p className="mb-1.5 text-[11px] text-faint">Table {t.id}</p>
-                <div className="grid grid-cols-8 gap-px font-mono text-[10px] text-muted tabular-nums">
+                <p className="mb-1.5 text-[12px] text-faint">Table {t.id}</p>
+                <div className="grid grid-cols-8 gap-px font-mono text-[11px] text-muted tabular-nums">
                   {t.values.map((v, i) => (
-                    <span key={i} className="bg-white/[0.03] py-0.5 text-center">{v}</span>
+                    <span key={i} className="bg-raised py-0.5 text-center">{v}</span>
                   ))}
                 </div>
               </div>
@@ -492,14 +497,14 @@ function ActionList({ title, actions }: { title: string; actions: C2paAction[] }
   if (actions.length === 0) return null
   return (
     <div>
-      <p className="text-[11px] text-faint">{title}</p>
+      <p className="text-[12px] text-faint">{title}</p>
       <ol className="mt-2 flex flex-col gap-1.5">
         {actions.map((a, i) => (
           <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm">
-            <span className="font-mono text-xs text-faint">{i + 1}.</span>
+            <span className="font-mono text-[13px] text-faint">{i + 1}.</span>
             <span>{a.action}</span>
-            {a.digital_source_type && <span className="text-xs text-muted">· {a.digital_source_type}</span>}
-            {a.software_agent && <span className="text-xs text-faint">· {a.software_agent}</span>}
+            {a.digital_source_type && <span className="text-[13px] text-muted">· {a.digital_source_type}</span>}
+            {a.software_agent && <span className="text-[13px] text-faint">· {a.software_agent}</span>}
           </li>
         ))}
       </ol>
@@ -586,25 +591,21 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
     <div className="flex flex-col gap-4">
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <span className="font-display text-lg font-semibold" style={{ color }}>
+          <span className="text-lg font-semibold tracking-tight" style={{ color }}>
             {label}
           </span>
-          <span className="font-mono text-xs text-faint tabular-nums">score {pct}%</span>
+          <span className="font-dot text-[18px] font-bold text-ink">{pct}%</span>
         </div>
-        <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color, boxShadow: `0 0 14px ${color}` }} />
-          {/* band edges used by the evidence engine */}
-          {[bands.real, bands.weak, bands.strong].map((t) => (
-            <span key={t} className="absolute top-0 h-full w-px bg-white/25" style={{ left: `${t}%` }} />
-          ))}
-        </div>
-        <div className="mt-1 flex justify-between font-mono text-[10px] text-faint">
-          <span>camera-like</span>
-          <span>unsure</span>
-          <span>AI</span>
-        </div>
+        {/* ticks mark the band edges the evidence engine used */}
+        <Meter
+          value={pct / 100}
+          color={color}
+          ticks={[bands.real, bands.weak, bands.strong].map((t) => t / 100)}
+          labels={['camera-like', 'unsure', 'AI']}
+          className="mt-3"
+        />
       </div>
-      <p className="text-xs leading-relaxed text-faint">
+      <p className="text-[13px] leading-relaxed text-faint">
         A calibrated classifier on CLIP image features, tested on generators it never saw during
         training. It is one signal among several: strong provenance evidence outweighs it, and it
         cannot detect local edits to real photos. {KNOWN_GAP}
@@ -635,26 +636,26 @@ function EvidenceChips({ job, verdict }: { job: Job; verdict: Verdict }) {
   return (
     <div className="mt-4 flex flex-col items-start gap-2">
       {source && verdict.label !== 'inconclusive' && (
-        <span className="glass inline-flex items-start gap-2 rounded-2xl px-3 py-1.5 text-xs">
-          <ShieldCheck className="mt-px size-3.5 shrink-0" />
+        <span className="frost inline-flex items-start gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+          <ShieldCheck className="mt-px size-4 shrink-0" />
           <span>
-            <span className="text-muted">{settled ? 'Decided by ' : 'Mainly from '}</span>
+            <span className="font-medium text-white/75">{settled ? 'Decided by ' : 'Mainly from '}</span>
             {source}
           </span>
         </span>
       )}
       {reading && (
-        <span className="glass inline-flex items-start gap-2 rounded-2xl px-3 py-1.5 text-xs">
-          <Sparkles className="mt-px size-3.5 shrink-0" style={{ color: reading.band.color }} />
+        <span className="frost inline-flex items-start gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+          <Sparkles className="mt-px size-4 shrink-0" />
           <span>
-            <span className="text-muted">Pixel detector: </span>
-            <span style={{ color: reading.band.color }}>{reading.band.label}</span>
+            <span className="font-medium text-white/75">Pixel detector: </span>
+            {reading.band.label}
           </span>
         </span>
       )}
-      {missedAi && <p className="max-w-lg text-xs leading-relaxed text-faint">{KNOWN_GAP}</p>}
+      {missedAi && <p className="max-w-lg text-[13px] leading-relaxed text-white/80">{KNOWN_GAP}</p>}
       {outweighed && (
-        <p className="max-w-lg text-xs leading-relaxed text-faint">
+        <p className="max-w-lg text-[13px] leading-relaxed text-white/80">
           The pixel detector flags this image, but stronger evidence outweighs it. It also flags some real
           photos, especially heavily filtered ones.
         </p>
@@ -678,22 +679,22 @@ function SeenBefore({ sha }: { sha: string }) {
   }, [sha])
   if (!items || items.length === 0) return null
   return (
-    <section className="glass animate-rise rounded-[28px] p-5 sm:p-6">
-      <p className="eyebrow">Seen before</p>
-      <h2 className="mt-1 font-display text-lg font-semibold">
-        {items.length === 1 ? 'A near-identical image was analyzed before' : `${items.length} near-identical images were analyzed before`}
-      </h2>
-      <p className="mt-1 text-xs text-faint">
+    <section className="panel animate-rise rounded-xl p-5 sm:p-6">
+      <PanelTitle
+        eyebrow="Seen before"
+        title={items.length === 1 ? 'A near-identical image was analyzed before' : `${items.length} near-identical images were analyzed before`}
+      />
+      <p className="mt-1 text-[13px] text-faint">
         Resized, cropped or recompressed copies have a different file hash, so MetaProof also compares what the images look like.
       </p>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {items.map((m) => (
           <li key={m.sha256}>
-            <Link to={`/report/${m.sha256}`} className="flex items-center gap-3 rounded-2xl p-2 transition hover:bg-white/[0.04]">
+            <Link to={`/report/${m.sha256}`} className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-raised">
               <Thumb sha={m.sha256} className="size-12 shrink-0 rounded-xl" />
               <div className="min-w-0 flex-1">
-                <p className="font-mono text-xs text-muted">{Math.round(m.similarity * 100)}% similar</p>
-                <p className="text-xs text-faint">First seen {formatWhen(m.first_seen_at)}</p>
+                <p className="font-mono text-[13px] text-muted">{Math.round(m.similarity * 100)}% similar</p>
+                <p className="text-[13px] text-faint">First seen {formatWhen(m.first_seen_at)}</p>
               </div>
               <VerdictBadge label={m.label} />
             </Link>
@@ -713,10 +714,10 @@ const SEARCH_TOOLS = [
 /** Inconclusive is the most common verdict, so it should leave the reader with something to do. */
 function NextSteps() {
   return (
-    <section className="glass animate-rise rounded-[28px] p-5 sm:p-6">
+    <section className="panel animate-rise rounded-xl p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <Compass className="size-5" strokeWidth={1.5} />
-        <h2 className="font-display text-lg font-semibold">What you can do next</h2>
+        <h2 className="text-[22px] font-medium tracking-[-0.02em]">What you can do next</h2>
       </div>
       <ol className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-muted">
         <li>
@@ -724,7 +725,7 @@ function NextSteps() {
           picture appeared first and whether an older or larger version exists:
           <span className="mt-2 flex flex-wrap gap-2">
             {SEARCH_TOOLS.map((t) => (
-              <a key={t.name} href={t.url} target="_blank" rel="noreferrer" className="glass btn-ghost !py-1.5 !text-xs">
+              <a key={t.name} href={t.url} target="_blank" rel="noreferrer" className="btn-ghost !py-1 !text-[13px]">
                 {t.name} <ArrowUpRight className="size-3.5" />
               </a>
             ))}
@@ -739,7 +740,7 @@ function NextSteps() {
           sources show the same scene from another angle?
         </li>
       </ol>
-      <p className="mt-4 text-xs text-faint">
+      <p className="mt-4 text-[13px] text-faint">
         These sites open in a new tab; you upload the image there yourself. MetaProof sends them nothing.
       </p>
     </section>

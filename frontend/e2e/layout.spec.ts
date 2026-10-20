@@ -12,15 +12,19 @@ test('logo reads "MetaProof"', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'MetaProof' }).first()).toBeVisible()
 })
 
-test('desktop: content panel is level with the sidebar, 12px from it', async ({ page }) => {
+test('desktop: the sidebar runs the full height on the left, content clears it by 48px or more', async ({ page }) => {
   for (const width of [1280, 1920]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/')
-    const sidebar = await page.locator('aside > div').boundingBox()
+    await page.locator('main section').first().waitFor()
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'))
+    const sidebar = await page.locator('aside').boundingBox()
     const hero = await page.locator('main section').first().boundingBox()
     expect(sidebar && hero).toBeTruthy()
-    expect(Math.abs(hero!.y - sidebar!.y)).toBeLessThanOrEqual(1)
-    expect(Math.round(hero!.x - (sidebar!.x + sidebar!.width))).toBe(12)
+    expect(sidebar!.x).toBe(0)
+    expect(sidebar!.y).toBe(0)
+    expect(sidebar!.height).toBe(900)
+    expect(hero!.x - (sidebar!.x + sidebar!.width)).toBeGreaterThanOrEqual(48)
   }
 })
 

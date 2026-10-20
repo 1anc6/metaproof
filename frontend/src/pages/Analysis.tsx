@@ -1,10 +1,11 @@
-import { Check, LoaderCircle } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
 import { ReportView } from '../components/ReportView'
-import { ErrorPanel, Orb } from '../components/ui'
+import { ErrorPanel, EvidenceMap } from '../components/ui'
+import { ThinkingOrb, ThinkingPill } from '../components/ThinkingOrb'
 import { ReportSkeleton } from './Report'
 import { previewFor } from '../lib/preview'
 
@@ -90,46 +91,63 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
   const waiting = job?.status === 'queued'
 
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center pt-6 text-center sm:pt-12">
-      {preview ? (
-        <div className="relative">
-          <img src={preview} alt="" className="max-h-52 max-w-full rounded-3xl object-contain ring-1 ring-white/10" />
-          {/* a soft light sweeping across the image while it is analyzed */}
-          <div className="skeleton pointer-events-none absolute inset-0 rounded-3xl opacity-60 mix-blend-screen" />
-        </div>
-      ) : (
-        <Orb size={150} />
-      )}
-      <p className="eyebrow mt-10">{job?.status === 'queued' ? 'In queue' : 'Analyzing'}</p>
-      <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Reading the evidence</h1>
-      {filename && <p className="mt-2 max-w-full truncate text-sm text-muted">{filename}</p>}
+    <div className="mx-auto grid max-w-5xl items-start gap-6 pt-2 sm:pt-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="min-w-0">
+        <p className="mb-3 text-sm text-faint">
+          MetaProof <span aria-hidden>›</span> {waiting ? 'In queue' : 'Analyzing'}
+        </p>
+        <h1 className="text-[40px] leading-[1.02] font-medium tracking-[-0.04em] sm:text-[52px]">Reading the evidence</h1>
+        {filename && <p className="mt-2 max-w-full truncate text-[15px] text-muted">{filename}</p>}
+        {/* Says what is happening now; the step list only swaps markers. */}
+        <ThinkingPill
+          className="mt-5"
+          variant={job && !waiting ? 'dots' : 'lines'}
+          label={!job ? 'Connecting…' : waiting ? 'Waiting in the queue…' : `${STEPS[active].label}…`}
+        />
+        {/* The upload in the middle orbit; the slider tracks how far along the checks are. */}
+        <EvidenceMap
+          src={preview}
+          title="Live evidence map"
+          score={(active + (waiting ? 0 : 0.5)) / STEPS.length}
+          className="mt-6"
+        />
+      </div>
 
-      <ol className="glass stagger mt-8 flex w-full flex-col gap-1 rounded-3xl p-3 text-left">
-        {STEPS.map((step, i) => {
-          const state = i < active ? 'done' : i === active && !waiting ? 'active' : 'todo'
-          return (
-            <li key={step.key} className="animate-rise flex items-center gap-3 rounded-2xl px-3 py-2.5">
-              <span
-                className={`grid size-6 place-items-center rounded-full border transition-colors duration-300 ${
-                  state === 'done' ? 'border-white bg-white text-black' : 'border-white/15 text-muted'
+      <div className="lg:pt-24">
+        <ol className="panel stagger flex w-full flex-col gap-1 rounded-xl p-3">
+          {STEPS.map((step, i) => {
+            const state = i < active ? 'done' : i === active && !waiting ? 'active' : 'todo'
+            return (
+              <li
+                key={step.key}
+                className={`animate-rise flex items-center gap-3 rounded-full py-2 pr-4 pl-2 transition-colors ${
+                  state === 'active' ? 'selected' : ''
                 }`}
               >
-                {state === 'done' ? (
-                  <Check className="animate-pop size-3.5" strokeWidth={3} />
-                ) : state === 'active' ? (
-                  <LoaderCircle className="size-3.5 animate-spin" />
-                ) : (
-                  <span className="size-1 rounded-full bg-current" />
-                )}
-              </span>
-              <span className={`text-sm transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'text-ink'}`}>{step.label}</span>
-            </li>
-          )
-        })}
-      </ol>
-      <p className="mt-5 text-xs text-faint">
-        {job ? 'This usually takes a few seconds.' : 'Connecting to the server… it may be waking up.'}
-      </p>
+                <span
+                  className={`grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
+                    state === 'done' ? 'bg-accent-soft text-accent' : 'bg-raised text-faint'
+                  }`}
+                >
+                  {state === 'done' ? (
+                    <Check className="animate-pop size-4" strokeWidth={2.5} />
+                  ) : state === 'active' ? (
+                    <ThinkingOrb size={18} className="text-ink" />
+                  ) : (
+                    <span className="font-dot text-[13px] font-bold">{i + 1}</span>
+                  )}
+                </span>
+                <span className={`text-[15px] transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>
+                  {step.label}
+                </span>
+              </li>
+            )
+          })}
+        </ol>
+        <p className="mt-4 px-2 text-[13px] text-faint">
+          {job ? 'This usually takes a few seconds.' : 'Connecting to the server… it may be waking up.'}
+        </p>
+      </div>
     </div>
   )
 }

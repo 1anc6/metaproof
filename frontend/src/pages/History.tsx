@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatBytes, formatWhen } from '../lib/format'
 import { useHistory } from '../lib/history'
+import { usePrefs } from '../lib/prefs'
 import { clearWithUndo, removeWithUndo } from '../lib/undo'
 import { useSummaries } from '../lib/hooks'
 import { VERDICTS } from '../lib/verdicts'
@@ -21,6 +22,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 export function History() {
   const history = useHistory()
+  const prefs = usePrefs()
   const { data, error } = useSummaries(history)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
@@ -48,7 +50,7 @@ export function History() {
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="glass flex flex-1 items-center gap-2.5 rounded-full px-4 py-2.5 focus-within:ring-2 focus-within:ring-white/50">
+        <label className="panel flex flex-1 items-center gap-2.5 rounded-md px-3.5 py-2 focus-within:border-primary">
           <Search className="size-4 text-faint" aria-hidden />
           <input
             type="search"
@@ -68,8 +70,8 @@ export function History() {
               type="button"
               onClick={() => setFilter(f.key)}
               aria-pressed={filter === f.key}
-              className={`shrink-0 rounded-full px-3.5 py-2 text-xs transition ${
-                filter === f.key ? 'bg-white text-black' : 'glass text-muted hover:text-ink'
+              className={`shrink-0 rounded-md px-3 py-2 text-[13px] transition ${
+                filter === f.key ? 'selected font-medium' : 'panel text-muted hover:text-ink'
               }`}
             >
               {f.label}
@@ -81,16 +83,16 @@ export function History() {
       {error && <p className="mb-4 text-sm text-ai">{error}</p>}
 
       {history.length === 0 ? (
-        <div className="glass rounded-[28px] px-6 py-16 text-center">
+        <div className="panel rounded-xl px-6 py-16 text-center">
           <p className="font-medium">Nothing here yet</p>
           <p className="mt-1 text-sm text-faint">Analyses you run on this device will appear here.</p>
         </div>
       ) : rows.length === 0 ? (
-        <div className="glass rounded-[28px] px-6 py-12 text-center text-sm text-faint">No analyses match.</div>
+        <div className="panel rounded-xl px-6 py-12 text-center text-sm text-faint">No analyses match.</div>
       ) : (
-        <div className="glass overflow-hidden rounded-[28px]">
+        <div className="panel overflow-hidden rounded-xl">
           {/* header row, desktop only */}
-          <div className="grid grid-cols-[1fr_150px_120px_40px] gap-4 border-b border-white/5 px-5 py-3 font-mono text-[10px] tracking-widest text-faint uppercase max-md:hidden">
+          <div className="grid grid-cols-[1fr_150px_120px_40px] gap-4 border-b border-line px-5 py-3 font-mono text-[11px] tracking-widest text-faint uppercase max-md:hidden">
             <span>File</span>
             <span>Verdict</span>
             <span>Analyzed</span>
@@ -100,30 +102,30 @@ export function History() {
             {rows.map((entry) => {
               const s = data[entry.jobId]
               return (
-                <li key={entry.jobId} className="group animate-rise relative border-b border-white/5 last:border-0">
+                <li key={entry.jobId} className="group animate-rise relative border-b border-line last:border-0">
                   <Link
                     to={`/analysis/${entry.jobId}`}
-                    className="grid grid-cols-[1fr_auto_32px] items-center gap-3 px-4 py-3 transition hover:bg-white/[0.03] md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
+                    className="grid grid-cols-[1fr_auto_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <Thumb sha={entry.sha256} className="size-11 shrink-0 rounded-xl" />
+                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-11 shrink-0 rounded-xl" />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{entry.filename}</p>
-                        <p className="text-xs text-faint">
+                        <p className="text-[13px] text-faint">
                           {formatBytes(entry.sizeBytes)}
                           <span className="md:hidden"> · {formatWhen(entry.uploadedAt)}</span>
                         </p>
                       </div>
                     </div>
                     <div>{s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}</div>
-                    <span className="text-xs text-faint max-md:hidden">{formatWhen(entry.uploadedAt)}</span>
+                    <span className="text-[13px] text-faint max-md:hidden">{formatWhen(entry.uploadedAt)}</span>
                     <span />
                   </Link>
                   <button
                     type="button"
                     onClick={() => removeWithUndo(entry.jobId, entry.filename)}
                     aria-label={`Remove ${entry.filename} from history`}
-                    className="absolute top-1/2 right-4 grid size-8 -translate-y-1/2 place-items-center rounded-full text-faint transition hover:bg-white/10 hover:text-ink md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+                    className="absolute top-1/2 right-4 grid size-8 -translate-y-1/2 place-items-center rounded-md text-faint transition hover:bg-raised hover:text-ink md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                   >
                     <Trash2 className="size-3.5" />
                   </button>
@@ -138,7 +140,7 @@ export function History() {
         <button
           type="button"
           onClick={clearWithUndo}
-          className="mt-4 text-xs text-faint transition hover:text-ink"
+          className="mt-4 text-[13px] text-faint transition hover:text-ink"
         >
           Clear history on this device
         </button>

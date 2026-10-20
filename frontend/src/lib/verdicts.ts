@@ -8,6 +8,8 @@ export interface VerdictStyle {
   text: string
   /** CSS colour for bars and glows */
   color: string
+  /** Gradient card class for the verdict hero */
+  mesh: string
 }
 
 export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
@@ -17,6 +19,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     summary: 'Strong provenance evidence points to an unedited original.',
     text: 'text-authentic',
     color: 'var(--color-authentic)',
+    mesh: 'mesh-teal',
   },
   edited: {
     title: 'Edited',
@@ -24,6 +27,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     summary: 'The evidence shows this file was changed after it was created.',
     text: 'text-edited',
     color: 'var(--color-edited)',
+    mesh: 'mesh-copper',
   },
   likely_ai_generated: {
     title: 'Likely AI-generated',
@@ -31,6 +35,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     summary: 'The evidence points to an image made by a generative AI tool.',
     text: 'text-ai',
     color: 'var(--color-ai)',
+    mesh: 'mesh-rose',
   },
   inconclusive: {
     title: 'Inconclusive',
@@ -39,6 +44,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
       'There is not enough evidence to decide. That is common: most images carry no provenance data.',
     text: 'text-neutral',
     color: 'var(--color-neutral)',
+    mesh: 'mesh-graphite',
   },
 }
 

@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, Download, HardDrive, OctagonAlert, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
+import { CircleAlert, CircleCheck, Download, HardDrive, Palette, OctagonAlert, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type ServiceStatus } from '../lib/api'
 import type { ReactNode } from 'react'
@@ -7,7 +7,7 @@ import { useHistory, type HistoryEntry } from '../lib/history'
 import { clearWithUndo } from '../lib/undo'
 import { promptInstall, useInstallState } from '../lib/install'
 import { ServerBadge } from '../components/Shell'
-import { GithubMark, PageHeader } from '../components/ui'
+import { GithubMark, PageHeader, ThemeSwitch } from '../components/ui'
 
 const PRIVACY = [
   'Uploaded files are deleted as soon as the analysis finishes.',
@@ -27,6 +27,13 @@ export function Settings() {
       />
 
       <div className="stagger grid gap-4 lg:grid-cols-2">
+        <Card icon={Palette} title="Appearance">
+          <p className="text-sm text-muted">
+            Light, dark, or follow this device's setting. Saved in this browser.
+          </p>
+          <ThemeSwitch labels className="mt-5" />
+        </Card>
+
         <InstallCard />
 
         <Card icon={HardDrive} title="This device">
@@ -40,7 +47,7 @@ export function Settings() {
               type="button"
               disabled={history.length === 0}
               onClick={() => exportHistory(history)}
-              className="glass btn-ghost disabled:opacity-40"
+              className="btn-ghost disabled:opacity-40"
             >
               <Download className="size-4" /> Export list
             </button>
@@ -48,7 +55,7 @@ export function Settings() {
               type="button"
               disabled={history.length === 0}
               onClick={clearWithUndo}
-              className="glass btn-ghost text-ai disabled:opacity-40"
+              className="btn-ghost text-ai disabled:opacity-40"
             >
               <Trash2 className="size-4" /> Clear history
             </button>
@@ -61,7 +68,7 @@ export function Settings() {
             <ServerBadge />
           </div>
           <ServiceFigures />
-          <p className="mt-4 text-xs text-faint">
+          <p className="mt-4 text-[13px] text-faint">
             The API runs on a free instance that sleeps when idle, so the first upload after a quiet
             spell can take up to a minute.
           </p>
@@ -69,7 +76,7 @@ export function Settings() {
             href="https://github.com/1anc6/metaproof"
             target="_blank"
             rel="noreferrer"
-            className="glass btn-ghost mt-5"
+            className="btn-ghost mt-5"
           >
             <GithubMark className="size-4" /> Source code
           </a>
@@ -79,7 +86,7 @@ export function Settings() {
           <ul className="flex flex-col gap-2.5">
             {PRIVACY.map((line) => (
               <li key={line} className="flex gap-3 text-sm text-muted">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-white/30" aria-hidden />
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-faint" aria-hidden />
                 {line}
               </li>
             ))}
@@ -121,12 +128,12 @@ function ServiceFigures() {
       <div>
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <span className="text-muted">Database storage</span>
-          <span className="font-mono text-xs text-ink tabular-nums">
+          <span className="font-mono text-[13px] text-ink tabular-nums">
             {used.toFixed(1)} MB of {limit} MB
           </span>
         </div>
         <div
-          className="relative mt-2 h-1.5 rounded-full bg-white/10"
+          className="relative mt-2 h-1.5 rounded-full bg-line"
           role="meter"
           aria-label="Database storage used"
           aria-valuemin={0}
@@ -137,9 +144,9 @@ function ServiceFigures() {
         >
           <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, 1)}%`, background: level.color }} />
           {/* where the server starts logging warnings */}
-          <div className="absolute top-[-3px] h-[12px] w-px bg-white/40" style={{ left: `${(warn / limit) * 100}%` }} aria-hidden />
+          <div className="absolute top-[-3px] h-[12px] w-px bg-faint" style={{ left: `${(warn / limit) * 100}%` }} aria-hidden />
         </div>
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+        <p className="mt-2 flex items-center gap-1.5 text-[13px] text-muted">
           <Icon className="size-3.5" style={{ color: level.color }} strokeWidth={2} aria-hidden />
           {level.label} · reports are kept for {status.retention_days} days
         </p>
@@ -159,10 +166,10 @@ function ServiceFigures() {
 
 function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-white/5 bg-white/[0.02] p-2.5 sm:p-3">
-      <dt className="text-[11px] leading-tight text-faint">{label}</dt>
-      <dd className="mt-1 font-display text-base leading-tight font-semibold tabular-nums sm:text-lg">{value}</dd>
-      {note && <dd className="mt-0.5 text-[11px] leading-tight text-faint">{note}</dd>}
+    <div className="min-w-0 rounded-lg border border-line bg-raised p-2.5 sm:p-3">
+      <dt className="text-[12px] leading-tight text-faint">{label}</dt>
+      <dd className="mt-1 text-base leading-tight font-semibold tracking-tight tabular-nums sm:text-lg">{value}</dd>
+      {note && <dd className="mt-0.5 text-[12px] leading-tight text-faint">{note}</dd>}
     </div>
   )
 }
@@ -217,8 +224,8 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className={`glass animate-rise rounded-3xl p-6 ${className}`}>
-      <h2 className="mb-4 flex items-center gap-2.5 font-display font-semibold">
+    <section className={`panel animate-rise rounded-xl p-6 ${className}`}>
+      <h2 className="mb-4 flex items-center gap-2.5 font-semibold tracking-[-0.02em]">
         <Icon className="size-4 text-faint" strokeWidth={1.75} /> {title}
       </h2>
       {children}

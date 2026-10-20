@@ -41,7 +41,7 @@ test('never shows on shared report links, for returning users or on desktop', as
   await mockApi(returning)
   await seedHistory(returning)
   await returning.goto('/')
-  await expect(returning.getByText('holiday.jpg')).toBeVisible()
+  await expect(returning.getByText('holiday.jpg').first()).toBeVisible()
   await expect(welcome(returning)).toBeHidden()
   await returning.close()
 

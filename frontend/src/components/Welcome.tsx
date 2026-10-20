@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { useHistory } from '../lib/history'
-import { Orb } from './ui'
+import { EvidenceMap, Logo } from './ui'
 
 const KEY = 'metaproof.welcome.v1'
 let seenThisSession = false // fallback when storage is blocked (private mode)
@@ -74,56 +74,56 @@ export function Welcome() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-title"
-      className="welcome fixed inset-0 z-50 flex flex-col overflow-y-auto px-6 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),24px)] lg:hidden"
+      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-canvas px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] lg:hidden"
+      style={{
+        backgroundImage:
+          'radial-gradient(28rem 24rem at 100% -4rem, var(--glow-1), transparent 70%), radial-gradient(24rem 22rem at -10% 40%, var(--glow-2), transparent 70%), radial-gradient(26rem 20rem at 60% 110%, var(--glow-3), transparent 70%)',
+      }}
     >
-      <div className="flex justify-end">
-        <button type="button" onClick={() => close()} className="px-2 py-2 text-sm text-faint transition hover:text-ink">
+      <div className="flex items-center justify-between">
+        <Logo />
+        <button type="button" onClick={() => close()} className="well h-10 px-4 text-sm font-medium">
           Skip
         </button>
       </div>
 
-      <div className="flex flex-1 items-center justify-center py-6 [@media(max-height:720px)]:py-2">
-        {/* A smaller orb on short phones keeps both buttons above the fold. */}
-        <Orb size={window.innerHeight < 720 ? 104 : 168} />
-      </div>
-
-      <div className="stagger text-center [&>*]:animate-rise">
-        <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-muted">
-          <Lock className="size-3" strokeWidth={2} /> No account needed
-        </span>
+      <div className="stagger mt-8 [&>*]:animate-rise [@media(max-height:720px)]:mt-5">
         <h1
           id="welcome-title"
-          className="mt-5 font-display text-[40px] leading-[1.02] font-semibold tracking-tight [@media(max-height:720px)]:mt-4 [@media(max-height:720px)]:text-[34px]"
+          className="text-[44px] leading-[0.98] font-medium tracking-[-0.045em] [@media(max-height:720px)]:text-[36px]"
         >
-          See what's behind
-          <br />
-          <span className="bg-gradient-to-b from-zinc-300 to-zinc-600 bg-clip-text text-transparent">
-            the image.
-          </span>
+          See what's behind the image.
         </h1>
-        <p className="mx-auto mt-4 max-w-xs text-[15px] leading-relaxed text-muted">
-          Check a photo's metadata, Content Credentials and pixels, and get a verdict that shows
-          its evidence.
+        <p className="mt-3 text-sm text-faint">
+          Metadata <span aria-hidden>›</span> Credentials <span aria-hidden>›</span> Pixels
+        </p>
+        <p className="eyebrow mt-5 flex items-center gap-1.5 [@media(max-height:720px)]:mt-3">
+          <Lock className="size-3.5" strokeWidth={2} /> No account needed
         </p>
       </div>
 
-      <div className="mt-8 flex flex-col gap-3 [@media(max-height:720px)]:mt-6">
+      {/* The orbit card shrinks away on short phones so both buttons stay above the fold. */}
+      <div className="flex flex-1 items-center py-5 [@media(max-height:720px)]:hidden">
+        <EvidenceMap title="Example findings" className="w-full" />
+      </div>
+
+      <div className="flex flex-col gap-3 [@media(max-height:720px)]:mt-auto">
         <button
           ref={primary}
           type="button"
           onClick={() => close('/new')}
-          className="btn-primary h-13 w-full justify-center text-[15px]"
+          className="btn-primary h-14 w-full justify-center text-[16px]"
         >
           Analyze an image <ArrowRight className="size-4" strokeWidth={2.25} />
         </button>
         <button
           type="button"
           onClick={() => close(DEMO_REPORT_PATH)}
-          className="glass btn-ghost h-13 w-full justify-center text-[15px]"
+          className="btn-ghost h-14 w-full justify-center text-[16px]"
         >
           See an example report
         </button>
-        <p className="mt-2 text-center text-[11px] leading-relaxed text-faint">
+        <p className="mt-1 text-center text-[12px] leading-relaxed text-faint">
           Files are deleted after analysis. Your history stays on this device.
         </p>
       </div>

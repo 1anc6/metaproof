@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MetaProof: Project Documentation</title>
+<style>
+  @font-face { font-family: 'JetBrains Mono'; src: url(assets/fonts/jetbrains-mono-latin-wght-normal.woff2) format('woff2'); font-weight: 100 800; }
+
+  @page { size: A4; margin: 20mm 18mm 18mm 18mm;
+    @bottom-center { content: counter(page); font: 9pt Cambria, Georgia, serif; color: #94a3b8; } }
+  
+  :root { --ink:#0f172a; --body:#334155; --muted:#64748b; --faint:#94a3b8; --line:#e2e8f0; --tint:#f8fafc;
+          --accent:#4f46e5; --accent-soft:#eef2ff; --teal:#0d9488; --teal-soft:#f0fdfa;
+          --ok:#15803d; --ok-soft:#f0fdf4; --warn:#b45309; --warn-soft:#fffbeb; --bad:#b91c1c; --bad-soft:#fef2f2; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html { font-size: 10.4pt; }
+  body { margin: 0; color: var(--body); font-family: Cambria, Georgia, 'Times New Roman', serif; line-height: 1.5; background: #fff; }
+  h1, h2, h3, h4 { font-family: Cambria, Georgia, 'Times New Roman', serif; color: var(--ink); line-height: 1.22; break-after: avoid; letter-spacing: 0; }
+  h2 { font-size: 21pt; font-weight: 700; margin: 0; }
+  h3 { font-size: 12.6pt; font-weight: 700; margin: 18pt 0 6pt; }
+  h3::before { content: ""; display: inline-block; width: 7pt; height: 7pt; border-radius: 2pt; background: var(--accent); margin-right: 7pt; vertical-align: 1pt; }
+  h4 { font-size: 10.8pt; font-weight: 700; margin: 12pt 0 5pt; }
+  p { margin: 0 0 7pt; }
+  b, strong { color: var(--ink); font-weight: 700; }
+  ul, ol { margin: 0 0 9pt; padding-left: 15pt; }
+  li { margin: 3pt 0; }
+  li::marker { color: var(--accent); font-weight: 600; }
+  a { color: var(--accent); text-decoration: none; }
+  code, .mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.86em; background: var(--accent-soft); color: #3730a3; padding: 0.5pt 3.5pt; border-radius: 3pt; }
+  section.chapter { break-before: page; }
+
+  .chap-head { display: flex; align-items: flex-end; gap: 12pt; margin: 0 0 16pt; padding-bottom: 10pt; border-bottom: 1px solid var(--line); break-after: avoid; }
+  .chap-num { font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 34pt; font-weight: 700; line-height: 0.9; color: var(--accent); letter-spacing: 0; min-width: 40pt; }
+  .chap-head h2 { padding-bottom: 2pt; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 5pt 0 12pt; font-size: 9pt; line-height: 1.45;
+          border: 1px solid var(--line); border-radius: 6pt; overflow: hidden; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th { text-align: left; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 8.4pt; font-variant: small-caps; letter-spacing: 0.03em;
+       padding: 5pt 7pt; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+  td { padding: 4.5pt 7pt; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .lead { font-size: 11pt; color: #1e293b; line-height: 1.6; }
+  .muted { color: var(--muted); }
+  .small { font-size: 8.3pt; }
+  .callout { border-radius: 7pt; background: var(--accent-soft); border-left: 3.5pt solid var(--accent); padding: 9pt 12pt; margin: 8pt 0 12pt; break-inside: avoid; }
+  .callout.warn { background: var(--warn-soft); border-color: #f59e0b; }
+  .callout.bad { background: var(--bad-soft); border-color: #ef4444; }
+  .callout.good { background: var(--ok-soft); border-color: #22c55e; }
+  .callout p:last-child, .callout ul:last-child, .callout ol:last-child { margin-bottom: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12pt; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8pt; }
+  .stat { border-radius: 8pt; background: var(--tint); border: 1px solid var(--line); padding: 9pt 11pt 8pt; break-inside: avoid; position: relative; }
+  .stat::before { content: ""; position: absolute; left: 11pt; top: 0; width: 22pt; height: 2.5pt; border-radius: 0 0 2pt 2pt; background: var(--accent); }
+  .stat b { display: block; font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 17pt; font-weight: 700; color: var(--ink); line-height: 1.15; margin: 3pt 0 2pt; letter-spacing: 0; }
+  .stat span { color: var(--muted); font-size: 8pt; line-height: 1.4; display: block; }
+  figure { margin: 8pt 0 14pt; break-inside: avoid; text-align: center; }
+  figure img { max-width: 100%; border-radius: 6pt; }
+  figcaption { font-size: 8pt; color: var(--muted); margin-top: 6pt; text-align: center; }
+  .tag { display: inline-block; font-size: 7.2pt; font-weight: 600; padding: 0.5pt 6pt; border-radius: 9pt; background: #f1f5f9; color: #475569; margin-right: 3pt; white-space: nowrap; }
+  .tag.ok { background: #dcfce7; color: #166534; } .tag.no { background: #fee2e2; color: #991b1b; } .tag.part { background: #fef3c7; color: #92400e; }
+  .keep { break-inside: avoid; }
+
+  .cover { width: 210mm; height: 297mm; position: relative; overflow: hidden; color: #e2e8f0;
+           background: radial-gradient(120% 80% at 85% 10%, #312e81 0%, rgba(49,46,129,0) 55%),
+                       radial-gradient(90% 70% at 0% 100%, #134e4a 0%, rgba(19,78,74,0) 60%), #0b1020;
+           padding: 26mm 22mm 20mm; display: flex; flex-direction: column; }
+  .cover .ring { position: absolute; right: -40mm; top: 40mm; width: 150mm; height: 150mm; border-radius: 50%; border: 1px solid rgba(165,180,252,0.18); }
+  .cover .ring.r2 { right: -20mm; top: 60mm; width: 110mm; height: 110mm; border-color: rgba(165,180,252,0.12); }
+  .cover .ring.r3 { right: 0; top: 80mm; width: 70mm; height: 70mm; border-color: rgba(94,234,212,0.2); }
+  .cover .kicker { font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 9pt; letter-spacing: 0.28em; text-transform: uppercase; color: #a5b4fc; font-weight: 600; position: relative; }
+  .cover h1 { font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 58pt; font-weight: 700; color: #fff; margin: 14pt 0 10pt; letter-spacing: 0; line-height: 1; position: relative; }
+  .cover .byline { font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 16pt; font-weight: 400; color: #a5b4fc; margin: -2pt 0 18pt; position: relative; letter-spacing: 0; }
+  .cover .byline b { color: #fff; font-weight: 600; }
+  .cover .sub { font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 15pt; font-weight: 400; color: #c7d2fe; max-width: 140mm; line-height: 1.4; position: relative; }
+  .cover .desc { margin-top: 20pt; max-width: 135mm; font-size: 10.2pt; line-height: 1.65; color: #cbd5e1; position: relative; }
+  .cover .desc b { color: #fff; }
+  .cover .stats { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10pt; position: relative; }
+  .cover .stats div { border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8pt; }
+  .cover .stats b { display: block; font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 19pt; font-weight: 700; color: #fff; letter-spacing: 0; }
+  .cover .stats span { font-size: 7.8pt; color: #94a3b8; line-height: 1.35; display: block; margin-top: 2pt; }
+  .cover .meta { margin-top: 18pt; display: grid; grid-template-columns: 1.2fr 1fr 1.3fr; gap: 8pt 18pt; font-size: 8.6pt; color: #e2e8f0; position: relative;
+                 background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8pt; padding: 11pt 13pt; }
+  .cover .meta div b { display: block; color: #94a3b8; font-weight: 600; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 2pt; }
+  .cover .meta .author { font-family: Cambria, Georgia, 'Times New Roman', serif; font-size: 12pt; color: #fff; font-weight: 600; }
+
+  .toc ol { list-style: none; padding: 0; margin: 0; }
+  .toc li { display: flex; align-items: baseline; border-bottom: 1px solid #f1f5f9; padding: 5pt 0; font-size: 10.4pt; color: var(--ink); margin: 0; }
+  .toc li span:first-child { width: 26pt; color: var(--accent); font-family: Cambria, Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<div class="cover">
+  <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div>
+  <div class="kicker">Project documentation &nbsp;·&nbsp; Version 1.0</div>
+  <h1>MetaProof</h1>
+  <div class="byline">by <b>Lanchenba Mutum</b></div>
+  <div class="sub">Evidence-based authenticity analysis for images</div>
+  <p class="desc">MetaProof checks an image's metadata, its file structure, its signed C2PA Content Credentials, invisible generator watermarks and its pixels, then combines the evidence into one explainable verdict: <b>likely authentic</b>, <b>edited</b>, <b>likely AI-generated</b> or <b>inconclusive</b>. Every verdict shows the evidence behind it, and the system says "inconclusive" rather than guess.</p>
+  <div class="stats">
+    <div><b>0.972</b><span>ROC-AUC on 9 generators never seen in training</span></div>
+    <div><b>36,528</b><span>training images for the shipped detector</span></div>
+    <div><b>5</b><span>independent analyzers in one evidence engine</span></div>
+    <div><b>$0</b><span>monthly running cost on free tiers</span></div>
+  </div>
+  <div class="meta">
+    <div><b>Author</b><span class="author">Lanchenba Mutum</span></div>
+    <div><b>Live app</b>metaproof.vercel.app</div>
+    <div><b>Source code</b>github.com/1anc6/metaproof</div>
+    <div><b>State documented</b>20 October 2026</div>
+    <div><b>API docs</b>metaproof.onrender.com/docs</div>
+    <div><b>Detector model</b>huggingface.co/1anc6/metaproof-detector</div>
+  </div>
+</div>
+
+<!-- ============================ TOC ============================ -->
+<section class="chapter toc">
+  <div class="chap-head"><h2>Contents</h2></div>
+  <ol>
+    <li><span>1</span>Summary and key numbers</li>
+    <li><span>2</span>The problem, and what MetaProof does about it</li>
+    <li><span>3</span>Timeline and time spent</li>
+    <li><span>4</span>System architecture</li>
+    <li><span>5</span>The five analyzers and the evidence engine</li>
+    <li><span>6</span>The AI-image detector: data, training and results</li>
+    <li><span>7</span>Model benchmark and efficiency</li>
+    <li><span>8</span>Experiments that did not ship, and why</li>
+    <li><span>9</span>Database design</li>
+    <li><span>10</span>Frontend: the web app</li>
+    <li><span>11</span>Security, privacy and abuse protection</li>
+    <li><span>12</span>Testing and quality</li>
+    <li><span>13</span>Deployment and operations</li>
+    <li><span>14</span>Performance and cost</li>
+    <li><span>15</span>How MetaProof compares with other tools</li>
+    <li><span>16</span>Limitations</li>
+    <li><span>17</span>Proposal versus delivery</li>
+    <li><span>18</span>Complete inventory of everything used</li>
+    <li><span>19</span>Future work</li>
+    <li><span>20</span>Glossary for study</li>
+    <li><span>21</span>Licences, credits and publishing notes</li>
+  </ol>
+  <div class="callout" style="margin-top:14pt">
+    <p><b>How to read this document.</b> Chapters 1–4 give the big picture. Chapters 5–9 explain the internals and are the ones to study for viva or interview questions; chapter 7 is the model's benchmark. Chapters 15–17 are the honest assessment. Chapter 18 lists every library, service, dataset and tool used. Chapter 20 defines the technical terms.</p>
+    <p><b>Where the numbers come from.</b> Every accuracy and timing figure here was measured by a script in the repository (named next to it) and recorded in <code>ml/README.md</code>, <code>docs/evaluation.md</code> or <code>docs/benchmarks.md</code>. None is estimated, except where it says so.</p>
+  </div>
+</section>
+
+<!-- ============================ 1 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">01</span><h2>Summary and key numbers</h2></div>
+  <p class="lead">MetaProof is a full-stack web application, built from an empty repository, that answers one question about an uploaded image: <i>what does the evidence say about where it came from?</i> It is live, free to use, needs no account and deletes every uploaded file after analysis.</p>
+
+  <div class="grid3" style="margin:10pt 0 12pt">
+    <div class="stat"><b>0.972</b><span>Detector ROC-AUC on 4,239 images from 9 generators it never saw in training</span></div>
+    <div class="stat"><b>36,528</b><span>Training images for the shipped detector (v3), from 30 generators and 6 real-photo sources</span></div>
+    <div class="stat"><b>99%</b><span>Precision when the detector gives strong evidence (score ≥ 0.91) on unseen generators</span></div>
+    <div class="stat"><b>5</b><span>Independent analyzers: metadata, file structure, C2PA, watermark, AI detector</span></div>
+    <div class="stat"><b>~9 s</b><span>Upload to finished report on the free production server (1–2 s on a laptop)</span></div>
+    <div class="stat"><b>$0</b><span>Monthly running cost: every service runs on a free tier</span></div>
+    <div class="stat"><b>52</b><span>Git commits, 11–20 October 2026</span></div>
+    <div class="stat"><b>~11,500</b><span>Lines of Python and TypeScript in 89 source files</span></div>
+    <div class="stat"><b>126</b><span>Automated tests: 107 backend (unit + integration) and 19 browser end-to-end</span></div>
+  </div>
+
+  <h3>What was built</h3>
+  <ul>
+    <li><b>A web app</b> (React, TypeScript) with upload, live analysis progress, an explained report, a shareable report link, history kept on the user's device, a method page and a status page. It installs on phones and appears in Android's share menu.</li>
+    <li><b>An API</b> (Python, FastAPI) that validates uploads safely, queues analysis jobs in PostgreSQL and runs five analyzers in a background worker.</li>
+    <li><b>An AI-image detector</b> trained by the author: frozen CLIP ViT-B/16 features with a small trained classifier, calibrated, and compressed to 121 MB so it fits a 512 MB free server.</li>
+    <li><b>An evidence engine</b> that weighs every finding and picks a verdict only when the evidence is strong enough and clearly points one way.</li>
+    <li><b>A "seen before" search</b> that finds resized or recompressed copies of an image using vector similarity (pgvector).</li>
+    <li><b>An evaluation suite</b>: detector metrics on unseen generators, robustness to everyday edits, a C2PA tamper benchmark and pipeline timings.</li>
+    <li><b>Production operations</b>: CI on every push, automatic deploys, a separate development database, uptime monitoring and data retention.</li>
+  </ul>
+
+  <h3>The guiding principle</h3>
+  <div class="callout"><p>Wrongly calling a real photo fake is the costlier mistake. So missing data is never held against a file, the detector's score only decides a verdict on its own when it is very high, signed proof (C2PA) outranks statistical guesses, and when the evidence is weak the answer is <b>inconclusive</b>.</p></div>
+</section>
+
+<!-- ============================ 2 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">02</span><h2>The problem, and what MetaProof does about it</h2></div>
+  <h3>The problem</h3>
+  <p>Images are easy to edit, recompress, re-upload and generate with AI. Checking them by eye is slow and unreliable. Pure AI detectors give a bare percentage, are often wrong on new generators and real photos, and do not explain themselves. A useful tool must gather several kinds of evidence, weigh them honestly and show its working.</p>
+
+  <h3>The approach: several independent kinds of evidence</h3>
+  <table>
+    <thead><tr><th>Evidence</th><th>What it can show</th><th>What it cannot show</th></tr></thead>
+    <tbody>
+      <tr><td><b>Metadata</b> (EXIF, XMP, PNG text)</td><td>Camera make and model, editing software, AI-generator tags (e.g. a Stable Diffusion prompt in a PNG chunk)</td><td>Metadata is easy to strip or forge, so it is weighed lightly</td></tr>
+      <tr><td><b>File structure</b></td><td>How the file was written: JPEG quality tables, segments, colour profile, data appended after the image</td><td>Explains the file only; every finding is neutral</td></tr>
+      <tr><td><b>C2PA Content Credentials</b></td><td>A cryptographically signed history: who created or edited it, with what tool, and whether it changed since signing</td><td>Most images have none, and re-saving removes them; absence proves nothing</td></tr>
+      <tr><td><b>Invisible watermark</b></td><td>The hidden mark Stable Diffusion 1.x/2.x and SDXL embed in their output</td><td>The mark usually does not survive resizing; absence proves nothing</td></tr>
+      <tr><td><b>AI-image detector</b></td><td>A calibrated probability that the pixels came from a generator</td><td>A probability, not proof; weaker on the newest generators</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The four verdicts</h3>
+  <table>
+    <thead><tr><th>Verdict</th><th>Typical evidence</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag ok">Likely authentic</span></td><td>Consistent camera metadata plus the structure of an untouched camera file, and no signs of AI. Requires more support than the other labels, because camera EXIF is easy to forge.</td></tr>
+      <tr><td><span class="tag part">Edited</span></td><td>Editing software in the metadata, or signed C2PA edit actions.</td></tr>
+      <tr><td><span class="tag no">Likely AI-generated</span></td><td>A signed C2PA "AI-generated" claim (decides on its own), a generator watermark, generator metadata, or a very high detector score.</td></tr>
+      <tr><td><span class="tag">Inconclusive</span></td><td>Not enough evidence, or evidence pointing different ways. This is the most common honest answer, because most images carry no provenance data.</td></tr>
+    </tbody>
+  </table>
+
+</section>
+
+<!-- ============================ 3 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">03</span><h2>Timeline and time spent</h2></div>
+  <p>The project was planned in a written proposal, then built between <b>11 and 20 October 2026</b> (10 calendar days, 52 commits). Hours were not tracked with a timer, so the table below gives what the git history proves, and the long-running machine jobs recorded in the ML notes. Real effort was larger than the commit windows, because work happens before each commit and long downloads ran unattended.</p>
+
+  <h3>Development sessions (from commit timestamps, India time)</h3>
+  <table>
+    <thead><tr><th>When</th><th>What was built</th><th class="n">Commit window</th></tr></thead>
+    <tbody>
+      <tr><td>11 Oct, 17:17–18:56</td><td>Backend core: upload pipeline, metadata and C2PA analyzers, rule-based evidence engine; Docker deployment on Render</td><td class="n">1.6 h</td></tr>
+      <tr><td>11 Oct, 22:14–23:01</td><td>Frontend, AI detector v1 integration, near-duplicate search, benchmarks, demo screenshots</td><td class="n">0.8 h</td></tr>
+      <tr><td>12 Oct, 13:09–18:28</td><td>Detector v2 data pipeline (2025–26 generators), detector v3 shipped, v4 experiment, full-resolution experiment, report polish</td><td class="n">5.3 h</td></tr>
+      <tr><td>12 Oct, 22:52</td><td>Full-resolution crop features (v5) for the detector</td><td class="n">—</td></tr>
+      <tr><td>20 Oct, 00:23–01:31</td><td>Liquid-glass UI pass, toasts with undo, accessibility; file-structure analyzer, HEIC support, real progress, ELA view; report wording</td><td class="n">1.1 h</td></tr>
+      <tr><td>20 Oct, 07:30</td><td>Camera-photo calibration set; v6 retrain experiment; evaluation report; border trimming</td><td class="n">—</td></tr>
+      <tr><td>20 Oct, 19:14–20:10</td><td>Production incident fix, cold-start resilience, merges, auto-deploy repair, dev database, uptime monitoring</td><td class="n">0.9 h</td></tr>
+      <tr><td colspan="2"><b>Total time between first and last commit of each session</b></td><td class="n"><b>9.8 h</b></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Long-running machine jobs (recorded in <code>ml/README.md</code>)</h3>
+  <table>
+    <thead><tr><th>Job</th><th class="n">Duration</th></tr></thead>
+    <tbody>
+      <tr><td>Streaming ~17 GB of Community Forensics data and extracting CLIP features (v1), on an RTX 4050 laptop GPU</td><td class="n">~1 h per split at 5 MB/s</td></tr>
+      <tr><td>v2 data extraction (2025–26 generators)</td><td class="n">~1.5 h</td></tr>
+      <tr><td>VISION phone-photo download (~3 GB)</td><td class="n">~1 h</td></tr>
+      <tr><td>Wikimedia Commons camera originals for v6 (~8 GB, API-throttled)</td><td class="n">~3 h</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn"><p><b>Honest estimate.</b> Commit windows (9.8 h) plus recorded machine jobs (about 7–8 h) give a floor of roughly <b>17–18 hours</b>. Planning, the proposal, reading papers and testing between commits are not in that figure. If you need an exact number for a report, use these as the documented minimum and add your own estimate for planning and study time.</p></div>
+
+  <h3>The 20 October production incident (a useful case study)</h3>
+  <p>The live API stopped answering. The investigation found three separate faults:</p>
+  <ol>
+    <li><b>Root cause:</b> a database migration (<code>0004</code>) had been applied to the production database from a laptop, but the deployed code was 8 days old and did not know that migration. On every start the container ran <code>alembic upgrade head</code>, which failed on the unknown revision, so the server never started and requests hung.</li>
+    <li><b>Why the new code never deployed:</b> Render's GitHub app had lost access to the repository, so pushes no longer triggered deploys.</li>
+    <li><b>Why the keep-warm check kept failing:</b> GitHub runs scheduled workflows hours late under load, and a single 120-second attempt could not outlast a cold start.</li>
+  </ol>
+  <p><b>Fixes:</b> a manual deploy of the latest code; repository access restored for Render; the client now retries through cold starts (with a regression test); the worker no longer blocks startup on the database; database connections time out after 15 s; a separate <b>dev</b> database branch for local work; and UptimeRobot replaced the unreliable GitHub schedule. The lesson, in one line: <i>never run migrations from a laptop against production.</i></p>
+</section>
+
+<!-- ============================ 4 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">04</span><h2>System architecture</h2></div>
+  <figure class="keep"><img src="assets/architecture.svg" style="width:100%; max-height:212mm; object-fit:contain"><figcaption>Figure 1. Production architecture and the workflow of one upload. Numbers give the order of steps; dashed grey links are deployment, build-time and monitoring connections. Drawn with Graphviz from <code>documentation/architecture.py</code>.</figcaption></figure>
+
+  <h3>The life of one upload</h3>
+  <ol>
+    <li><b>Upload.</b> The browser posts the file (with a neutral name, <code>upload</code>; the real filename stays on the device). The API streams it to a private temp file, computing SHA-256 on the way, checks the real type from the file's bytes (not its extension), and decodes it once under a 25 MB size limit and a 30-megapixel limit, which also blocks decompression bombs.</li>
+    <li><b>Deduplicate.</b> If the same file (same hash) was analyzed before under the current pipeline, the existing job is returned at once.</li>
+    <li><b>Queue.</b> A job row is inserted in PostgreSQL and the worker is woken. The worker claims jobs with <code>SELECT … FOR UPDATE SKIP LOCKED</code>, so several workers could share the queue safely without Redis. It sleeps instead of polling, so the serverless database can scale to zero.</li>
+    <li><b>Analyze.</b> The five analyzers run in turn; each writes its findings, raw output and duration. Progress (<code>current_step</code>) is published so the page can tick off steps. One failing analyzer cannot sink the report.</li>
+    <li><b>Decide.</b> The evidence engine weighs all findings into a verdict with its top reasons.</li>
+    <li><b>Clean up.</b> The original file is deleted whatever the outcome. A hash, a small WebP thumbnail, the findings and the CLIP embedding are kept for 90 days.</li>
+    <li><b>Read.</b> The page polls the job until it is done, then shows the report. The report is shareable at <code>/report/&lt;sha256&gt;</code>.</li>
+  </ol>
+
+  <h3>Key design decisions</h3>
+  <table>
+    <thead><tr><th>Decision</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>PostgreSQL as the job queue (no Redis)</td><td>One less service to run on free tiers; <code>SKIP LOCKED</code> is proven safe with concurrent workers (tested with 6 workers and 12 jobs, none claimed twice).</td></tr>
+      <tr><td>Worker inside the API process</td><td>Render's free tier allows one container; a thread keeps memory low.</td></tr>
+      <tr><td>Event-woken worker, not polling</td><td>Neon suspends idle databases; polling would keep it awake and use compute hours.</td></tr>
+      <tr><td>ONNX Runtime with 8-bit weights for serving</td><td>The fp32 model peaked at 557 MB, over Render's 512 MB; 8-bit weight-only fits (348 MB peak) with no accuracy loss.</td></tr>
+      <tr><td>Watermark decoder rewritten in numpy</td><td>The reference library imports PyTorch, far too heavy for the server; the port matches it bit for bit in tests.</td></tr>
+      <tr><td>Deduplicate by hash, search by embedding</td><td>Exact copies are found instantly; resized or recompressed copies are found by CLIP similarity.</td></tr>
+      <tr><td>History stored in the browser</td><td>No accounts, no personal data on the server.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>API endpoints</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>POST</td><td><code>/api/analyses</code></td><td>Upload an image; returns a job id (429 when rate-limited)</td></tr>
+      <tr><td>GET</td><td><code>/api/analyses/{job_id}</code></td><td>Job status, current step, verdict, findings per analyzer</td></tr>
+      <tr><td>GET</td><td><code>/api/analyses?ids=…</code></td><td>Summaries for the jobs this browser remembers</td></tr>
+      <tr><td>GET</td><td><code>/api/media/{sha256}/report</code></td><td>Shareable latest finished report for a file</td></tr>
+      <tr><td>GET</td><td><code>/api/media/{sha256}/similar</code></td><td>Near-duplicates analyzed before (pgvector)</td></tr>
+      <tr><td>GET</td><td><code>/api/media/{sha256}/thumbnail</code></td><td>Small WebP preview, cached for a year</td></tr>
+      <tr><td>GET</td><td><code>/api/status</code></td><td>Database size against the plan limit; last day's analyses and failures</td></tr>
+      <tr><td>GET, HEAD</td><td><code>/api/health</code></td><td>Health check for uptime monitoring (does not touch the database)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 5 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">05</span><h2>The five analyzers and the evidence engine</h2></div>
+  <p>Every analyzer turns the file into typed <b>findings</b>. A finding has a <i>signal</i> (authentic, edited, AI or neutral), a <i>strength</i> (weak, moderate, strong or conclusive) and a plain-language message. Raw output is stored too, so the report can show details.</p>
+
+  <h3>5.1 Metadata analyzer</h3>
+  <p>Reads EXIF, XMP and PNG text chunks with Pillow; adds ExifTool's full tag dump when the binary is present (it is in the Docker image). Signals include camera make and model, editing software, generator names and prompts written by AI tools, and timestamps. GPS coordinates are never stored. Because metadata is easy to forge or strip, camera EXIF alone cannot make a file "likely authentic".</p>
+
+  <h3>5.2 File-structure analyzer</h3>
+  <p>Lists JPEG segments and PNG, WebP and HEIF chunks, reads JPEG quantization tables and estimates the quality the file was saved at, names the ICC colour profile and measures data appended after the image. It explains <i>how</i> the file was written (for example, "saved by an editor at quality 85" or "camera-original structure"); every finding is neutral on its own, but it supports the authentic verdict. Includes HEIC/HEIF support (iPhone photos).</p>
+
+  <h3>5.3 C2PA analyzer</h3>
+  <p>Reads and validates Content Credentials with the official <code>c2pa-python</code> SDK. It reports whether a manifest is present, whether it validates, who signed it, the recorded actions (created, edited, converted), any AI-generation source type (<code>trainedAlgorithmicMedia</code>), and the history of ingredients. A valid AI-generation claim is <b>conclusive</b>. A missing manifest is neutral. A manifest proves who signed and that the file has not changed since; it does not prove the scene is real.</p>
+
+  <h3>5.4 Invisible-watermark analyzer</h3>
+  <p>Stable Diffusion 1.x/2.x and SDXL hide a fixed message in their output using the DWT-DCT method of the <code>invisible-watermark</code> library. MetaProof reimplements that decoder in numpy (the original needs PyTorch) and checks it bit for bit against the library in tests. Finding the mark is strong evidence; not finding it says nothing, because resizing or heavy recompression removes it.</p>
+
+  <h3>5.5 AI-image detector</h3>
+  <p>A frozen CLIP ViT-B/16 image encoder plus a small trained head that outputs a calibrated probability, served with ONNX Runtime. Before scoring, added borders (meme caption bands, phone screenshot app bars) are trimmed. It also outputs the 512-dimensional embedding used for the "seen before" search. Chapter 6 covers it in depth.</p>
+
+  <h3>5.6 Error Level Analysis view (ELA)</h3>
+  <p>The report includes an ELA view computed in the browser: the image is re-saved as JPEG and the difference is amplified, which can make regions with a different compression history stand out. It is shown as a visual aid for the reader, not counted as evidence, because ELA is easy to misread.</p>
+
+  <h3>5.7 The evidence engine (<code>backend/app/engine.py</code>, version 0.2.0-rules)</h3>
+  <table>
+    <thead><tr><th>Strength</th><th class="n">Weight</th></tr></thead>
+    <tbody>
+      <tr><td>weak</td><td class="n">0.5</td></tr><tr><td>moderate</td><td class="n">1.0</td></tr><tr><td>strong</td><td class="n">2.0</td></tr><tr><td>conclusive</td><td class="n">10.0 (decides alone)</td></tr>
+    </tbody>
+  </table>
+  <ol>
+    <li>Weights are summed per outcome (authentic, edited, AI). Neutral findings count for nothing.</li>
+    <li>A <b>conclusive</b> finding (such as a valid signed C2PA AI claim) decides the verdict on its own.</li>
+    <li>Otherwise a label needs at least <b>1.0</b> total support and a lead of at least <b>0.75</b> over the runner-up.</li>
+    <li>"Likely authentic" needs at least <b>2.0</b>, because camera EXIF is easy to forge.</li>
+    <li>If none of this holds, the verdict is <b>inconclusive</b>. The report always lists the top reasons and says what decided the verdict.</li>
+  </ol>
+
+  <h3>5.8 How detector scores become evidence</h3>
+  <table>
+    <thead><tr><th>Detector score</th><th>Becomes</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>≥ 0.91</td><td>strong AI evidence</td><td>Can decide a verdict alone. 70% of unseen-generator AI images and 1.3% of real images score this high.</td></tr>
+      <tr><td>0.79 – 0.91</td><td>weak AI evidence</td><td>Counts only together with other evidence.</td></tr>
+      <tr><td>0.05 – 0.79</td><td>neutral ("unsure")</td><td>No effect on the verdict.</td></tr>
+      <tr><td>&lt; 0.05</td><td>weak support for a real photo</td><td>A small push towards authentic.</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">The thresholds were chosen on a held-out calibration split so that detector v3 flags no more real images than v1 did at its 0.95 threshold.</p>
+</section>
+
+<!-- ============================ 6 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">06</span><h2>The AI-image detector: data, training and results</h2></div>
+  <h3>6.1 Design</h3>
+  <ul>
+    <li><b>Frozen foundation-model features</b> (the UnivFD idea): OpenAI CLIP ViT-B/16 turns each image into a 512-number embedding. Only a small multilayer perceptron (MLP) head, about 130,000 parameters, is trained on top. Frozen features generalize to new generators far better than a network trained from scratch.</li>
+    <li><b>Split by generator, not by image.</b> The test set contains only generators the model never saw, so the score measures generalization, not memorization.</li>
+    <li><b>Standardize every image</b>: shorter side to 256 px and a JPEG round trip at quality 90, then CLIP's resize, crop and normalization. In the raw data, real photos are mostly small JPEGs and AI images large PNGs; without this step a model learns "PNG means AI". The API applies the identical step, verified bit-identical to training.</li>
+    <li><b>Calibration</b> by temperature scaling (T = 1.176 for v3) on a held-out split, so 0.8 means roughly 80%. That lets the evidence engine use fixed, interpretable thresholds.</li>
+    <li><b>Trained on a laptop</b>: an NVIDIA RTX 4050 laptop GPU (6 GB). Images were streamed from Hugging Face and decoded in memory; only CLIP features were kept on disk (42 MB for 33,000 images).</li>
+  </ul>
+
+  <h3>6.2 How many images were used</h3>
+  <table>
+    <thead><tr><th>Set</th><th class="n">Images</th><th class="n">AI</th><th class="n">Real</th><th>Contents</th></tr></thead>
+    <tbody>
+      <tr><td>v1 training</td><td class="n">25,751</td><td class="n">11,714</td><td class="n">14,037</td><td>12 named generators + ~150 Stable Diffusion variants (Community Forensics)</td></tr>
+      <tr><td>v1 calibration</td><td class="n">2,851</td><td class="n">1,299</td><td class="n">1,552</td><td>Same generators as training, held out for calibration and thresholds</td></tr>
+      <tr><td>Added for v2/v3</td><td class="n">~5,400</td><td class="n">~5,400</td><td class="n">—</td><td>18 generators from 2025 (Imagen 4, GPT-4o image, Seedream 3/4, Recraft v2/v3, HiDream, Reve, Ideogram 3, Hunyuan 2.1/3, Wan 2.2, Grok Aurora, Runway Frames, Lumina, Janus, SD3); max 600 distinct per generator</td></tr>
+      <tr><td>Added for v3 balance</td><td class="n">~6,000</td><td class="n">—</td><td class="n">~6,000</td><td>LAION images (stock photos, logos, screenshots, renders) so "polished" is not a cue for AI</td></tr>
+      <tr><td><b>v3 training total (shipped)</b></td><td class="n"><b>36,528</b></td><td class="n" colspan="2">30 generators</td><td>Real images from COCO, LAION, Landscapes HQ, VISION, FFHQ and ImageNet</td></tr>
+      <tr><td>Test: unseen generators (2023–24)</td><td class="n">4,239</td><td class="n">2,731</td><td class="n">1,508</td><td>FLUX dev/schnell, Midjourney 6.1, DALL·E 3, Firefly 3, Imagen 3, Ideogram 2, Stable Cascade, SDXL-LCM</td></tr>
+      <tr><td>Test: newest generators (2026)</td><td class="n">2,313</td><td class="n">1,423</td><td class="n">890</td><td>Nano Banana 1/Pro/2, FLUX.2, GPT Image 2, Qwen Image 2.1</td></tr>
+      <tr><td>Test: robustness to edits</td><td class="n">928</td><td class="n">577</td><td class="n">351</td><td>Each scored under 7 edits (crops, screenshot, filter, caption band, rotation, recompression)</td></tr>
+      <tr><td>Test: real camera originals</td><td class="n">1,304</td><td class="n">—</td><td class="n">1,304</td><td>From 97 devices (VISION + Wikimedia Commons), plus 1,325 social-media copies; testing only, never trained on</td></tr>
+      <tr><td>Experiment v6 (not shipped)</td><td class="n">2,067</td><td class="n">—</td><td class="n">2,067</td><td>Unedited camera originals from 189 other devices, 950 photographers</td></tr>
+      <tr><td>Experiment v4 (not shipped)</td><td class="n">2,400</td><td class="n">1,200</td><td class="n">1,200</td><td>Nano Banana 2 images and matched real photos</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.3 Results on generators never seen in training</h3>
+  <table>
+    <thead><tr><th>Test</th><th class="n">Threshold</th><th class="n">Precision</th><th class="n">Recall</th><th class="n">F1</th><th class="n">Accuracy</th><th class="n">Real flagged</th><th class="n">ROC-AUC</th></tr></thead>
+    <tbody>
+      <tr><td>9 unseen generators</td><td class="n">0.5</td><td class="n">0.947</td><td class="n">0.922</td><td class="n">0.934</td><td class="n">91.6%</td><td class="n">9.4%</td><td class="n"><b>0.972</b></td></tr>
+      <tr><td></td><td class="n">0.91</td><td class="n">0.990</td><td class="n">0.699</td><td class="n">0.819</td><td class="n">80.1%</td><td class="n">1.3%</td><td class="n"></td></tr>
+      <tr><td>…after recompression</td><td class="n">0.5</td><td class="n">0.899</td><td class="n">0.956</td><td class="n">0.927</td><td class="n">90.2%</td><td class="n">19.5%</td><td class="n"><b>0.967</b></td></tr>
+      <tr><td></td><td class="n">0.91</td><td class="n">0.981</td><td class="n">0.784</td><td class="n">0.872</td><td class="n">85.1%</td><td class="n">2.7%</td><td class="n"></td></tr>
+      <tr><td>Newest 2026 generators</td><td class="n">0.5</td><td class="n">0.914</td><td class="n">0.368</td><td class="n">0.524</td><td class="n">59.0%</td><td class="n">5.5%</td><td class="n"><b>0.770</b></td></tr>
+      <tr><td></td><td class="n">0.91</td><td class="n">0.993</td><td class="n">0.202</td><td class="n">0.335</td><td class="n">50.8%</td><td class="n">0.2%</td><td class="n"></td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Source: <code>ml/eval_metrics.py</code> → <code>ml/results_metrics.json</code>; also <code>docs/evaluation.md</code>. Recompression = 50% downscale plus JPEG quality 60. Calibration error 1.1%.</p>
+
+  <div class="grid2">
+    <div>
+      <h4>Detection per unseen generator (score ≥ 0.5)</h4>
+      <table>
+        <thead><tr><th>Generator</th><th class="n">Images</th><th class="n">AUC</th><th class="n">Caught</th></tr></thead>
+        <tbody>
+          <tr><td>Stable Cascade</td><td class="n">300</td><td class="n">0.989</td><td class="n">97.7%</td></tr>
+          <tr><td>Firefly Image 3</td><td class="n">302</td><td class="n">0.989</td><td class="n">97.4%</td></tr>
+          <tr><td>DALL·E 3</td><td class="n">301</td><td class="n">0.986</td><td class="n">96.4%</td></tr>
+          <tr><td>Midjourney 6.1</td><td class="n">324</td><td class="n">0.975</td><td class="n">93.8%</td></tr>
+          <tr><td>Imagen 3</td><td class="n">301</td><td class="n">0.973</td><td class="n">92.0%</td></tr>
+          <tr><td>FLUX dev</td><td class="n">300</td><td class="n">0.972</td><td class="n">92.0%</td></tr>
+          <tr><td>FLUX schnell</td><td class="n">303</td><td class="n">0.962</td><td class="n">89.1%</td></tr>
+          <tr><td>Ideogram 2</td><td class="n">300</td><td class="n">0.955</td><td class="n">85.7%</td></tr>
+          <tr><td>SDXL-LCM</td><td class="n">300</td><td class="n">0.952</td><td class="n">85.3%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h4>The known weak spot: 2026 generators</h4>
+      <table>
+        <thead><tr><th>Generator</th><th class="n">Images</th><th class="n">AUC</th><th class="n">Caught</th></tr></thead>
+        <tbody>
+          <tr><td>FLUX.2</td><td class="n">300</td><td class="n">0.815</td><td class="n">37.7%</td></tr>
+          <tr><td>Qwen Image 2.1</td><td class="n">300</td><td class="n">0.771</td><td class="n">23.7%</td></tr>
+          <tr><td>Nano Banana 2</td><td class="n">300</td><td class="n">0.680</td><td class="n">21.3%</td></tr>
+          <tr><td>GPT Image 2</td><td class="n">300</td><td class="n">0.651</td><td class="n">21.0%</td></tr>
+          <tr><td>Nano Banana (1)</td><td class="n">40</td><td class="n">0.990</td><td class="n">95.0%</td></tr>
+          <tr><td>Nano Banana Pro</td><td class="n">36</td><td class="n">0.981</td><td class="n">91.7%</td></tr>
+        </tbody>
+      </table>
+      <p class="small">For Google's Nano Banana images, the signed C2PA credential they carry is the evidence that decides, not the detector.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <figure><img src="assets/confusion_heldout.png"><figcaption>Confusion matrices, 9 unseen generators (as-is).</figcaption></figure>
+    <figure><img src="assets/confusion_heldout2.png"><figcaption>Confusion matrices, newest 2026 generators (as-is).</figcaption></figure>
+  </div>
+
+  <h3>6.4 Choosing the backbone and the model size</h3>
+  <table>
+    <thead><tr><th>Model (v1 data)</th><th class="n">Accuracy @0.5</th><th class="n">AUC</th><th class="n">AUC recompressed</th><th class="n">Calibration error</th></tr></thead>
+    <tbody>
+      <tr><td>CLIP ViT-B/32 + MLP</td><td class="n">87.2%</td><td class="n">0.937</td><td class="n">0.894</td><td class="n">1.5%</td></tr>
+      <tr><td><b>CLIP ViT-B/16 + MLP</b> (chosen)</td><td class="n">88.7%</td><td class="n">0.953</td><td class="n">0.950</td><td class="n">1.0%</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>Export</th><th class="n">Size</th><th class="n">Peak RAM in the API</th><th class="n">AUC</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <tr><td>fp32</td><td class="n">346 MB</td><td class="n">557 MB</td><td class="n">0.9519</td><td>Does not fit Render's 512 MB</td></tr>
+      <tr><td>dynamic int8</td><td class="n">88 MB</td><td class="n">—</td><td class="n">0.919</td><td>Rejected: −0.03 AUC</td></tr>
+      <tr><td><b>8-bit weight-only</b></td><td class="n">121 MB</td><td class="n">348 MB</td><td class="n">0.9518</td><td><b>Shipped</b></td></tr>
+      <tr><td>4-bit weight-only</td><td class="n">82 MB</td><td class="n">—</td><td class="n">0.940</td><td>Not needed</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.5 Robustness to everyday edits, and border trimming</h3>
+  <p>A white meme caption band cut AI images at the strong band from 70.7% to 2.9%, because the flat band filled much of the 256 px input. The fix trims added borders before scoring, but only borders that hold text or UI and end in a straight edge, so studio backgrounds and skies are left alone.</p>
+  <table>
+    <thead><tr><th>Edit</th><th class="n">AUC before → after</th><th class="n">AI at strong, before → after</th><th class="n">Real at strong</th></tr></thead>
+    <tbody>
+      <tr><td>none (original)</td><td class="n">0.976 → 0.976</td><td class="n">70.7% → 70.7%</td><td class="n">0.3%</td></tr>
+      <tr><td><b>caption band</b></td><td class="n">0.872 → <b>0.970</b></td><td class="n">2.9% → <b>57.0%</b></td><td class="n">0.0%</td></tr>
+      <tr><td><b>phone screenshot</b></td><td class="n">0.948 → <b>0.958</b></td><td class="n">41.1% → <b>57.4%</b></td><td class="n">0.0%</td></tr>
+      <tr><td>centre crop 60%</td><td class="n">0.961</td><td class="n">55.6%</td><td class="n">0.6%</td></tr>
+      <tr><td>corner crop 50%</td><td class="n">0.951</td><td class="n">40.6%</td><td class="n">0.0%</td></tr>
+      <tr><td>filter edit</td><td class="n">0.967</td><td class="n">64.0%</td><td class="n">1.4%</td></tr>
+      <tr><td>rotate 3°</td><td class="n">0.971</td><td class="n">61.5%</td><td class="n">0.3%</td></tr>
+      <tr><td>social recompression</td><td class="n">0.967</td><td class="n">59.8%</td><td class="n">0.9%</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Source: <code>ml/eval_robustness.py</code> on 928 held-out images. No edit pushed real photos above 1.4% at the strong band.</p>
+
+  <h3>6.6 Real camera photos</h3>
+  <p>Test sets of web images say little about what users upload most: originals straight from a phone or camera. On <b>1,304 camera originals from 97 devices</b> (2012–2026 phones, mirrorless and DSLR cameras) the live model flags <b>0.5%</b> at the strong threshold (95% upper bound 1.1%), and 0.5% of their social-media copies. The thresholds hold on real camera files.</p>
+</section>
+
+<!-- ============================ MODEL BENCHMARK ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">07</span><h2>Model benchmark and efficiency</h2></div>
+  <p class="lead">The detector inside MetaProof (<code>clip-vitb16-mlp-v3</code>) was designed, trained and evaluated by Lanchenba Mutum. This chapter gathers its benchmark in one place: how accurate it is on images it has never seen, how small and fast it is, and what it costs to run.</p>
+
+  <h3>Scorecard</h3>
+  <div class="grid3" style="margin:6pt 0 4pt">
+    <div class="stat"><b>0.972</b><span>ROC-AUC on 4,239 images from 9 generators never seen in training</span></div>
+    <div class="stat"><b>91.6%</b><span>Accuracy at the 0.5 threshold on those unseen generators (F1 0.934)</span></div>
+    <div class="stat"><b>99.0%</b><span>Precision at the strong threshold (≥ 0.91): 20 false alarms in 1,929 AI flags</span></div>
+    <div class="stat"><b>0.967</b><span>ROC-AUC after social-media recompression (50% downscale, JPEG quality 60)</span></div>
+    <div class="stat"><b>0.5%</b><span>Real camera originals flagged at the strong threshold (1,304 photos, 97 devices)</span></div>
+    <div class="stat"><b>1.1%</b><span>Expected calibration error: a score of 0.8 means about 80%</span></div>
+  </div>
+  <div class="grid3" style="margin:0 0 10pt">
+    <div class="stat"><b>121 MB</b><span>Model file, 65% smaller than full precision (346 MB) with the same AUC</span></div>
+    <div class="stat"><b>~0.5 s</b><span>Per image on one laptop CPU thread; time barely grows with image size</span></div>
+    <div class="stat"><b>348 MB</b><span>Peak memory of the whole API with the model loaded (limit: 512 MB)</span></div>
+  </div>
+
+  <h3>Accuracy on generators it never saw</h3>
+  <p>The test set is split <b>by generator</b>: none of the nine generators below appeared in training, so the numbers measure how well the model generalizes to new AI tools, not how well it remembers old ones.</p>
+  <table>
+    <thead><tr><th>Metric</th><th class="n">As-is</th><th class="n">Recompressed</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td>ROC-AUC</td><td class="n"><b>0.972</b></td><td class="n"><b>0.967</b></td><td>Chance a random AI image scores above a random real one</td></tr>
+      <tr><td>Accuracy @ 0.5</td><td class="n">91.6%</td><td class="n">90.2%</td><td>Share of all images classified correctly</td></tr>
+      <tr><td>Precision / recall @ 0.5</td><td class="n">0.947 / 0.922</td><td class="n">0.899 / 0.956</td><td>Flags that are right / AI images caught</td></tr>
+      <tr><td>F1 @ 0.5</td><td class="n">0.934</td><td class="n">0.927</td><td>Balance of precision and recall</td></tr>
+      <tr><td>Precision @ 0.91 (strong)</td><td class="n"><b>0.990</b></td><td class="n">0.981</td><td>When it gives strong evidence, it is almost always right</td></tr>
+      <tr><td>Real images flagged @ 0.91</td><td class="n">1.3%</td><td class="n">2.7%</td><td>False alarms that could affect a verdict</td></tr>
+      <tr><td>Expected calibration error</td><td class="n">1.1%</td><td class="n">—</td><td>Scores can be read as probabilities</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Sources: <code>ml/eval_metrics.py</code> → <code>ml/results_metrics.json</code>; <code>ml/MODEL_CARD.md</code>. 4,239 images: 2,731 AI from FLUX dev/schnell, Midjourney 6.1, DALL·E 3, Firefly Image 3, Imagen 3, Ideogram 2, Stable Cascade and SDXL-LCM, and 1,508 real.</p>
+
+  <h3>Safety on real photos</h3>
+  <table>
+    <thead><tr><th>Real-photo test</th><th class="n">Photos</th><th class="n">Flagged at strong (≥ 0.91)</th></tr></thead>
+    <tbody>
+      <tr><td>Camera originals straight from phones and cameras (2012–2026, 97 devices)</td><td class="n">1,304</td><td class="n"><b>0.5%</b> (95% upper bound 1.1%)</td></tr>
+      <tr><td>The same photos as social-media copies (1,080 px, JPEG quality 75)</td><td class="n">1,325</td><td class="n">0.5%</td></tr>
+      <tr><td>Real photos from the 2026 benchmark</td><td class="n">890</td><td class="n">0.2%</td></tr>
+      <tr><td>Real images in the unseen-generator test</td><td class="n">1,508</td><td class="n">1.3%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Improvement across versions</h3>
+  <table>
+    <thead><tr><th>Measure</th><th class="n">v1</th><th class="n">v3 (shipped)</th></tr></thead>
+    <tbody>
+      <tr><td>ROC-AUC, unseen generators</td><td class="n">0.953</td><td class="n"><b>0.972</b></td></tr>
+      <tr><td>ROC-AUC, recompressed</td><td class="n">0.950</td><td class="n"><b>0.967</b></td></tr>
+      <tr><td>AI images caught at the strong threshold</td><td class="n">60% (at 0.95)</td><td class="n"><b>70%</b> (at 0.91)</td></tr>
+      <tr><td>Real images flagged at the strong threshold</td><td class="n">1.8%</td><td class="n"><b>1.3%</b></td></tr>
+      <tr><td>Generators in training</td><td class="n">12 + SD variants</td><td class="n"><b>30</b> + SD variants</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Efficiency</h3>
+  <table>
+    <thead><tr><th>Measure</th><th class="n">Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Trainable parameters</td><td class="n">~130,000</td><td>Only the small MLP head is trained; the CLIP ViT-B/16 image encoder (about 86 million parameters) stays frozen</td></tr>
+      <tr><td>Training hardware</td><td class="n">1 laptop GPU</td><td>NVIDIA RTX 4050 (6 GB); no cloud GPUs</td></tr>
+      <tr><td>Stored training features</td><td class="n">42 MB</td><td>For 33,000 images: images were streamed and only CLIP features kept</td></tr>
+      <tr><td>Model file</td><td class="n">121 MB</td><td>8-bit weight-only ONNX; fp32 was 346 MB</td></tr>
+      <tr><td>Accuracy cost of compression</td><td class="n">none</td><td>AUC 0.9518 vs 0.9519 for fp32; scores differ by 0.003 on average</td></tr>
+      <tr><td>Peak API memory</td><td class="n">348 MB</td><td>fp32 needed 557 MB and did not fit the 512 MB server</td></tr>
+      <tr><td>Inference, laptop CPU, 1 thread</td><td class="n">~0.5 s</td><td>Per image; about 2 images per second per core (derived)</td></tr>
+      <tr><td>Inside the full pipeline (laptop)</td><td class="n">0.75–0.88 s</td><td>1 MP to 12 MP photos: every image is resized to 256 px first, so size barely matters</td></tr>
+      <tr><td>Large camera photos (5–50 MP)</td><td class="n">0.94 s</td><td>Including decoding and resizing, one laptop core</td></tr>
+      <tr><td>Production (Render free, ~0.1 CPU)</td><td class="n">~5.3 s</td><td>Warm; ~8.4 s on first use while the model loads</td></tr>
+      <tr><td>GPU needed to serve</td><td class="n">no</td><td>Runs on CPU with ONNX Runtime; no PyTorch in production</td></tr>
+      <tr><td>Running cost</td><td class="n">$0 / month</td><td>Free hosting tiers</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Sources: <code>ml/README.md</code> (serving table), <code>ml/bench_cpu.py</code>, <code>docs/benchmarks.md</code>, <code>backend/scripts/benchmark_pipeline.py</code>.</p>
+
+  <h3>Choices that made it efficient</h3>
+  <table>
+    <thead><tr><th>Alternative measured</th><th>Result</th><th>Decision</th></tr></thead>
+    <tbody>
+      <tr><td>Smaller backbone, CLIP ViT-B/32</td><td>AUC 0.937 (0.894 recompressed)</td><td>Rejected: ViT-B/16 is 0.016 better, and much better after recompression</td></tr>
+      <tr><td>Full precision (fp32)</td><td>346 MB, 557 MB RAM</td><td>Rejected: does not fit the server</td></tr>
+      <tr><td>Dynamic int8 quantization</td><td>88 MB, AUC 0.919</td><td>Rejected: costs 0.03 AUC</td></tr>
+      <tr><td><b>8-bit weight-only</b></td><td>121 MB, AUC 0.9518</td><td><b>Shipped</b>: no accuracy loss</td></tr>
+      <tr><td>Full-resolution crops (v5/v6)</td><td>2.67 s per photo (2.9× slower)</td><td>Not shipped: slower, and not more accurate at a safe threshold</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout good">
+    <p><b>In plain words:</b> on AI generators it has never seen, the detector separates AI images from real ones with an AUC of 0.97. When it is confident enough to decide a verdict, it is right 99% of the time and flags only about 1 in 200 real camera photos. It does this with a 121 MB model that runs in about half a second on one ordinary CPU core, needs no GPU and costs nothing to host.</p>
+  </div>
+  <div class="callout warn">
+    <p><b>Where it is weaker:</b> the newest photorealistic generators (GPT Image 2, Nano Banana 2, Qwen Image 2.1, FLUX.2) reach an AUC of only 0.770, and corner crops or heavy edits lower detection. Chapter 6 and the limitations chapter give the details. These numbers are from the project's own test sets; the detector has not been benchmarked head-to-head against commercial tools.</p>
+  </div>
+</section>
+
+<!-- ============================ 7 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">08</span><h2>Experiments that did not ship, and why</h2></div>
+  <p>Knowing what <i>not</i> to ship is part of the work. Each experiment was measured against the live model with the same protocol, and rejected when it did not beat it where it matters: catching AI images without flagging real photos.</p>
+  <table>
+    <thead><tr><th>Experiment</th><th>Idea</th><th>Result</th><th>Lesson</th></tr></thead>
+    <tbody>
+      <tr><td>First v2 head</td><td>Add 2025 generators, balanced with COCO/Landscapes photos</td><td>Real images flagged rose 1.8% → 2.5% (stock photos, logos, renders)</td><td>It learned "polished means AI". Balancing with ~6,000 LAION images fixed it (→ v3).</td></tr>
+      <tr><td>v4</td><td>Train on 1,200 Nano Banana 2 images</td><td>Caught 5% → 7%; more false alarms</td><td>The information is not in 256 px CLIP features; more examples do not help.</td></tr>
+      <tr><td>Full-resolution probe</td><td>Score four 224 px crops at up to 1,024 px</td><td>AUC on GPT Image 2 0.83 → 0.97 (partly a size/compression shortcut)</td><td>Full resolution carries real signal, but the test must match real photos' size and compression.</td></tr>
+      <tr><td>v5</td><td>Full-resolution crops head</td><td>Flagged 5.8% of real camera originals at ≥ 0.95 (22% of mirrorless/DSLR)</td><td>It learned "clean, sharp pixels mean AI", which modern cameras also produce.</td></tr>
+      <tr><td>v6</td><td>v5 retrained with 2,067 camera originals as real examples</td><td>Camera false alarms 5.8% → 0.8%, but at a safe threshold it catches no more new-generator images than v3, and fewer after recompression</td><td>Safer, but not better. Keep v3; next step is more camera originals and full-size AI images.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><p><b>Cost check for v5/v6:</b> on Render's free CPU, v3 takes about 5 s per image; a full-resolution model would take about 14 s. Speed was a second reason to keep v3.</p></div>
+</section>
+
+<!-- ============================ 8 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">09</span><h2>Database design</h2></div>
+  <p>PostgreSQL 17 on Neon with the pgvector extension. The schema is managed with Alembic migrations (<code>0001</code> initial schema, <code>0002</code> media embeddings, <code>0003</code> drop the original filename for privacy, <code>0004</code> job progress step).</p>
+  <table>
+    <thead><tr><th>Table</th><th>Holds</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>media_files</code></td><td>One row per distinct file: SHA-256, MIME type, size, width, height, thumbnail (WebP), first seen</td><td>Unique index on <code>sha256</code>; insert-or-ignore prevents races between concurrent uploads</td></tr>
+      <tr><td><code>analysis_jobs</code></td><td>Status (queued, running, done, failed), attempts, current step, pipeline version, temp path, timestamps, error</td><td>The job queue itself, claimed with <code>FOR UPDATE SKIP LOCKED</code></td></tr>
+      <tr><td><code>analyzer_runs</code></td><td>One row per analyzer per job: version, ok, duration, error, raw output (JSON)</td><td>Lets the report show details and timings</td></tr>
+      <tr><td><code>findings</code></td><td>Code, signal, strength, message</td><td>Belongs to an analyzer run</td></tr>
+      <tr><td><code>verdicts</code></td><td>Label, confidence, engine version, scores, top reasons</td><td>One per finished job</td></tr>
+      <tr><td><code>media_embeddings</code></td><td>512-d CLIP vector per file and model name</td><td>HNSW index for near-duplicate search</td></tr>
+    </tbody>
+  </table>
+  <h3>Measured database performance (<code>backend/scripts/benchmark_db.py</code>)</h3>
+  <table>
+    <thead><tr><th>Rows</th><th class="n">Hash lookup (index)</th><th class="n">Hash lookup (scan)</th><th class="n">Seen-before (HNSW)</th><th class="n">Seen-before (exact)</th><th class="n">HNSW recall@5</th></tr></thead>
+    <tbody>
+      <tr><td>10,000</td><td class="n">0.01 ms</td><td class="n">0.46 ms</td><td class="n">0.44 ms</td><td class="n">16.6 ms</td><td class="n">99.7%</td></tr>
+      <tr><td>30,000</td><td class="n">0.01 ms</td><td class="n">1.43 ms</td><td class="n">0.63 ms</td><td class="n">51.9 ms</td><td class="n">99.6%</td></tr>
+    </tbody>
+  </table>
+  <p>At 30,000 analyses the HNSW index is about 80× faster than an exact scan while returning the same best match in every query. A lesson recorded during benchmarking: random vectors gave only 39–68% recall, because random vectors have no neighbourhood structure; real CLIP embeddings cluster, which is what HNSW exploits.</p>
+  <h3>Storage and retention</h3>
+  <p>About 6 KB per analysis for the row and embedding, plus ~7 KB thumbnail and a few KB of findings, so Neon's 0.5 GB free tier holds roughly 25,000–30,000 analyses. Images not analyzed for 90 days are deleted with everything derived from them. The API logs a warning at 400 MB. The database used 9.1 MB on 20 October 2026.</p>
+  <h3>Two database branches</h3>
+  <p><b>main</b> is production (used by Render). <b>dev</b> is a copy-on-write branch for local development, so migrations and experiments can never break the live site again.</p>
+</section>
+
+<!-- ============================ 9 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">10</span><h2>Frontend: the web app</h2></div>
+  <p>React 19 with TypeScript, built with Vite and styled with Tailwind CSS 4 in a "liquid glass" design (translucent panels, soft motion), served by Vercel. Fonts: Inter, Sora and JetBrains Mono. Icons: Lucide. Toasts: Sonner.</p>
+  <table>
+    <thead><tr><th>Page</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Welcome</td><td>First-visit introduction on phones; never shown on shared links</td></tr>
+      <tr><td>Overview</td><td>Recent analyses and an explanation of the six evidence layers</td></tr>
+      <tr><td>New analysis</td><td>Drag-and-drop, file picker, paste, or Android share; client-side type and size checks; upload progress bar</td></tr>
+      <tr><td>Analysis</td><td>Live progress by analyzer, then the full report</td></tr>
+      <tr><td>Report (shared)</td><td><code>/report/&lt;sha256&gt;</code>: anyone with the link sees the latest report</td></tr>
+      <tr><td>History</td><td>Every analysis made on this device, filterable by verdict, with undo on delete</td></tr>
+      <tr><td>Method</td><td>How MetaProof works and the detector's measured results per generator</td></tr>
+      <tr><td>Settings</td><td>Service status: database storage meter, last day's analyses and failures, retention</td></tr>
+    </tbody>
+  </table>
+  <h3>Notable features</h3>
+  <ul>
+    <li><b>Explained report:</b> what decided the verdict, the detector's reading in words ("No clear signs either way") rather than a bare number, a balance-of-evidence bar, per-analyzer details, near-duplicates "seen before", an ELA view, copy share link and save as PDF.</li>
+    <li><b>Installable PWA with share target:</b> a web manifest and a small service worker put MetaProof in Android's share menu, so a photo can be sent straight from the gallery.</li>
+    <li><b>Privacy:</b> the real filename never leaves the device; history and previews live in the browser.</li>
+    <li><b>Cold-start resilience:</b> the API client retries through the free server's wake-up (dropped connections, 502/503/504, hung requests) for up to 3 minutes, and shows "waking up" instead of an error. Uploads are safe to retry because the server deduplicates by hash.</li>
+    <li><b>Accessibility:</b> skip link, semantic landmarks, labelled controls, warnings in words and not only colour, a meter element for storage.</li>
+  </ul>
+</section>
+
+<!-- ============================ 10 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">11</span><h2>Security, privacy and abuse protection</h2></div>
+  <table>
+    <thead><tr><th>Risk</th><th>Protection</th></tr></thead>
+    <tbody>
+      <tr><td>Malicious or huge files</td><td>Type detected from bytes, not extension; 25 MB limit enforced while streaming; 30 MP pixel limit (also blocks decompression bombs); decoded once under Pillow's limits</td></tr>
+      <tr><td>Path or filename tricks</td><td>Files written to a private temp directory under random names; the uploaded name is never used</td></tr>
+      <tr><td>Running out of free quota</td><td>Per-IP limit (20 uploads/hour, sliding window), global daily cap (500/day) counted in Postgres so it survives restarts</td></tr>
+      <tr><td>Forged client IP</td><td>The IP is read from the header Cloudflare sets (<code>cf-connecting-ip</code>), which the client cannot forge; tested</td></tr>
+      <tr><td>Keeping personal data</td><td>Originals deleted after analysis; no accounts; filename never sent; GPS never stored; 90-day retention</td></tr>
+      <tr><td>Container privileges</td><td>The API runs as a non-root user in Docker</td></tr>
+      <tr><td>Secrets in code</td><td>Configuration from environment variables; <code>.env</code> is git-ignored; separate dev and production databases</td></tr>
+      <tr><td>Web headers</td><td>Vercel sends <code>X-Content-Type-Options: nosniff</code>, <code>X-Frame-Options: DENY</code> and a strict referrer policy; CORS limited to the app's origin</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 11 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">12</span><h2>Testing and quality</h2></div>
+  <table>
+    <thead><tr><th>Suite</th><th class="n">Tests</th><th>Covers</th><th>Runs</th></tr></thead>
+    <tbody>
+      <tr><td>Backend unit (pytest)</td><td class="n">84</td><td>Analyzers, evidence engine, ingest limits, rate limits, watermark decoder vs the reference library, detector preprocessing, border trimming, health check (GET and HEAD)</td><td>Locally and in CI</td></tr>
+      <tr><td>Backend integration</td><td class="n">23</td><td>Full upload → queue → worker → report flow on a real Postgres + pgvector: migrations, deduplication, progress steps, restart recovery, 429 limits, forged headers, near-duplicate search, 6 concurrent workers with no job claimed twice</td><td>CI service container</td></tr>
+      <tr><td>Browser end-to-end (Playwright)</td><td class="n">19</td><td>Upload sends no filename, reports explain themselves, unsupported files, a sleeping server is waited for, layout on desktop and phones, settings warnings, PWA manifest and share target, welcome screen</td><td>Against the production build with a faked API</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><b>Linting:</b> Ruff for Python, oxlint for TypeScript; TypeScript type checking on every build.</li>
+    <li><b>CI:</b> GitHub Actions runs the backend workflow on backend changes and the frontend workflow on frontend changes, for every push and pull request.</li>
+    <li><b>Regression tests for real incidents:</b> the cold-start retry and the HEAD health check were each added with a test that fails without the fix.</li>
+  </ul>
+</section>
+
+<!-- ============================ 12 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">13</span><h2>Deployment and operations</h2></div>
+  <table>
+    <thead><tr><th>Part</th><th>Where</th><th>How it deploys</th></tr></thead>
+    <tbody>
+      <tr><td>Web app</td><td>Vercel (free)</td><td>Automatically on every push to <code>main</code>; SPA rewrites; long cache for hashed assets</td></tr>
+      <tr><td>API + worker</td><td>Render web service, Docker, Oregon, free (512 MB RAM, fractional CPU)</td><td>Automatically when files under <code>backend/</code> change (Root Directory: backend); runs <code>alembic upgrade head</code> then uvicorn</td></tr>
+      <tr><td>Database</td><td>Neon serverless Postgres, US East, free (0.5 GB), branches <code>main</code> and <code>dev</code></td><td>Schema via Alembic on API start</td></tr>
+      <tr><td>Model weights</td><td>Hugging Face Hub, pinned to a revision</td><td>Downloaded into the Docker image at build time</td></tr>
+      <tr><td>Uptime</td><td>UptimeRobot (free)</td><td><code>HEAD /api/health</code> every 5 minutes keeps Render awake and emails on outages</td></tr>
+      <tr><td>Source and CI</td><td>GitHub + GitHub Actions</td><td>Tests and lint on every push</td></tr>
+    </tbody>
+  </table>
+  <h3>Operational rules learned</h3>
+  <ul>
+    <li>Run migrations only through a deploy, never from a laptop against production; local work uses the <code>dev</code> branch.</li>
+    <li>The free Render instance sleeps after 15 idle minutes and takes about a minute to wake; one always-awake service uses ~744 of Render's 750 free hours a month.</li>
+    <li>GitHub scheduled workflows can run hours late; use an external monitor for anything time-sensitive.</li>
+    <li>Health checks should accept HEAD as well as GET, because monitors often use HEAD.</li>
+  </ul>
+</section>
+
+<!-- ============================ 13 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">14</span><h2>Performance and cost</h2></div>
+  <h3>Time per stage (laptop, one CPU thread, p50; <code>backend/scripts/benchmark_pipeline.py</code>)</h3>
+  <table>
+    <thead><tr><th>Stage</th><th class="n">1 MP</th><th class="n">4 MP</th><th class="n">12 MP</th></tr></thead>
+    <tbody>
+      <tr><td>Upload (POST returns)</td><td class="n">105 ms</td><td class="n">118 ms</td><td class="n">165 ms</td></tr>
+      <tr><td>Metadata</td><td class="n">28 ms</td><td class="n">22 ms</td><td class="n">29 ms</td></tr>
+      <tr><td>File structure</td><td class="n">5 ms</td><td class="n">6 ms</td><td class="n">7 ms</td></tr>
+      <tr><td>C2PA</td><td class="n">2 ms</td><td class="n">3 ms</td><td class="n">6 ms</td></tr>
+      <tr><td>Watermark</td><td class="n">94 ms</td><td class="n">367 ms</td><td class="n">685 ms</td></tr>
+      <tr><td>AI detector</td><td class="n">752 ms</td><td class="n">774 ms</td><td class="n">875 ms</td></tr>
+      <tr><td><b>Upload to finished report</b></td><td class="n"><b>1.03 s</b></td><td class="n"><b>1.34 s</b></td><td class="n"><b>1.82 s</b></td></tr>
+    </tbody>
+  </table>
+  <p>On the free production server (about a tenth of a CPU) a full report takes about 9 s; the detector dominates. Peak API memory with the detector loaded and a 12 MP photo is about 350 MB of the 512 MB limit.</p>
+  <h3>Running cost</h3>
+  <table>
+    <thead><tr><th>Service</th><th>Plan</th><th class="n">Cost</th><th>Limit that matters</th></tr></thead>
+    <tbody>
+      <tr><td>Vercel</td><td>Hobby</td><td class="n">$0</td><td>Non-commercial use</td></tr>
+      <tr><td>Render</td><td>Free web service</td><td class="n">$0</td><td>750 instance hours/month; sleeps after 15 idle minutes; 512 MB RAM</td></tr>
+      <tr><td>Neon</td><td>Free</td><td class="n">$0</td><td>0.5 GB storage per project; compute scales to zero</td></tr>
+      <tr><td>Hugging Face Hub</td><td>Free</td><td class="n">$0</td><td>Public model repository</td></tr>
+      <tr><td>UptimeRobot</td><td>Free</td><td class="n">$0</td><td>50 monitors, 5-minute interval</td></tr>
+      <tr><td>GitHub + Actions</td><td>Free</td><td class="n">$0</td><td>Public repository</td></tr>
+      <tr><td colspan="2"><b>Total</b></td><td class="n"><b>$0 / month</b></td><td>Hardware used for training: the author's laptop GPU</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 14 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">15</span><h2>How MetaProof compares with other tools</h2></div>
+  <style>#cmp td,#cmp th{font-size:8pt;padding:2.6pt 5pt}</style>
+  <p>The comparison below is about <b>approach and features</b>, based on how these kinds of tools generally work. MetaProof has <b>not</b> been benchmarked head-to-head against any commercial product, so it makes no claim to be more accurate than any of them. Check each product's current documentation before citing a specific feature.</p>
+  <table id="cmp">
+    <thead><tr><th>Capability</th><th>MetaProof</th><th>Typical AI-detector website</th><th>C2PA viewer (e.g. Content Credentials Verify)</th><th>Forensics site (e.g. ELA tools)</th></tr></thead>
+    <tbody>
+      <tr><td>AI-pixel detection</td><td><span class="tag ok">Yes</span> calibrated, measured on unseen generators</td><td><span class="tag ok">Yes</span> usually the only signal</td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+      <tr><td>Signed provenance (C2PA)</td><td><span class="tag ok">Yes</span> validated, weighed with other evidence</td><td><span class="tag part">Varies</span></td><td><span class="tag ok">Yes</span> its main purpose</td><td><span class="tag no">Rarely</span></td></tr>
+      <tr><td>Metadata and file structure</td><td><span class="tag ok">Yes</span></td><td><span class="tag part">Rarely</span></td><td><span class="tag part">Partial</span></td><td><span class="tag ok">Yes</span></td></tr>
+      <tr><td>Generator watermarks</td><td><span class="tag ok">Yes</span> SD/SDXL</td><td><span class="tag part">Varies</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+      <tr><td>One combined, explained verdict</td><td><span class="tag ok">Yes</span> with reasons and "inconclusive"</td><td><span class="tag part">Usually a bare percentage</span></td><td><span class="tag no">No verdict</span></td><td><span class="tag no">Expert reads it</span></td></tr>
+      <tr><td>Published accuracy and failure cases</td><td><span class="tag ok">Yes</span> including weak spots</td><td><span class="tag part">Often marketing figures</span></td><td>n/a</td><td>n/a</td></tr>
+      <tr><td>Open source, self-hostable</td><td><span class="tag ok">Yes</span> MIT code</td><td><span class="tag no">Usually not</span></td><td><span class="tag part">SDK is open</span></td><td><span class="tag part">Varies</span></td></tr>
+      <tr><td>Keeps uploads</td><td><span class="tag ok">No</span> deleted after analysis</td><td><span class="tag part">Varies</span></td><td><span class="tag part">Varies</span></td><td><span class="tag part">Some publish uploads</span></td></tr>
+      <tr><td>Near-duplicate "seen before"</td><td><span class="tag ok">Yes</span></td><td><span class="tag no">Rarely</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+      <tr><td>Video</td><td><span class="tag no">No</span></td><td><span class="tag part">Some</span></td><td><span class="tag ok">Some</span></td><td><span class="tag no">Rarely</span></td></tr>
+      <tr><td>Scale and support</td><td><span class="tag no">Free tier, one person</span></td><td><span class="tag ok">Commercial</span></td><td><span class="tag ok">Industry-backed</span></td><td><span class="tag part">Varies</span></td></tr>
+    </tbody>
+  </table>
+  <h3>Advantages, in plain words</h3>
+  <ol>
+    <li><b>Several kinds of evidence, one honest answer.</b> Signed proof outranks statistics, missing data is never held against a file, and weak evidence gives "inconclusive" instead of a guess.</li>
+    <li><b>Explains itself.</b> Every verdict names what decided it, in words a non-expert can follow.</li>
+    <li><b>Measured honestly.</b> Accuracy is reported on generators the model never saw, under recompression and edits, on real camera photos, and its weak spots are published.</li>
+    <li><b>Conservative by design.</b> At the strong threshold it is right 99% of the time when it says AI on unseen generators, and flags about 0.5% of real camera originals.</li>
+    <li><b>Private.</b> No account, no stored originals, filename never sent.</li>
+    <li><b>Open and cheap.</b> MIT-licensed code that runs entirely on free tiers.</li>
+  </ol>
+</section>
+
+<!-- ============================ 15 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">16</span><h2>Limitations</h2></div>
+  <div class="callout bad"><p>Read this chapter before relying on a verdict or publishing claims about the system.</p></div>
+  <h3>Detection</h3>
+  <ul>
+    <li><b>The newest photorealistic generators are mostly missed.</b> GPT Image 2, Nano Banana 2 and Qwen Image 2.1 reach only 21–24% at a score of 0.5 and 5–8% at the strong threshold. The cause is in the features (256 px CLIP view), not the amount of training data.</li>
+    <li>A detector score is a probability, not proof; about 9% of real web images score above 0.5, which is why only scores ≥ 0.91 can decide a verdict.</li>
+    <li>Corner crops and screenshots lower detection (to about 41–57% at the strong band).</li>
+    <li>Heavily filtered or edited real photos can be flagged.</li>
+    <li>Does not localize edits: splicing, inpainting or object removal inside a real photo are not detected.</li>
+  </ul>
+  <h3>Provenance and metadata</h3>
+  <ul>
+    <li>Most images carry no C2PA credentials, and normal re-saving removes them; "inconclusive" is therefore the most common verdict.</li>
+    <li>Metadata can be stripped or forged, so it is weighed lightly.</li>
+    <li>Watermark detection covers only Stable Diffusion 1.x/2.x and SDXL marks, which do not survive resizing.</li>
+  </ul>
+  <h3>Product and operations</h3>
+  <ul>
+    <li><b>Images only.</b> Video analysis from the proposal is not built.</li>
+    <li>Free hosting: about 9 s per analysis, a cold start of about a minute if the server sleeps, 20 uploads per hour per IP, 500 per day overall, and roughly 25,000–30,000 stored analyses.</li>
+    <li>One server instance: no horizontal scaling or redundancy.</li>
+    <li>No user accounts: history is per browser and is lost if browser data is cleared.</li>
+    <li>The detector weights are licensed <b>non-commercial only</b> (CC BY-NC-SA 4.0), because of the training data.</li>
+    <li>Evaluation sets are a few hundred images per generator, so differences of a few points can be noise.</li>
+  </ul>
+</section>
+
+<!-- ============================ 16 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">17</span><h2>Proposal versus delivery</h2></div>
+  <table>
+    <thead><tr><th>Proposal item</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Secure upload with validation, size limits and SHA-256</td><td><span class="tag ok">Done</span></td><td>Plus pixel limits, byte-level type detection, deduplication</td></tr>
+      <tr><td>Metadata extraction (EXIF, software, timestamps, hashes)</td><td><span class="tag ok">Done</span></td><td>Pillow + ExifTool; plus a file-structure analyzer</td></tr>
+      <tr><td>C2PA detection, signature verification, claim summary</td><td><span class="tag ok">Done</span></td><td>Official SDK; tamper benchmark included</td></tr>
+      <tr><td>AI/ML model for synthetic or edited content</td><td><span class="tag ok">Done</span> for AI generation</td><td>Trained by the author; local edit detection not built</td></tr>
+      <tr><td>Evidence engine with explainable assessment</td><td><span class="tag ok">Done</span></td><td>Weighted rules with an explicit "inconclusive"</td></tr>
+      <tr><td>Relational database for media, features, results</td><td><span class="tag ok">Done</span></td><td>Postgres + pgvector, migrations, retention</td></tr>
+      <tr><td>Dashboard: history, confidence scores, PDF summaries</td><td><span class="tag ok">Done</span></td><td>History on device, save report as PDF, shareable links</td></tr>
+      <tr><td>Benchmarking</td><td><span class="tag ok">Done</span></td><td>Detector, robustness, C2PA, database and pipeline benchmarks</td></tr>
+      <tr><td>Video upload, FFprobe metadata, frame sampling</td><td><span class="tag no">Not built</span></td><td>Scoped out to keep the image pipeline strong on free hosting</td></tr>
+      <tr><td>User accounts</td><td><span class="tag part">Replaced</span></td><td>No accounts by design, for privacy</td></tr>
+      <tr><td>Not in the proposal</td><td><span class="tag ok">Added</span></td><td>Invisible watermark detection, near-duplicate search, installable PWA with share target, live progress, ELA view, uptime monitoring</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 17 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">18</span><h2>Complete inventory of everything used</h2></div>
+  <h3>Languages and formats</h3>
+  <p>Python 3.12 (backend, ML) · TypeScript 6 (frontend) · SQL (PostgreSQL) · HTML/CSS · YAML (CI) · Dockerfile · ONNX (model format) · JSON.</p>
+
+  <h3>Backend libraries</h3>
+  <table>
+    <thead><tr><th>Library</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>FastAPI, Uvicorn</td><td>HTTP API and ASGI server; automatic OpenAPI docs at <code>/docs</code></td></tr>
+      <tr><td>Pydantic v2, pydantic-settings</td><td>Request/response schemas and configuration from environment variables</td></tr>
+      <tr><td>SQLAlchemy 2, psycopg 3</td><td>Database access</td></tr>
+      <tr><td>Alembic</td><td>Database migrations</td></tr>
+      <tr><td>python-multipart</td><td>File uploads</td></tr>
+      <tr><td>Pillow, pi-heif</td><td>Image decoding, EXIF, thumbnails; HEIC/HEIF decoding</td></tr>
+      <tr><td>filetype</td><td>File type from bytes</td></tr>
+      <tr><td>c2pa-python</td><td>Official C2PA SDK for Content Credentials</td></tr>
+      <tr><td>NumPy</td><td>Watermark decoder, preprocessing, border trimming</td></tr>
+      <tr><td>ONNX Runtime</td><td>Serving the detector on CPU</td></tr>
+      <tr><td>ExifTool (Perl)</td><td>Full metadata dump inside the Docker image</td></tr>
+      <tr><td>pytest, httpx, Ruff</td><td>Tests, test client, linting</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Frontend libraries</h3>
+  <table>
+    <thead><tr><th>Library</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>React 19, React DOM, React Router 7</td><td>UI and routing</td></tr>
+      <tr><td>Vite 8, @vitejs/plugin-react</td><td>Dev server and production build</td></tr>
+      <tr><td>Tailwind CSS 4</td><td>Styling</td></tr>
+      <tr><td>TypeScript 6</td><td>Type safety</td></tr>
+      <tr><td>lucide-react</td><td>Icons</td></tr>
+      <tr><td>Sonner</td><td>Toast notifications with undo</td></tr>
+      <tr><td>Fontsource: Inter, Sora, JetBrains Mono</td><td>Self-hosted fonts</td></tr>
+      <tr><td>Playwright</td><td>Browser end-to-end tests</td></tr>
+      <tr><td>oxlint</td><td>Linting</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Machine-learning stack</h3>
+  <table>
+    <thead><tr><th>Tool</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>PyTorch (CUDA 12.8), torchvision</td><td>Feature extraction and training on GPU</td></tr>
+      <tr><td>open_clip</td><td>OpenAI CLIP ViT-B/16 and ViT-B/32 image encoders</td></tr>
+      <tr><td>scikit-learn</td><td>Metrics (AUC, calibration), linear probes</td></tr>
+      <tr><td>PyArrow, huggingface_hub, requests</td><td>Streaming Parquet datasets from Hugging Face; Wikimedia Commons downloads</td></tr>
+      <tr><td>ONNX, ONNX Runtime quantization</td><td>Export and 8-bit weight-only compression</td></tr>
+      <tr><td>tqdm, Pillow (ImageDraw)</td><td>Progress bars; drawing the confusion-matrix figures</td></tr>
+      <tr><td>NVIDIA RTX 4050 laptop GPU (6 GB)</td><td>All training and feature extraction</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Datasets</h3>
+  <table>
+    <thead><tr><th>Dataset</th><th>Licence</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>Community Forensics (Park &amp; Owens, CVPR 2025), Eval and Small</td><td>CC BY-NC-SA 4.0</td><td>Main training data and the 9-generator test</td></tr>
+      <tr><td>Rapidata human-preference datasets (Imagen 4, Seedream 3, Recraft v3, Bananamark, …)</td><td>CDLA-Permissive-2.0</td><td>2025 generators for v3; Nano Banana test images</td></tr>
+      <tr><td>zr-zhang MLLM-Generated-Image-Detection-Dataset</td><td>Apache-2.0 (research use)</td><td>Newest 2026 generators test</td></tr>
+      <tr><td>COCO, LAION, Landscapes HQ, FFHQ, ImageNet</td><td>Per source (via Community Forensics)</td><td>Real images</td></tr>
+      <tr><td>VISION (Shullani et al. 2017)</td><td>CC BY-SA 4.0</td><td>Real phone photos (calibration test)</td></tr>
+      <tr><td>Wikimedia Commons "Taken with …" photos</td><td>Per file (CC BY-SA, CC BY, CC0, PD)</td><td>Real camera originals for testing and the v6 experiment</td></tr>
+      <tr><td>C2PA test fixtures (contentauth/c2pa-rs)</td><td>MIT or Apache-2.0</td><td>C2PA tamper benchmark</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Services and infrastructure</h3>
+  <p>GitHub (code, issues, pull requests) · GitHub Actions (CI) · Vercel (web hosting) · Render (API hosting, Docker) · Neon (serverless Postgres with pgvector, dev branch) · Hugging Face Hub (dataset streaming, model hosting) · UptimeRobot (uptime monitoring and keep-awake) · Cloudflare (in front of Render; supplies the client IP header).</p>
+
+  <h3>Development tools</h3>
+  <p>Git and the GitHub CLI · Docker · Python virtual environments · Node.js and npm · Playwright browsers · Claude Code (AI coding assistant, used for parts of the implementation, debugging, reviews and this document) · Windows 11 laptop.</p>
+</section>
+
+<!-- ============================ 18 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">19</span><h2>Future work</h2></div>
+  <ol>
+    <li><b>A full-resolution detector that keeps camera photos safe:</b> a few thousand more unedited camera originals as real examples, full-size outputs of the newest generators, and a larger test set so small gains can be told from noise.</li>
+    <li><b>Video:</b> FFprobe metadata, C2PA for video, and frame sampling through the existing image pipeline.</li>
+    <li><b>Local edit detection:</b> splicing and inpainting localization, shown as a heat map.</li>
+    <li><b>More watermark families</b> as generators publish decoders (for example, invisible marks from other open models).</li>
+    <li><b>A learned evidence engine</b> fitted on a labelled validation set, replacing hand-set weights.</li>
+    <li><b>Paid hosting</b> (or a self-hosted server) to remove cold starts and speed analysis to about 1–2 s.</li>
+    <li><b>CI-gated deploys:</b> switch Render to "After CI checks pass" so a failing test blocks a deploy.</li>
+  </ol>
+</section>
+
+<!-- ============================ 19 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">20</span><h2>Glossary for study</h2></div>
+  <table>
+    <thead><tr><th style="width:28%">Term</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>AUC (ROC-AUC)</td><td>The probability that a random AI image scores higher than a random real image. 0.5 is chance; 1.0 is perfect.</td></tr>
+      <tr><td>Precision / recall / F1</td><td>Precision: of the images flagged as AI, the share that really are. Recall: of the AI images, the share flagged. F1: their harmonic mean.</td></tr>
+      <tr><td>Calibration, temperature scaling</td><td>Adjusting a model so its scores mean what they say (0.8 ≈ 80%). Temperature scaling divides the model's raw output by one fitted number.</td></tr>
+      <tr><td>CLIP, ViT-B/16</td><td>OpenAI's image-text model. ViT-B/16 is a Vision Transformer that splits an image into 16×16-pixel patches.</td></tr>
+      <tr><td>Frozen features, linear probe, MLP head</td><td>Using a pre-trained network unchanged as a feature extractor and training only a small classifier on top.</td></tr>
+      <tr><td>Held-out / unseen generators</td><td>Generators kept entirely out of training, to measure generalization.</td></tr>
+      <tr><td>Quantization (8-bit weight-only)</td><td>Storing model weights in 8 bits to save memory while still computing in 32-bit floats.</td></tr>
+      <tr><td>ONNX, ONNX Runtime</td><td>A portable model format and a fast engine to run it without PyTorch.</td></tr>
+      <tr><td>C2PA, Content Credentials, manifest</td><td>An open standard for signed provenance records attached to media; the manifest holds signed claims and assertions.</td></tr>
+      <tr><td>EXIF, XMP, ICC</td><td>Camera metadata, Adobe's extensible metadata, and colour-profile data inside image files.</td></tr>
+      <tr><td>JPEG quantization table</td><td>The table that controls JPEG compression; it reveals the quality setting and often the software that saved the file.</td></tr>
+      <tr><td>DWT-DCT watermark</td><td>A hidden mark embedded in an image's frequency domain (wavelet then cosine transform).</td></tr>
+      <tr><td>ELA (Error Level Analysis)</td><td>Re-saving a JPEG and amplifying the difference to reveal regions with a different compression history.</td></tr>
+      <tr><td>SHA-256</td><td>A cryptographic hash; identical files give identical hashes.</td></tr>
+      <tr><td>pgvector, HNSW</td><td>A Postgres extension for vectors; HNSW is a graph index for fast approximate nearest-neighbour search.</td></tr>
+      <tr><td>FOR UPDATE SKIP LOCKED</td><td>A Postgres row-locking clause that lets several workers take different jobs from one table without conflicts.</td></tr>
+      <tr><td>Migration (Alembic)</td><td>A versioned script that changes the database schema.</td></tr>
+      <tr><td>Cold start</td><td>The delay when a sleeping free server is woken by a request.</td></tr>
+      <tr><td>PWA, service worker, share target</td><td>A web app that installs like a native app; a background script; registration in the phone's share menu.</td></tr>
+      <tr><td>CI / CD</td><td>Continuous integration (tests on every change) and continuous deployment (automatic release).</td></tr>
+      <tr><td>Decompression bomb</td><td>A small file that expands to an enormous image to exhaust memory.</td></tr>
+      <tr><td>Clopper-Pearson interval</td><td>An exact confidence interval for a proportion, used for small false-alarm rates.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 20 ============================ -->
+<section class="chapter">
+  <div class="chap-head"><span class="chap-num">21</span><h2>Licences, credits and publishing notes</h2></div>
+  <h3>Licences</h3>
+  <ul>
+    <li><b>Code:</b> MIT. Anyone may use, modify and redistribute it with the copyright notice.</li>
+    <li><b>Detector weights:</b> CC BY-NC-SA 4.0, because they derive from Community Forensics data. <b>Non-commercial use only</b>, with attribution, and derivatives under the same licence.</li>
+    <li><b>Hosting plans:</b> Vercel Hobby and some other free plans are intended for personal or non-commercial projects. A commercial launch needs paid plans and a commercially licensed detector.</li>
+  </ul>
+  <h3>Credits</h3>
+  <ul>
+    <li><b>Lanchenba Mutum</b>: creator of MetaProof. Design, development, detector training, evaluation and deployment.</li>
+    <li>Community Forensics: J. Park and A. Owens, CVPR 2025.</li>
+    <li>UnivFD (frozen CLIP features for detection): U. Ojha, Y. Li and Y. J. Lee, CVPR 2023.</li>
+    <li>VISION dataset: D. Shullani et al., 2017.</li>
+    <li>OpenAI CLIP; the open_clip project; the C2PA project and its SDK; Rapidata; the zr-zhang benchmark authors; Wikimedia Commons photographers (per-file licences recorded in the manifest).</li>
+  </ul>
+</section>
+
+</body>
+</html>
