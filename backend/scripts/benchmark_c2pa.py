@@ -96,7 +96,7 @@ def tamper_jpeg(data: bytes) -> bytes | None:
         try:
             if Image.open(io.BytesIO(bytes(out))).convert("RGB").tobytes() != original:
                 return bytes(out)
-        except Exception:
+        except (OSError, ValueError):  # this flip broke the decode; try another spot
             continue
     return None
 
