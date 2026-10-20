@@ -324,6 +324,41 @@ python compare_heads.py --heads v3=head_vitb16.v3.pt v5=head_vitb16n.v5.pt v6=he
 Large files go to `D:/metaproof/data` (override with `METAPROOF_DATA`). Trained on an RTX 4050
 laptop GPU (6 GB); feature extraction is download-bound (~1 hour at 5 MB/s).
 
+## Robustness to edits: border trimming
+
+`eval_robustness.py` scores the live model with the backend's preprocessing on 928 held-out
+images (577 AI, 351 real) after edits people make before checking an image. A white meme
+caption band cut AI images at the strong band from 70.7% to 2.9%, and phone screenshots with
+dark app bars to 41.1%: the band filled much of the 256 px image and the center crop, so the
+model mostly saw a flat area.
+
+The backend now trims added borders before standardizing (`trim_borders` in
+`backend/app/analyzers/detector.py`; the trim is reported as `trimmed_px` per side). A border
+must be flat rows of one colour that hold text or UI and end in a straight edge across the
+image. A first version that cut any flat edge also trimmed 281 of the 928 unedited images
+(studio backgrounds, skies) and lowered AI images at strong on them from 70.7% to 66.6%, so
+plain margins without text are left alone. Results (`results_robustness.json` before,
+`results_robustness_trim.json` after):
+
+| Edit | AUC | Real photos at strong | Real at weak | AI at strong | AI above 0.5 |
+| --- | --- | --- | --- | --- | --- |
+| none (original) | 0.976 → 0.976 | 0.3% → 0.3% | 2.3% → 2.3% | 70.7% → 70.7% | 92.4% → 92.4% |
+| **caption band** | 0.872 → **0.970** | 0.0% → 0.0% | 0.0% → 0.9% | 2.9% → **57.0%** | 22.0% → 85.3% |
+| **screenshot** | 0.948 → **0.958** | 0.0% → 0.0% | 1.1% → 1.4% | 41.1% → **57.4%** | 80.1% → 84.1% |
+| center crop 60% | 0.961 → 0.961 | 0.6% → 0.6% | 2.6% → 2.6% | 55.6% → 55.5% | 86.0% → 85.8% |
+| corner crop 50% | 0.951 → 0.951 | 0.0% → 0.0% | 0.0% → 0.0% | 40.6% → 40.6% | 78.7% → 78.7% |
+| filter edit | 0.967 → 0.967 | 1.4% → 1.4% | 2.6% → 2.6% | 64.0% → 63.8% | 91.0% → 91.0% |
+| rotate 3° | 0.971 → 0.971 | 0.3% → 0.3% | 1.7% → 1.7% | 61.5% → 61.5% | 90.1% → 90.1% |
+| social recompress | 0.967 → 0.966 | 0.9% → 0.9% | 2.0% → 2.0% | 59.8% → 59.6% | 89.8% → 89.8% |
+
+No edit raises real photos at the strong band, and unedited images score as before. The
+other changes are one image each. Real photos at the weak band rose by one to three images
+for captions and screenshots; that band only counts together with other evidence. Captioned
+and screenshotted AI images still score below the originals: a bar is only cut where its
+edge is straight, which a dark picture under dark app bars may not show, and a gap-only rule
+(no edge check) that recovered screenshots to 64.5% lowered unedited AI images at strong to
+69.8%. Corner crops are untouched by this and remain the weakest case.
+
 ## License
 
 Code: MIT. Model weights: CC BY-NC-SA 4.0 (derived from the training data), non-commercial.
