@@ -87,14 +87,14 @@ export function ThinkingOrb({ size = 36, variant = 'dots', className = '' }: { s
   return <canvas ref={ref} aria-hidden className={className} style={{ width: size, height: size }} />
 }
 
-/** The orb in a panel pill with what is happening, like "Reading metadata…". Announced politely. */
+/** The orb in a soft pill with what is happening, like "Reading metadata…". Announced politely. */
 export function ThinkingPill({ label, variant = 'dots', className = '' }: { label: string; variant?: Variant; className?: string }) {
   return (
-    <span role="status" className={`panel inline-flex items-center gap-2.5 rounded-md py-1 pr-4 pl-1 ${className}`}>
+    <span role="status" className={`inline-flex items-center gap-2.5 rounded-full bg-raised py-1 pr-5 pl-1 ${className}`}>
       <span className="grid size-10 place-items-center rounded-full text-ink">
         <ThinkingOrb size={30} variant={variant} />
       </span>
-      <span className="text-sm text-muted">{label}</span>
+      <span className="text-[15px] font-medium text-ink">{label}</span>
     </span>
   )
 }
