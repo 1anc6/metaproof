@@ -24,7 +24,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
       {/* Verdict hero */}
       {/* The verdict on a gradient card in its own hue. */}
       <section className={`mesh ${v.mesh} animate-rise rounded-xl`}>
-        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8">
+        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8 sm:pb-6">
           <div className="frost w-full max-w-[220px] shrink-0 rounded-xl p-2 max-sm:mx-auto max-sm:max-w-[200px]">
             <Thumb sha={sha} className="aspect-square w-full rounded-lg" />
           </div>
@@ -44,7 +44,8 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <EvidenceChips job={job} verdict={verdict} />
           </div>
         </div>
-        <dl className="frost mx-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg px-5 py-4 sm:mx-5 sm:grid-cols-3 lg:grid-cols-6">
+        <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
+        <dl className="frost mx-3 mb-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg px-5 py-4 sm:mx-5 sm:mb-5 sm:grid-cols-3 lg:grid-cols-6">
           {[
             ['File', filename ?? '—'],
             ['Type', formatType(job.media.mime_type)],
@@ -59,7 +60,6 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             </div>
           ))}
         </dl>
-        <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -138,7 +138,7 @@ function Actions({ sha, title }: { sha: string; title: string }) {
     }
   }
   return (
-    <div className="no-print flex flex-wrap gap-2 px-3 pt-4 pb-5 sm:px-5">
+    <div className="no-print flex flex-wrap gap-2 px-3 pb-4 sm:px-5 sm:pb-5">
       <button type="button" onClick={share} className="btn-ghost">
         {nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
         {nativeShare ? 'Share report' : 'Copy share link'}

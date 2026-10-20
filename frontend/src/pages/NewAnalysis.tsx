@@ -11,6 +11,9 @@ import { rememberPreview } from '../lib/preview'
 import { takeSharedImage } from '../lib/share'
 import { PageHeader } from '../components/ui'
 
+// Touch screens have no drag and drop, so the drop zone words itself as a picker there.
+const TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff', 'image/heic', 'image/heif']
 const MAX_MB = 25
 
@@ -106,7 +109,7 @@ export function NewAnalysis() {
       <div
         role="button"
         tabIndex={0}
-        aria-label="Choose an image to analyze"
+        aria-label={TOUCH ? 'Choose a photo to analyze' : 'Choose an image to analyze'}
         aria-busy={busy}
         onClick={() => !busy && input.current?.click()}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !busy && input.current?.click()}
@@ -158,17 +161,17 @@ export function NewAnalysis() {
               <CloudUpload className="size-7" strokeWidth={1.5} />
             </span>
             <p className="mt-7 text-[26px] font-medium tracking-[-0.03em]">
-              {dragging ? 'Release to analyze' : 'Drop an image to analyze'}
+              {TOUCH ? 'Choose a photo' : dragging ? 'Release to analyze' : 'Drop an image to analyze'}
             </p>
-            <p className="mt-2 text-[15px] text-muted">
-              or <span className="text-ink underline decoration-faint underline-offset-4">browse your device</span>
-              <span className="max-sm:hidden"> · or paste with Ctrl+V</span>
-            </p>
-            <p className="mt-6 flex flex-wrap justify-center gap-1.5">
-              {['JPEG', 'PNG', 'WebP', 'TIFF', 'HEIC', `≤ ${MAX_MB} MB`].map((t) => (
-                <span key={t} className="tag">{t}</span>
-              ))}
-            </p>
+            {TOUCH ? (
+              <p className="mt-2 text-[15px] text-muted">From your gallery, files or camera</p>
+            ) : (
+              <p className="mt-2 text-[15px] text-muted">
+                or <span className="text-ink underline decoration-faint underline-offset-4">browse your device</span>
+                <span className="max-sm:hidden"> · or paste with Ctrl+V</span>
+              </p>
+            )}
+            <p className="mt-6 text-[13px] text-faint">JPEG, PNG, WebP, TIFF or HEIC · up to {MAX_MB} MB</p>
           </div>
         )}
 
@@ -191,16 +194,16 @@ export function NewAnalysis() {
         </p>
       )}
 
-      <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+      <ol className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
         {[
           ['Hash and read', 'A SHA-256 fingerprint, then metadata and file structure.'],
           ['Six checks', 'Credentials, watermark, AI detector and seen-before search.'],
           ['Delete the file', 'Only the hash, a thumbnail and the findings remain.'],
         ].map(([title, text], i) => (
-          <li key={title} className="panel rounded-xl p-5">
-            <p className="num text-[34px] leading-none text-accent">{String(i + 1).padStart(2, '0')}</p>
-            <p className="mt-4 text-[17px] font-medium">{title}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-faint">{text}</p>
+          <li key={title} className="panel rounded-lg p-3 sm:rounded-xl sm:p-5">
+            <p className="num text-[24px] leading-none text-accent sm:text-[34px]">{String(i + 1).padStart(2, '0')}</p>
+            <p className="mt-2 text-[14px] leading-tight font-medium sm:mt-4 sm:text-[17px]">{title}</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-faint max-sm:hidden">{text}</p>
           </li>
         ))}
       </ol>

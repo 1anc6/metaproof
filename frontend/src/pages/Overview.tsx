@@ -67,7 +67,7 @@ export function Overview() {
 
       {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing */}
       {history.length > 0 && (
-        <section className="stagger grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Your analyses">
+        <section className="panel animate-rise grid grid-cols-4 divide-x divide-line rounded-xl" aria-label="Your analyses">
           <Stat label="Files analyzed" value={history.length} note="on this device" />
           <Stat label="Flagged" value={n(flagged)} note="edited or AI" tone={flagged ? 'text-edited' : undefined} />
           <Stat label="Likely AI" value={n(counts.likely_ai_generated)} note="AI-generated verdicts" tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
@@ -153,17 +153,17 @@ export function Overview() {
   )
 }
 
-/** A count on neutral glass. Only a count that needs attention takes its verdict colour. */
+/** One cell of the counts strip. Only a count that needs attention takes its verdict colour. */
 function Stat({ label, value, note, tone }: { label: string; value: number | null; note?: string; tone?: string }) {
   return (
-    <div className="panel animate-rise flex flex-col rounded-xl p-4 sm:p-5">
-      <p className="text-[15px] font-medium text-muted">{label}</p>
+    <div className="flex min-w-0 flex-col px-3 py-3.5 sm:px-6 sm:py-5">
+      <p className="text-[12px] leading-tight font-medium text-muted sm:text-[15px]">{label}</p>
       {value === null ? (
-        <span className="skeleton mt-5 h-11 w-14" />
+        <span className="skeleton mt-3 h-8 w-10 sm:mt-4 sm:h-11 sm:w-14" />
       ) : (
-        <span className={`num mt-4 text-[48px] leading-none ${tone ?? 'text-ink'}`}>{value}</span>
+        <span className={`num mt-2 text-[30px] leading-none sm:mt-3 sm:text-[48px] ${tone ?? 'text-ink'}`}>{value}</span>
       )}
-      {note && <p className="mt-2 px-1 text-[12px] text-faint">{note}</p>}
+      {note && <p className="mt-2 text-[12px] text-faint max-sm:hidden">{note}</p>}
     </div>
   )
 }
