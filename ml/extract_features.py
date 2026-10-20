@@ -105,6 +105,10 @@ VARIANTS = {
 }
 VARIANTS["heldout2"] = VARIANTS["heldout"]  # newer generators, never seen in training
 VARIANTS["local"] = VARIANTS["heldout"]     # your own images
+# Real-photo calibration set (real_photos.py): original files and their social-media copies,
+# each exactly as the API would see it.
+VARIANTS["realcal"] = [("", lambda rng: (90, 1.0))]
+VARIANTS["realcal-social"] = VARIANTS["realcal"]
 
 
 def as_table(data: list[bytes], label: list[int], model: list[str], source: list[str]):
