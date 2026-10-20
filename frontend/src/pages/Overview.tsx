@@ -1,4 +1,4 @@
-import { ArrowUpRight, Copy, Droplets, Fingerprint, Layers, Plus, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Copy, Droplets, EyeOff, Filter, Fingerprint, Layers, Plus, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatWhen } from '../lib/format'
@@ -6,7 +6,7 @@ import { useHistory } from '../lib/history'
 import { useSummaries } from '../lib/hooks'
 import { setPref, usePrefs } from '../lib/prefs'
 import { DEMO_REPORT_PATH } from '../lib/demo'
-import { EvidenceMap, PanelTitle, Thumb, Toggle, VerdictBadge } from '../components/ui'
+import { Chip, EvidenceMap, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
 
 const LAYERS = [
   { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
@@ -47,7 +47,10 @@ export function Overview() {
           <h1 className="mt-3 text-[40px] leading-[1.02] font-medium tracking-[-0.04em] sm:mt-4 sm:text-[72px] sm:leading-[0.98] sm:tracking-[-0.045em] xl:text-[60px]">
             See what's behind the image.
           </h1>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted sm:mt-6 sm:text-[17px]">
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted sm:hidden">
+            Checks metadata, credentials and pixels, and tells you what the evidence says.
+          </p>
+          <p className="mt-6 max-w-md text-[17px] leading-relaxed text-muted max-sm:hidden">
             MetaProof checks metadata, Content Credentials and the pixels themselves, then tells you
             what the evidence says — and when it isn't enough to say anything.
           </p>
@@ -63,17 +66,17 @@ export function Overview() {
             </Link>
           </div>
         </div>
-        <EvidenceMap to={DEMO_REPORT_PATH} title="Example findings" />
+        <EvidenceMap to={DEMO_REPORT_PATH} title="Example findings" meterOnPhones={false} />
       </section>
 
       {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing. Two by
           two on phones, where four columns would wrap the labels and misalign the numbers. */}
       {history.length > 0 && (
         <section className="panel animate-rise grid grid-cols-2 rounded-xl sm:grid-cols-4" aria-label="Your analyses">
-          <Stat label="Files analyzed" value={history.length} note="on this device" />
-          <Stat label="Flagged" value={n(flagged)} note="edited or AI" tone={flagged ? 'text-edited' : undefined} />
-          <Stat label="Likely AI" value={n(counts.likely_ai_generated)} note="AI-generated verdicts" tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
-          <Stat label="Inconclusive" value={n(counts.inconclusive)} note="not enough evidence" />
+          <Stat to="/history" label="Files analyzed" value={history.length} note="on this device" />
+          <Stat to="/history?filter=flagged" label="Flagged" value={n(flagged)} note="edited or AI" tone={flagged ? 'text-edited' : undefined} />
+          <Stat to="/history?filter=likely_ai_generated" label="Likely AI" value={n(counts.likely_ai_generated)} note="AI-generated verdicts" tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
+          <Stat to="/history?filter=inconclusive" label="Inconclusive" value={n(counts.inconclusive)} note="not enough evidence" />
         </section>
       )}
 
@@ -89,15 +92,9 @@ export function Overview() {
             )}
           </div>
           {history.length > 0 && (
-            <div className="flex flex-wrap gap-x-4 gap-y-2 px-4 pb-3 sm:gap-x-5 sm:px-5">
-              <label className="flex items-center gap-2 text-[13px] text-muted sm:gap-2.5 sm:text-sm">
-                <Toggle label="Blur previews" checked={prefs.blurPreviews} onChange={(v) => setPref('blurPreviews', v)} />
-                Blur previews
-              </label>
-              <label className="flex items-center gap-2 text-[13px] text-muted sm:gap-2.5 sm:text-sm">
-                <Toggle label="Only flagged" checked={prefs.onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
-                Only flagged
-              </label>
+            <div className="flex flex-wrap gap-2 px-4 pb-3 sm:px-5">
+              <Chip icon={EyeOff} label="Blur previews" checked={prefs.blurPreviews} onChange={(v) => setPref('blurPreviews', v)} />
+              <Chip icon={Filter} label="Only flagged" checked={prefs.onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
             </div>
           )}
           {history.length === 0 ? (
@@ -133,7 +130,8 @@ export function Overview() {
         {/* Evidence layers */}
         <section className="panel animate-rise rounded-xl p-6">
           <PanelTitle eyebrow="Evidence layers" title="Six independent checks" />
-          <ul className="stagger mt-5 flex flex-col gap-2">
+          {/* Returning visitors on phones came for their files; the checks fold down to the link. */}
+          <ul className={`stagger mt-5 flex flex-col gap-2 ${history.length > 0 ? 'max-sm:hidden' : ''}`}>
             {LAYERS.map(({ icon: Icon, name, detail }) => (
               <li key={name} className="animate-rise flex items-center gap-3">
                 <span className="well size-10">
@@ -146,7 +144,7 @@ export function Overview() {
               </li>
             ))}
           </ul>
-          <Link to="/method" className="btn-ghost mt-6 w-full">
+          <Link to="/method" className="btn-ghost mt-6 w-full max-sm:mt-4">
             Read the method <ArrowUpRight className="size-4 text-faint" />
           </Link>
         </section>
@@ -155,10 +153,16 @@ export function Overview() {
   )
 }
 
-/** One cell of the counts strip. Only a count that needs attention takes its verdict colour. */
-function Stat({ label, value, note, tone }: { label: string; value: number | null; note?: string; tone?: string }) {
+/**
+ * One cell of the counts strip, linking to History filtered to it. Only a count that needs
+ * attention takes its verdict colour.
+ */
+function Stat({ to, label, value, note, tone }: { to: string; label: string; value: number | null; note?: string; tone?: string }) {
   return (
-    <div className="flex min-w-0 flex-col border-line px-4 py-4 max-sm:odd:border-r max-sm:nth-[-n+2]:border-b sm:px-6 sm:py-5 sm:not-last:border-r">
+    <Link
+      to={to}
+      className="flex min-w-0 flex-col border-line px-4 py-4 transition first:rounded-tl-xl hover:bg-hover max-sm:odd:border-r max-sm:nth-[-n+2]:border-b max-sm:nth-2:rounded-tr-xl max-sm:nth-3:rounded-bl-xl last:rounded-br-xl sm:px-6 sm:py-5 sm:not-last:border-r sm:first:rounded-l-xl sm:last:rounded-r-xl"
+    >
       <p className="truncate text-[13px] leading-tight font-medium whitespace-nowrap text-muted sm:text-[15px]">{label}</p>
       {value === null ? (
         <span className="skeleton mt-3 h-9 w-12 sm:mt-4 sm:h-11 sm:w-14" />
@@ -166,7 +170,7 @@ function Stat({ label, value, note, tone }: { label: string; value: number | nul
         <span className={`num mt-2.5 text-[36px] leading-none sm:mt-3 sm:text-[48px] ${tone ?? 'text-ink'}`}>{value}</span>
       )}
       {note && <p className="mt-2 text-[12px] text-faint max-sm:hidden">{note}</p>}
-    </div>
+    </Link>
   )
 }
 

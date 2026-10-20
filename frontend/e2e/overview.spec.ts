@@ -26,3 +26,17 @@ test('the blur and only-flagged switches work and are remembered', async ({ page
   await expect(page.getByRole('switch', { name: 'Only flagged' })).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByRole('switch', { name: 'Blur previews' })).toHaveAttribute('aria-checked', 'true')
 })
+
+test('each count opens History filtered to it', async ({ page }) => {
+  await page.goto('/')
+  const counts = page.getByRole('region', { name: 'Your analyses' })
+  // The sample analysis is inconclusive: it shows under Inconclusive and not under Flagged.
+  await counts.getByRole('link', { name: /Inconclusive/ }).click()
+  await expect(page).toHaveURL(/\/history\?filter=inconclusive$/)
+  await expect(page.getByRole('button', { name: 'Inconclusive', pressed: true })).toBeVisible()
+  await expect(page.getByText('holiday.jpg')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Flagged' }).click()
+  await expect(page).toHaveURL(/\/history\?filter=flagged$/)
+  await expect(page.getByText('No analyses match.')).toBeVisible()
+})

@@ -55,6 +55,7 @@ export function EvidenceMap({
   to,
   mesh = 'mesh-gold',
   score = 0.62,
+  meterOnPhones = true,
 }: {
   className?: string
   src?: string
@@ -62,6 +63,8 @@ export function EvidenceMap({
   to?: string
   mesh?: string
   score?: number
+  /** false drops the slider below the small breakpoint, for a shorter card on phones */
+  meterOnPhones?: boolean
 }) {
   return (
     <div className={`mesh ${mesh} rounded-xl p-6 sm:p-7 ${className}`}>
@@ -111,7 +114,7 @@ export function EvidenceMap({
         <MapLabel className="top-[32%] left-[92%]">HASH</MapLabel>
       </div>
 
-      <Meter value={score} className="mt-5" onDark />
+      <Meter value={score} className={`mt-5 ${meterOnPhones ? '' : 'max-sm:hidden'}`} onDark />
     </div>
   )
 }
@@ -186,6 +189,15 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
     )
   }
   const v = VERDICTS[label]
+  if (label === 'inconclusive') {
+    // Not a finding, so no pill: it should not weigh as much as a real flag beside it.
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-faint">
+        <span className="size-1.5 rounded-full bg-current" />
+        {v.short}
+      </span>
+    )
+  }
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${v.text}`}
@@ -367,6 +379,34 @@ export function ThemeToggle({ resolved }: { resolved: 'light' | 'dark' }) {
   return (
     <button type="button" onClick={() => setPref('theme', next)} className="well size-10" aria-label={`Switch to ${next} theme`}>
       <Icon className="size-[18px]" strokeWidth={1.75} />
+    </button>
+  )
+}
+
+/** A pill-shaped on/off filter: ink when on, quiet when off. Announced as a switch. */
+export function Chip({
+  icon: Icon,
+  label,
+  checked,
+  onChange,
+}: {
+  icon: typeof Sun
+  label: string
+  checked: boolean
+  onChange: (next: boolean) => void
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium transition ${
+        checked ? 'bg-primary text-on-primary' : 'bg-raised text-muted hover:text-ink'
+      }`}
+    >
+      <Icon className="size-3.5" strokeWidth={2} />
+      {label}
     </button>
   )
 }
