@@ -1,6 +1,7 @@
 name: Backend
 
-# Render deploys main by itself on every push (Auto-Deploy: On Commit), alongside these checks.
+# Render deploys main by itself whenever files under backend/ change (Auto-Deploy: On Commit,
+# Root Directory: backend), alongside these checks.
 
 on:
   push:
