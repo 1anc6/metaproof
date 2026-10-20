@@ -360,11 +360,26 @@ const THEMES = [
   { value: 'system', label: 'System', icon: Monitor },
 ] as const
 
-/** Light / dark / system, as a row of round segments. `labels` shows the words beside the icons. */
-export function ThemeSwitch({ labels = false, className = '' }: { labels?: boolean; className?: string }) {
+/**
+ * Light / dark / system, as a row of round segments. `labels` shows the words beside the icons;
+ * `stretch` fills the container with three equal segments.
+ */
+export function ThemeSwitch({
+  labels = false,
+  stretch = false,
+  className = '',
+}: {
+  labels?: boolean
+  stretch?: boolean
+  className?: string
+}) {
   const { theme } = usePrefs()
   return (
-    <div className={`well inline-flex gap-0.5 p-1 ${className}`} role="radiogroup" aria-label="Colour theme">
+    <div
+      className={`well gap-0.5 p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`}
+      role="radiogroup"
+      aria-label="Colour theme"
+    >
       {THEMES.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
@@ -375,7 +390,7 @@ export function ThemeSwitch({ labels = false, className = '' }: { labels?: boole
           title={label}
           onClick={() => setPref('theme', value)}
           className={`flex h-8 items-center justify-center gap-1.5 rounded-full text-[13px] font-medium transition ${
-            labels ? 'px-3.5' : 'w-8'
+            stretch ? 'flex-1' : labels ? 'px-3.5' : 'w-8'
           } ${theme === value ? 'selected' : 'text-faint hover:text-ink'}`}
         >
           <Icon className="size-4" strokeWidth={1.75} />
