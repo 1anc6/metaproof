@@ -67,7 +67,7 @@ export function EvidenceMap({
   meterOnPhones?: boolean
 }) {
   return (
-    <div className={`mesh ${mesh} rounded-xl p-6 sm:p-7 ${className}`}>
+    <div className={`mesh ${mesh} flex flex-col rounded-xl p-6 sm:p-7 ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <p className="text-[22px] font-medium tracking-[-0.02em]">{title}</p>
         {to && <CardArrow to={to} label="Open" />}
@@ -114,7 +114,8 @@ export function EvidenceMap({
         <MapLabel className="top-[32%] left-[92%]">HASH</MapLabel>
       </div>
 
-      <Meter value={score} className={`mt-5 ${meterOnPhones ? '' : 'max-sm:hidden'}`} onDark />
+      {/* mt-auto pins the slider to the bottom when the card is stretched beside a taller panel */}
+      <Meter value={score} className={`mt-auto pt-5 ${meterOnPhones ? '' : 'max-sm:hidden'}`} onDark />
     </div>
   )
 }

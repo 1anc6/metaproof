@@ -91,62 +91,69 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
   const waiting = job?.status === 'queued'
 
   return (
-    <div className="mx-auto grid max-w-5xl items-start gap-6 pt-2 sm:pt-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-      <div className="min-w-0">
-        <p className="mb-3 text-sm text-faint">
-          MetaProof <span aria-hidden>›</span> {waiting ? 'In queue' : 'Analyzing'}
+    <div className="mx-auto max-w-5xl pt-2 sm:pt-4">
+      <header className="animate-rise mb-6 sm:mb-8">
+        <p className="eyebrow flex items-center gap-2">
+          <span className="animate-blink size-1.5 rounded-full bg-accent" aria-hidden />
+          {waiting ? 'In queue' : 'Analyzing'}
         </p>
-        <h1 className="text-[40px] leading-[1.02] font-medium tracking-[-0.04em] sm:text-[52px]">Reading the evidence</h1>
+        <h1 className="mt-3 text-[36px] leading-[1.04] font-medium tracking-[-0.035em] sm:mt-4 sm:text-[52px]">
+          Reading the evidence
+        </h1>
         {filename && <p className="mt-2 max-w-full truncate text-[15px] text-muted">{filename}</p>}
-        {/* Says what is happening now; the step list only swaps markers. */}
-        <ThinkingPill
-          className="mt-5"
-          variant={job && !waiting ? 'dots' : 'lines'}
-          label={!job ? 'Connecting…' : waiting ? 'Waiting in the queue…' : `${STEPS[active].label}…`}
-        />
+      </header>
+
+      {/* Two equal columns that start and end level; on phones the steps come first. */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 lg:items-stretch">
         {/* The upload in the middle orbit; the slider tracks how far along the checks are. */}
         <EvidenceMap
           src={preview}
           title="Live evidence map"
           score={(active + (waiting ? 0 : 0.5)) / STEPS.length}
-          className="mt-6"
+          className="max-lg:order-2"
         />
-      </div>
 
-      <div className="lg:pt-24">
-        <ol className="panel stagger flex w-full flex-col gap-1 rounded-xl p-3">
-          {STEPS.map((step, i) => {
-            const state = i < active ? 'done' : i === active && !waiting ? 'active' : 'todo'
-            return (
-              <li
-                key={step.key}
-                className={`animate-rise flex items-center gap-3 rounded-full py-2 pr-4 pl-2 transition-colors ${
-                  state === 'active' ? 'selected' : ''
-                }`}
-              >
-                <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
-                    state === 'done' ? 'bg-accent-soft text-accent' : 'bg-raised text-faint'
+        <section className="panel flex flex-col rounded-xl p-3 sm:p-4">
+          {/* Says what is happening now; the list below only swaps markers. */}
+          <ThinkingPill
+            className="w-full justify-start"
+            variant={job && !waiting ? 'dots' : 'lines'}
+            label={!job ? 'Connecting…' : waiting ? 'Waiting in the queue…' : `${STEPS[active].label}…`}
+          />
+          <ol className="stagger mt-2 flex flex-col gap-0.5">
+            {STEPS.map((step, i) => {
+              const state = i < active ? 'done' : i === active && !waiting ? 'active' : 'todo'
+              return (
+                <li
+                  key={step.key}
+                  className={`animate-rise flex items-center gap-3 rounded-full py-1.5 pr-4 pl-1.5 ${
+                    state === 'active' ? 'selected' : ''
                   }`}
                 >
-                  {state === 'done' ? (
-                    <Check className="animate-pop size-4" strokeWidth={2.5} />
-                  ) : state === 'active' ? (
-                    <ThinkingOrb size={18} className="text-ink" />
-                  ) : (
-                    <span className="text-[13px] font-semibold tabular-nums">{i + 1}</span>
-                  )}
-                </span>
-                <span className={`text-[15px] transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>
-                  {step.label}
-                </span>
-              </li>
-            )
-          })}
-        </ol>
-        <p className="mt-4 px-2 text-[13px] text-faint">
-          {job ? 'This usually takes a few seconds.' : 'Connecting to the server… it may be waking up.'}
-        </p>
+                  <span
+                    className={`grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
+                      state === 'done' ? 'bg-accent-soft text-accent' : 'bg-raised text-faint'
+                    }`}
+                  >
+                    {state === 'done' ? (
+                      <Check className="animate-pop size-4" strokeWidth={2.5} />
+                    ) : state === 'active' ? (
+                      <ThinkingOrb size={18} className="text-ink" />
+                    ) : (
+                      <span className="text-[13px] font-semibold tabular-nums">{i + 1}</span>
+                    )}
+                  </span>
+                  <span className={`text-[15px] transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>
+                    {step.label}
+                  </span>
+                </li>
+              )
+            })}
+          </ol>
+          <p className="mt-auto border-t border-line px-2 pt-3 text-[13px] text-faint">
+            {job ? 'This usually takes a few seconds.' : 'Connecting to the server… it may be waking up.'}
+          </p>
+        </section>
       </div>
     </div>
   )
