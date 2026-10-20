@@ -1,0 +1,711 @@
+{
+  "source": "contentauth/c2pa-rs@60f7cbdc69ab7a2554fcc87eb4df77050814b2cf",
+  "repeats": 20,
+  "groups": {
+    "valid": {
+      "files": 13,
+      "detected": 13,
+      "validation_state": {
+        "Invalid": 3,
+        "Valid": 9,
+        "error": 1
+      },
+      "finding_codes": {
+        "c2pa.invalid": 3,
+        "c2pa.signed_edits": 8,
+        "c2pa.valid": 1,
+        "c2pa.ai_composite": 1,
+        "c2pa.unreadable": 1
+      },
+      "ms_p50": 4.85,
+      "ms_p95": 11.09,
+      "rows": [
+        {
+          "file": "adobe-20220124-E-clm-CAICAI.jpg",
+          "kb": 641,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "ingredient.manifest.missing",
+            "assertion.hashedURI.mismatch",
+            "ingredient.manifest.missing"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 7.54
+        },
+        {
+          "file": "boxhash.jpg",
+          "kb": 170,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.signed_edits"
+          ],
+          "ms": 3.76
+        },
+        {
+          "file": "C.jpg",
+          "kb": 129,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.valid"
+          ],
+          "ms": 3.98
+        },
+        {
+          "file": "CA.jpg",
+          "kb": 163,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.signed_edits"
+          ],
+          "ms": 4.44
+        },
+        {
+          "file": "CACA.jpg",
+          "kb": 273,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.signed_edits"
+          ],
+          "ms": 9.13
+        },
+        {
+          "file": "CACAE-uri-CA.jpg",
+          "kb": 379,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.signed_edits"
+          ],
+          "ms": 11.55
+        },
+        {
+          "file": "CIE-sig-CA.jpg",
+          "kb": 346,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.signed_edits"
+          ],
+          "ms": 9.03
+        },
+        {
+          "file": "E-sig-CA.jpg",
+          "kb": 163,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "claimSignature.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 4.3
+        },
+        {
+          "file": "legacy_ingredient_hash.jpg",
+          "kb": 370,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.signed_edits"
+          ],
+          "ms": 8.75
+        },
+        {
+          "file": "ocsp.jpg",
+          "kb": 279,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.ai_composite",
+            "c2pa.signed_edits"
+          ],
+          "ms": 7.73
+        },
+        {
+          "file": "prerelease.jpg",
+          "kb": 366,
+          "detected": true,
+          "validation_state": "error",
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.unreadable"
+          ],
+          "ms": 0.78
+        },
+        {
+          "file": "update_manifest.jpg",
+          "kb": 222,
+          "detected": true,
+          "validation_state": "Valid",
+          "failures": [],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.signed_edits"
+          ],
+          "ms": 4.22
+        },
+        {
+          "file": "XCA.jpg",
+          "kb": 139,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 4.5
+        }
+      ]
+    },
+    "tampered": {
+      "files": 13,
+      "detected": 13,
+      "validation_state": {
+        "Invalid": 12,
+        "error": 1
+      },
+      "finding_codes": {
+        "c2pa.invalid": 12,
+        "c2pa.unreadable": 1
+      },
+      "ms_p50": 5.24,
+      "ms_p95": 11.1,
+      "rows": [
+        {
+          "file": "adobe-20220124-E-clm-CAICAI.jpg",
+          "kb": 641,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "ingredient.manifest.missing",
+            "assertion.hashedURI.mismatch",
+            "assertion.dataHash.mismatch",
+            "ingredient.manifest.missing"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 8.47
+        },
+        {
+          "file": "boxhash.jpg",
+          "kb": 170,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 3.74
+        },
+        {
+          "file": "C.jpg",
+          "kb": 129,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 3.84
+        },
+        {
+          "file": "CA.jpg",
+          "kb": 163,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 3.38
+        },
+        {
+          "file": "CACA.jpg",
+          "kb": 273,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 8.63
+        },
+        {
+          "file": "CACAE-uri-CA.jpg",
+          "kb": 379,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 11.47
+        },
+        {
+          "file": "CIE-sig-CA.jpg",
+          "kb": 346,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 8.64
+        },
+        {
+          "file": "E-sig-CA.jpg",
+          "kb": 163,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "claimSignature.mismatch",
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 4.49
+        },
+        {
+          "file": "legacy_ingredient_hash.jpg",
+          "kb": 370,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 7.25
+        },
+        {
+          "file": "ocsp.jpg",
+          "kb": 279,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 6.46
+        },
+        {
+          "file": "prerelease.jpg",
+          "kb": 366,
+          "detected": true,
+          "validation_state": "error",
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.unreadable"
+          ],
+          "ms": 0.61
+        },
+        {
+          "file": "update_manifest.jpg",
+          "kb": 222,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 4.98
+        },
+        {
+          "file": "XCA.jpg",
+          "kb": 139,
+          "detected": true,
+          "validation_state": "Invalid",
+          "failures": [
+            "assertion.dataHash.mismatch"
+          ],
+          "signer_trusted": false,
+          "findings": [
+            "c2pa.invalid"
+          ],
+          "ms": 4.64
+        }
+      ]
+    },
+    "stripped": {
+      "files": 13,
+      "detected": 0,
+      "validation_state": {
+        "None": 13
+      },
+      "finding_codes": {
+        "c2pa.absent": 13
+      },
+      "ms_p50": 0.32,
+      "ms_p95": 0.56,
+      "rows": [
+        {
+          "file": "adobe-20220124-E-clm-CAICAI.jpg",
+          "kb": 88,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.54
+        },
+        {
+          "file": "boxhash.jpg",
+          "kb": 56,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.5
+        },
+        {
+          "file": "C.jpg",
+          "kb": 78,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.33
+        },
+        {
+          "file": "CA.jpg",
+          "kb": 56,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.29
+        },
+        {
+          "file": "CACA.jpg",
+          "kb": 54,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.3
+        },
+        {
+          "file": "CACAE-uri-CA.jpg",
+          "kb": 110,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.31
+        },
+        {
+          "file": "CIE-sig-CA.jpg",
+          "kb": 131,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.34
+        },
+        {
+          "file": "E-sig-CA.jpg",
+          "kb": 56,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.29
+        },
+        {
+          "file": "legacy_ingredient_hash.jpg",
+          "kb": 73,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.29
+        },
+        {
+          "file": "ocsp.jpg",
+          "kb": 85,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.23
+        },
+        {
+          "file": "prerelease.jpg",
+          "kb": 314,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.42
+        },
+        {
+          "file": "update_manifest.jpg",
+          "kb": 70,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.3
+        },
+        {
+          "file": "XCA.jpg",
+          "kb": 44,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.3
+        }
+      ]
+    },
+    "none": {
+      "files": 9,
+      "detected": 0,
+      "validation_state": {
+        "None": 9
+      },
+      "finding_codes": {
+        "c2pa.absent": 9
+      },
+      "ms_p50": 0.38,
+      "ms_p95": 1.25,
+      "rows": [
+        {
+          "file": "earth_apollo17.jpg",
+          "kb": 179,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.62
+        },
+        {
+          "file": "IMG_0003.jpg",
+          "kb": 60,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.37
+        },
+        {
+          "file": "libpng-test.png",
+          "kb": 4,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.44
+        },
+        {
+          "file": "mars.webp",
+          "kb": 171,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.16
+        },
+        {
+          "file": "P1000827.jpg",
+          "kb": 164,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.35
+        },
+        {
+          "file": "sample1.png",
+          "kb": 292,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 1.21
+        },
+        {
+          "file": "sample1.webp",
+          "kb": 49,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.15
+        },
+        {
+          "file": "test.webp",
+          "kb": 5,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.25
+        },
+        {
+          "file": "thumbnail.jpg",
+          "kb": 60,
+          "detected": false,
+          "validation_state": null,
+          "failures": [],
+          "signer_trusted": null,
+          "findings": [
+            "c2pa.absent"
+          ],
+          "ms": 0.36
+        }
+      ]
+    }
+  },
+  "tamper_detection_on_originally_valid": {
+    "files": 9,
+    "flagged_invalid": 9
+  },
+  "sha256": {
+    "adobe-20220124-E-clm-CAICAI.jpg": "b3ff3f00c6660228",
+    "boxhash.jpg": "b63a8df44b09d78c",
+    "C.jpg": "a2d14755db55de67",
+    "CA.jpg": "e71bff58fc576408",
+    "CACA.jpg": "e735fe9e50057f82",
+    "CACAE-uri-CA.jpg": "66baccd7a155946e",
+    "CIE-sig-CA.jpg": "0c343c0f7c07ff6a",
+    "E-sig-CA.jpg": "20dc072a4c843d3b",
+    "earth_apollo17.jpg": "b7ffd2579d0921aa",
+    "IMG_0003.jpg": "f999fd78bfe8a83c",
+    "legacy_ingredient_hash.jpg": "e64168ba337fb879",
+    "libpng-test.png": "c5c635a1dbbec9a7",
+    "mars.webp": "e8402f9020e2e015",
+    "ocsp.jpg": "49a6b089bf3fe610",
+    "P1000827.jpg": "9d33d48863ac4f94",
+    "prerelease.jpg": "17ea3035caaa4eb6",
+    "sample1.png": "0bd72c972c14e5fd",
+    "sample1.webp": "006ee0871284b06a",
+    "test.webp": "a3665d7a6fd48ff6",
+    "thumbnail.jpg": "f999fd78bfe8a83c",
+    "update_manifest.jpg": "c855bbce1e2ea50b",
+    "XCA.jpg": "81f20702a2e81611"
+  }
+}

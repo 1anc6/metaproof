@@ -1,0 +1,69 @@
+{
+  "model": "detector.onnx",
+  "plan": "plan_heldout.v3.json",
+  "n": 928,
+  "ai": 577,
+  "real": 351,
+  "bands": {
+    "strong": 0.91,
+    "weak": 0.79
+  },
+  "variants": {
+    "original": {
+      "auc": 0.9763,
+      "real_at_strong_%": 0.3,
+      "real_at_weak_%": 2.3,
+      "ai_at_strong_%": 70.7,
+      "ai_above_0.5_%": 92.4
+    },
+    "crop_center_60": {
+      "auc": 0.9611,
+      "real_at_strong_%": 0.6,
+      "real_at_weak_%": 2.6,
+      "ai_at_strong_%": 55.6,
+      "ai_above_0.5_%": 86.0
+    },
+    "crop_corner_50": {
+      "auc": 0.9508,
+      "real_at_strong_%": 0.0,
+      "real_at_weak_%": 0.0,
+      "ai_at_strong_%": 40.6,
+      "ai_above_0.5_%": 78.7
+    },
+    "screenshot": {
+      "auc": 0.9479,
+      "real_at_strong_%": 0.0,
+      "real_at_weak_%": 1.1,
+      "ai_at_strong_%": 41.1,
+      "ai_above_0.5_%": 80.1
+    },
+    "filter_edit": {
+      "auc": 0.9673,
+      "real_at_strong_%": 1.4,
+      "real_at_weak_%": 2.6,
+      "ai_at_strong_%": 64.0,
+      "ai_above_0.5_%": 91.0
+    },
+    "caption_band": {
+      "auc": 0.8722,
+      "real_at_strong_%": 0.0,
+      "real_at_weak_%": 0.0,
+      "ai_at_strong_%": 2.9,
+      "ai_above_0.5_%": 22.0
+    },
+    "rotate_3deg": {
+      "auc": 0.9711,
+      "real_at_strong_%": 0.3,
+      "real_at_weak_%": 1.7,
+      "ai_at_strong_%": 61.5,
+      "ai_above_0.5_%": 90.1
+    },
+    "social_recompress": {
+      "auc": 0.9665,
+      "real_at_strong_%": 0.9,
+      "real_at_weak_%": 2.0,
+      "ai_at_strong_%": 59.8,
+      "ai_above_0.5_%": 89.8
+    }
+  }
+}
