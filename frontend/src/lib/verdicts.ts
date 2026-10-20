@@ -35,7 +35,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     summary: 'The evidence points to an image made by a generative AI tool.',
     text: 'text-ai',
     color: 'var(--color-ai)',
-    mesh: 'mesh-rose',
+    mesh: 'mesh-garnet',
   },
   inconclusive: {
     title: 'Inconclusive',
