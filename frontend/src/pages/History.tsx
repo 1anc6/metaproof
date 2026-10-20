@@ -108,10 +108,10 @@ export function History() {
                     className="grid grid-cols-[1fr_auto_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-11 shrink-0 rounded-xl" />
+                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-11 shrink-0 rounded-full" />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{entry.filename}</p>
-                        <p className="text-[13px] text-faint">
+                        <p className="truncate text-[13px] whitespace-nowrap text-faint">
                           {formatBytes(entry.sizeBytes)}
                           <span className="md:hidden"> · {formatWhen(entry.uploadedAt)}</span>
                         </p>

@@ -40,25 +40,26 @@ export function Overview() {
   return (
     <div className="flex flex-col gap-6">
       {/* Hero */}
-      <section className="animate-rise grid items-center gap-8 pb-4 xl:grid-cols-[1fr_460px] xl:gap-12">
+      <section className="animate-rise grid items-center gap-8 xl:grid-cols-[minmax(0,1fr)_400px] xl:gap-10">
         <div className="max-w-xl">
-          <p className="mb-4 text-sm text-faint">
-            MetaProof <span aria-hidden>›</span> Overview
-          </p>
-          <h1 className="text-[46px] leading-[0.98] font-medium tracking-[-0.045em] sm:text-[72px]">
+          <p className="eyebrow">Image forensics, explained</p>
+          {/* Sized to break into two even lines: on a phone, and beside the card on desktop. */}
+          <h1 className="mt-3 text-[40px] leading-[1.02] font-medium tracking-[-0.04em] sm:mt-4 sm:text-[72px] sm:leading-[0.98] sm:tracking-[-0.045em] xl:text-[60px]">
             See what's behind the image.
           </h1>
-          <p className="eyebrow mt-6">Image forensics, explained</p>
-          <p className="mt-2 max-w-md text-[17px] leading-relaxed text-muted">
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted sm:mt-6 sm:text-[17px]">
             MetaProof checks metadata, Content Credentials and the pixels themselves, then tells you
             what the evidence says — and when it isn't enough to say anything.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/new" className="btn-primary h-12 px-6">
+          {/* Two equal buttons side by side on a phone; natural widths from the small breakpoint. */}
+          <div className="mt-7 grid grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
+            <Link to="/new" className="btn-primary h-12 px-4 sm:px-6">
               <Plus className="size-4" strokeWidth={2.5} /> New analysis
             </Link>
-            <Link to={DEMO_REPORT_PATH} className="btn-ghost h-12 px-5">
-              See an example report <ArrowUpRight className="size-4 text-faint" />
+            <Link to={DEMO_REPORT_PATH} className="btn-ghost h-12 px-4 sm:px-5">
+              <span className="sm:hidden">Example report</span>
+              <span className="max-sm:hidden">See an example report</span>
+              <ArrowUpRight className="size-4 shrink-0 text-faint" />
             </Link>
           </div>
         </div>
