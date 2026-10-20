@@ -4,7 +4,8 @@ import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { useHistory } from '../lib/history'
 import { useServerStatus, type ServerState } from '../lib/hooks'
-import { GithubMark, Logo } from './ui'
+import { useThemeSync } from '../lib/theme'
+import { GithubMark, Logo, ThemeSwitch, ThemeToggle } from './ui'
 import { Welcome } from './Welcome'
 
 const NAV = [
@@ -18,6 +19,7 @@ const NAV = [
 export function Shell() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const theme = useThemeSync()
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
@@ -43,7 +45,7 @@ export function Shell() {
         Skip to content
       </a>
       <Sidebar />
-      <MobileTopBar />
+      <MobileTopBar theme={theme} />
       <main
         id="main"
         tabIndex={-1}
@@ -54,7 +56,7 @@ export function Shell() {
       <MobileTabBar />
       <Welcome />
       {/* Bottom centre on every screen; on phones it clears the tab bar. */}
-      <Toaster theme="light" position="bottom-center" offset={24} mobileOffset={{ bottom: 104 }} />
+      <Toaster theme={theme} position="bottom-center" offset={24} mobileOffset={{ bottom: 104 }} />
     </div>
   )
 }
@@ -84,7 +86,7 @@ function Sidebar() {
             end={end}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-full py-2 pr-4 pl-2 text-[15px] transition ${
-                isActive ? 'selected font-semibold' : 'text-muted hover:bg-white/45 hover:text-ink'
+                isActive ? 'selected font-semibold' : 'text-muted hover:bg-hover hover:text-ink'
               }`
             }
           >
@@ -107,6 +109,7 @@ function Sidebar() {
             90 days.
           </p>
         </div>
+        <ThemeSwitch className="self-start" />
         <div className="flex items-center justify-between px-2">
           <ServerBadge />
           <a
@@ -142,14 +145,17 @@ export function ServerBadge() {
   )
 }
 
-function MobileTopBar() {
+function MobileTopBar({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <header className="no-print panel-bar sticky top-0 z-30 px-4 pt-[env(safe-area-inset-top)] lg:hidden">
       <div className="flex h-16 items-center justify-between">
         <NavLink to="/">
           <Logo />
         </NavLink>
-        <ServerBadge />
+        <div className="flex items-center gap-3">
+          <ServerBadge />
+          <ThemeToggle resolved={theme} />
+        </div>
       </div>
     </header>
   )
@@ -164,7 +170,7 @@ function MobileTabBar() {
       className="no-print fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),16px)] lg:hidden"
       aria-label="Main"
     >
-      <div className="panel-bar flex w-full max-w-sm items-center justify-between rounded-full p-2 shadow-[0_24px_48px_-20px_rgb(60_40_30/0.45),inset_0_0_0_1px_rgb(255_255_255/0.7)]">
+      <div className="panel-bar pill-bar flex w-full max-w-sm items-center justify-between rounded-full p-2">
         {items.slice(0, half).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}

@@ -77,7 +77,7 @@ export function Welcome() {
       className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-canvas px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] lg:hidden"
       style={{
         backgroundImage:
-          'radial-gradient(28rem 24rem at 100% -4rem, rgb(222 176 186 / 0.6), transparent 70%), radial-gradient(24rem 22rem at -10% 40%, rgb(206 198 220 / 0.5), transparent 70%)',
+          'radial-gradient(28rem 24rem at 100% -4rem, var(--glow-1), transparent 70%), radial-gradient(24rem 22rem at -10% 40%, var(--glow-2), transparent 70%), radial-gradient(26rem 20rem at 60% 110%, var(--glow-3), transparent 70%)',
       }}
     >
       <div className="flex items-center justify-between">

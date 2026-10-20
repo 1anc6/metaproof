@@ -112,7 +112,7 @@ export function Overview() {
                   <li key={entry.jobId}>
                     <Link
                       to={`/analysis/${entry.jobId}`}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-white/70"
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-hover"
                     >
                       <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-full" />
                       <div className="min-w-0 flex-1">

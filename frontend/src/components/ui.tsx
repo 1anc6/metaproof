@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowUpRight, ImageOff } from 'lucide-react'
+import { ArrowUpRight, ImageOff, Monitor, Moon, Sun } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
+import { setPref, usePrefs } from '../lib/prefs'
 import { PENDING, SIGNALS, VERDICTS } from '../lib/verdicts'
 
 /** A viewfinder: four corner brackets around a lime point of focus. */
@@ -314,6 +315,49 @@ export function Toggle({
           checked ? 'translate-x-5' : ''
         }`}
       />
+    </button>
+  )
+}
+
+const THEMES = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
+] as const
+
+/** Light / dark / system, as a row of round segments. `labels` shows the words beside the icons. */
+export function ThemeSwitch({ labels = false, className = '' }: { labels?: boolean; className?: string }) {
+  const { theme } = usePrefs()
+  return (
+    <div className={`well inline-flex gap-0.5 p-1 ${className}`} role="radiogroup" aria-label="Colour theme">
+      {THEMES.map(({ value, label, icon: Icon }) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={theme === value}
+          aria-label={labels ? undefined : label}
+          title={label}
+          onClick={() => setPref('theme', value)}
+          className={`flex h-8 items-center justify-center gap-1.5 rounded-full text-[13px] font-medium transition ${
+            labels ? 'px-3.5' : 'w-8'
+          } ${theme === value ? 'selected' : 'text-faint hover:text-ink'}`}
+        >
+          <Icon className="size-4" strokeWidth={1.75} />
+          {labels && label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** One tap between light and dark, for the phone top bar. */
+export function ThemeToggle({ resolved }: { resolved: 'light' | 'dark' }) {
+  const next = resolved === 'dark' ? 'light' : 'dark'
+  const Icon = resolved === 'dark' ? Sun : Moon
+  return (
+    <button type="button" onClick={() => setPref('theme', next)} className="well size-10" aria-label={`Switch to ${next} theme`}>
+      <Icon className="size-[18px]" strokeWidth={1.75} />
     </button>
   )
 }

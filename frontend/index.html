@@ -14,6 +14,15 @@
       content="MetaProof checks an image's metadata, Content Credentials and pixels, and explains whether it looks authentic, edited or AI-generated."
     />
     <title>MetaProof — image authenticity, explained</title>
+    <script>
+      // Set the theme before first paint so a dark-mode visitor never sees a light flash.
+      try {
+        var pref = (JSON.parse(localStorage.getItem('metaproof.prefs.v1') || '{}').theme) || 'system'
+        var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+        if (dark) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0f')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

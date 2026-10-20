@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, Download, HardDrive, OctagonAlert, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
+import { CircleAlert, CircleCheck, Download, HardDrive, Palette, OctagonAlert, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type ServiceStatus } from '../lib/api'
 import type { ReactNode } from 'react'
@@ -7,7 +7,7 @@ import { useHistory, type HistoryEntry } from '../lib/history'
 import { clearWithUndo } from '../lib/undo'
 import { promptInstall, useInstallState } from '../lib/install'
 import { ServerBadge } from '../components/Shell'
-import { GithubMark, PageHeader } from '../components/ui'
+import { GithubMark, PageHeader, ThemeSwitch } from '../components/ui'
 
 const PRIVACY = [
   'Uploaded files are deleted as soon as the analysis finishes.',
@@ -27,6 +27,13 @@ export function Settings() {
       />
 
       <div className="stagger grid gap-4 lg:grid-cols-2">
+        <Card icon={Palette} title="Appearance">
+          <p className="text-sm text-muted">
+            Light, dark, or follow this device's setting. Saved in this browser.
+          </p>
+          <ThemeSwitch labels className="mt-5" />
+        </Card>
+
         <InstallCard />
 
         <Card icon={HardDrive} title="This device">

@@ -1,14 +1,18 @@
 import { useSyncExternalStore } from 'react'
 
-// Small per-browser switches from the overview. Storage can be blocked (private mode), so the
-// in-memory copy is the source of truth and storage is only a best-effort mirror.
+// Small per-browser switches: the overview's list filters and the colour theme. Storage can be
+// blocked (private mode), so the in-memory copy is the source of truth and storage is only a
+// best-effort mirror.
+export type ThemePref = 'system' | 'light' | 'dark'
+
 export interface Prefs {
   blurPreviews: boolean
   onlyFlagged: boolean
+  theme: ThemePref
 }
 
 const KEY = 'metaproof.prefs.v1'
-const DEFAULTS: Prefs = { blurPreviews: false, onlyFlagged: false }
+const DEFAULTS: Prefs = { blurPreviews: false, onlyFlagged: false, theme: 'system' }
 const listeners = new Set<() => void>()
 let cache: Prefs | null = null
 
