@@ -6,7 +6,7 @@ import { useHistory } from '../lib/history'
 import { useSummaries } from '../lib/hooks'
 import { setPref, usePrefs } from '../lib/prefs'
 import { DEMO_REPORT_PATH } from '../lib/demo'
-import { Chip, EvidenceMap, OrbitGlyph, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
+import { Chip, EvidenceMap, FileName, OrbitGlyph, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
 
 const LAYERS = [
   { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
@@ -86,7 +86,7 @@ export function Overview() {
         <section className="panel animate-rise grid grid-cols-2 rounded-xl sm:grid-cols-4" aria-label="Your analyses">
           <Stat to="/history" label="Files analyzed" value={history.length} note="on this device" />
           <Stat to="/history?filter=flagged" label="Flagged" value={n(flagged)} note="edited or AI" tone={flagged ? 'text-edited' : undefined} />
-          <Stat to="/history?filter=likely_ai_generated" label="Likely AI" value={n(counts.likely_ai_generated)} note="AI-generated verdicts" tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
+          <Stat to="/history?filter=likely_ai_generated" label="Likely AI" value={n(counts.likely_ai_generated)} note={counts.likely_ai_generated === 1 ? 'AI-generated verdict' : 'AI-generated verdicts'} tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
           <Stat to="/history?filter=inconclusive" label="Inconclusive" value={n(counts.inconclusive)} note="not enough evidence" />
         </section>
       )}
@@ -126,10 +126,18 @@ export function Overview() {
                     >
                       <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-full" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[15px] font-semibold">{entry.filename}</p>
-                        <p className="text-[13px] text-faint">{formatWhen(entry.uploadedAt)}</p>
+                        <FileName name={entry.filename} className="text-[15px] font-semibold" />
+                        {/* On phones the verdict sits under the name, so the name gets the row's full width. */}
+                        <div className="flex min-w-0 items-center gap-2 max-sm:mt-1">
+                          <span className="shrink-0 sm:hidden">
+                            {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
+                          </span>
+                          <span className="truncate text-[13px] text-faint">{formatWhen(entry.uploadedAt)}</span>
+                        </div>
                       </div>
-                      {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton h-6 w-20" />}
+                      <span className="shrink-0 max-sm:hidden">
+                        {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-6 w-20" />}
+                      </span>
                     </Link>
                   </li>
                 )

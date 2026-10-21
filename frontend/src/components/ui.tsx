@@ -196,7 +196,7 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
   if (status !== 'done' || !label) {
     const p = PENDING[status === 'done' ? 'queued' : status]
     return (
-      <span className={`inline-flex items-center gap-1.5 rounded-full bg-raised px-2.5 py-1 text-xs font-semibold ${p.text}`}>
+      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-raised px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${p.text}`}>
         <span className={`size-1.5 rounded-full bg-current ${status === 'running' || status === 'queued' ? 'animate-pulse' : ''}`} />
         {p.title}
       </span>
@@ -206,7 +206,7 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
   if (label === 'inconclusive') {
     // Not a finding, so no pill: it should not weigh as much as a real flag beside it.
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-faint">
+      <span className="inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-faint">
         <span className="size-1.5 rounded-full bg-current" />
         {v.short}
       </span>
@@ -214,7 +214,7 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
   }
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${v.text}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${v.text}`}
       style={{ background: `color-mix(in srgb, ${v.color} 12%, transparent)` }}
     >
       <span className="size-1.5 rounded-full bg-current" />
@@ -225,6 +225,22 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
 
 export function SignalDot({ signal }: { signal: Signal }) {
   return <span className="mt-[7px] size-2 shrink-0 rounded-full" style={{ background: SIGNALS[signal].color }} aria-hidden />
+}
+
+/**
+ * A file name cut in the middle: phone photos share long prefixes (IMG_2025…), so cutting the end
+ * would make them all look alike. The last characters and the extension always stay visible.
+ */
+export function FileName({ name, className = '' }: { name: string; className?: string }) {
+  const chars = Array.from(name) // code points, so an emoji or accent is never split
+  const tail = chars.length > 16 ? chars.slice(-10).join('') : ''
+  const head = tail ? chars.slice(0, -10).join('') : name
+  return (
+    <p className={`flex min-w-0 ${className}`} title={name}>
+      <span className="truncate">{head}</span>
+      {tail && <span className="shrink-0 whitespace-pre">{tail}</span>}
+    </p>
+  )
 }
 
 export function Thumb({ sha, className = '', blur = false }: { sha: string; className?: string; blur?: boolean }) {

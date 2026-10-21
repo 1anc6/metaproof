@@ -155,15 +155,16 @@ const SERVER_LABEL: Record<ServerState, { text: string; dot: string }> = {
   offline: { text: 'API offline', dot: 'bg-ai' },
 }
 
-/** `compact` shows only the dot while the API is up, and words once something needs saying. */
+/** `compact` shows only the dot while the API is up, and words once something needs saying.
+ *  Below 380px the words don't fit beside the wordmark, so compact keeps just the dot there. */
 export function ServerBadge({ compact = false }: { compact?: boolean }) {
   const state = useServerStatus()
   const s = SERVER_LABEL[state]
   const quiet = compact && state === 'online'
   return (
     <span className="flex items-center gap-2 text-[13px] font-medium text-faint" title={s.text}>
-      <span className={`size-2 rounded-full ${s.dot}`} />
-      <span className={quiet ? 'sr-only' : ''}>{s.text}</span>
+      <span className={`size-2 shrink-0 rounded-full ${s.dot}`} />
+      <span className={quiet ? 'sr-only' : compact ? 'whitespace-nowrap max-[379px]:sr-only' : 'whitespace-nowrap'}>{s.text}</span>
     </span>
   )
 }
@@ -171,7 +172,7 @@ export function ServerBadge({ compact = false }: { compact?: boolean }) {
 function MobileTopBar({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <header className="no-print panel-bar sticky top-0 z-30 px-4 pt-[env(safe-area-inset-top)] lg:hidden">
-      <div className="flex h-16 items-center justify-between">
+      <div className="flex h-16 items-center justify-between gap-3">
         <NavLink to="/">
           <Logo />
         </NavLink>

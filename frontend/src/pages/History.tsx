@@ -8,7 +8,7 @@ import { usePrefs } from '../lib/prefs'
 import { clearWithUndo, removeWithUndo } from '../lib/undo'
 import { useSummaries } from '../lib/hooks'
 import { VERDICTS } from '../lib/verdicts'
-import { OrbitGlyph, PageHeader, Thumb, VerdictBadge } from '../components/ui'
+import { FileName, OrbitGlyph, PageHeader, Thumb, VerdictBadge } from '../components/ui'
 
 type Filter = 'all' | 'flagged' | VerdictLabel
 
@@ -118,19 +118,21 @@ export function History() {
                 <li key={entry.jobId} className="group animate-rise relative border-b border-line last:border-0">
                   <Link
                     to={`/analysis/${entry.jobId}`}
-                    className="grid grid-cols-[1fr_auto_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
+                    className="grid grid-cols-[1fr_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-11 shrink-0 rounded-full" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{entry.filename}</p>
-                        <p className="truncate text-[13px] whitespace-nowrap text-faint">
-                          {formatBytes(entry.sizeBytes)}
-                          <span className="md:hidden"> · {formatWhen(entry.uploadedAt)}</span>
-                        </p>
+                      <div className="min-w-0 flex-1">
+                        <FileName name={entry.filename} className="text-sm font-medium" />
+                        <p className="truncate text-[13px] whitespace-nowrap text-faint max-md:hidden">{formatBytes(entry.sizeBytes)}</p>
+                        {/* On phones the verdict sits under the name, so the name gets the row's full width. */}
+                        <div className="mt-1 flex min-w-0 items-center gap-2 md:hidden">
+                          {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
+                          <span className="truncate text-[13px] text-faint">{formatWhen(entry.uploadedAt)}</span>
+                        </div>
                       </div>
                     </div>
-                    <div>{s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}</div>
+                    <div className="max-md:hidden">{s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}</div>
                     <span className="text-[13px] text-faint max-md:hidden">{formatWhen(entry.uploadedAt)}</span>
                     <span />
                   </Link>
