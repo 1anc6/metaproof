@@ -55,6 +55,8 @@ export function History() {
         }
       />
 
+      {/* Search and filters only once there is something to search. */}
+      {history.length > 0 && (
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="panel flex flex-1 items-center gap-2.5 rounded-md px-3.5 py-2 focus-within:border-primary">
           <Search className="size-4 text-faint" aria-hidden />
@@ -85,6 +87,7 @@ export function History() {
           ))}
         </div>
       </div>
+      )}
 
       {error && <p className="mb-4 text-sm text-ai">{error}</p>}
 
