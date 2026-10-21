@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, Download, HardDrive, Palette, OctagonAlert, Server, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
+import { CircleAlert, CircleCheck, Download, OctagonAlert, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type ServiceStatus } from '../lib/api'
 import type { ReactNode } from 'react'
@@ -21,26 +21,29 @@ export function Settings() {
   return (
     <div>
       <PageHeader
-        eyebrow="Preferences"
-        title="Settings."
+        title="Settings"
         subtitle="There are no accounts: everything here applies to this browser only."
       />
 
       {/* Source order is the phone order and the reading order. On desktop CSS columns split the
           cards into two stacks of about equal height, without changing that order. */}
       <div className="flex flex-col gap-4 lg:block lg:columns-2 lg:gap-4 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
-        <Card icon={Palette} title="Appearance">
+        <Card title="Appearance">
           <p className="text-sm text-muted">
             Light, dark, or follow this device's setting. Saved in this browser.
           </p>
           <ThemeSwitch labels className="mt-5" />
         </Card>
 
-        <Card icon={HardDrive} title="This device">
-          <p className="text-sm text-muted">
+        <Card title="This device">
+          <p className="flex items-start gap-2">
+            <span className="dot-num text-[48px]">{history.length}</span>
+            <span className="tag-hi mt-1">Saved here</span>
+          </p>
+          <p className="mt-3 text-[15px] text-muted">
             {history.length === 0
               ? 'No analyses saved in this browser.'
-              : `${history.length} ${history.length === 1 ? 'analysis' : 'analyses'} saved in this browser. Latest: ${formatWhen(history[0].uploadedAt)}.`}
+              : `${history.length === 1 ? 'analysis' : 'analyses'} in this browser. Latest: ${formatWhen(history[0].uploadedAt)}.`.replace(/^./, (c) => c.toUpperCase())}
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <button
@@ -64,7 +67,7 @@ export function Settings() {
 
         <InstallCard />
 
-        <Card icon={Server} title="Server" action={<ServerBadge />}>
+        <Card title="Server" action={<ServerBadge />}>
           <ServiceFigures />
           <p className="mt-4 text-[13px] text-faint">
             The API runs on a free instance that sleeps when idle, so the first upload after a quiet
@@ -80,7 +83,7 @@ export function Settings() {
           </a>
         </Card>
 
-        <Card icon={ShieldCheck} title="Privacy and data">
+        <Card title="Privacy and data">
           <ul className="flex flex-col gap-2.5">
             {PRIVACY.map((line) => (
               <li key={line} className="flex gap-3 text-sm text-muted">
@@ -126,8 +129,8 @@ function ServiceFigures() {
       <div>
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <span className="text-muted">Database storage</span>
-          <span className="font-mono text-[13px] text-ink tabular-nums">
-            {used.toFixed(1)} MB of {limit} MB
+          <span className="text-[13px] text-muted tabular-nums">
+            <span className="dot-num text-[28px] text-ink">{used.toFixed(1)}</span> MB of {limit} MB
           </span>
         </div>
         <div
@@ -164,9 +167,9 @@ function ServiceFigures() {
 
 function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-line bg-raised p-2.5 sm:p-3">
+    <div className="min-w-0 rounded-lg bg-raised p-3">
       <dt className="text-[12px] leading-tight text-faint">{label}</dt>
-      <dd className="mt-1 text-base leading-tight font-semibold tracking-tight tabular-nums sm:text-lg">{value}</dd>
+      <dd className={`mt-2 ${/^\d+$/.test(value) ? 'dot-num text-[32px]' : 'text-base leading-tight font-semibold tracking-tight sm:text-lg'}`}>{value}</dd>
       {note && <dd className="mt-0.5 text-[12px] leading-tight text-faint">{note}</dd>}
     </div>
   )
@@ -175,7 +178,7 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
 function InstallCard() {
   const state = useInstallState()
   return (
-    <Card icon={Smartphone} title="Install the app">
+    <Card title="Install the app">
       {state === 'installed' && (
         <p className="text-sm text-muted">
           MetaProof is installed on this device. On Android, share any photo to it from your gallery,
@@ -212,13 +215,11 @@ function InstallCard() {
 
 /** A settings card: icon disc and title on one line, an optional status on the right. */
 function Card({
-  icon: Icon,
   title,
   action,
   className = '',
   children,
 }: {
-  icon: typeof Server
   title: string
   action?: ReactNode
   className?: string
@@ -227,12 +228,7 @@ function Card({
   return (
     <section className={`panel animate-rise rounded-xl p-5 sm:p-6 ${className}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-3 text-[17px] font-semibold tracking-[-0.02em]">
-          <span className="well size-9">
-            <Icon className="size-4" strokeWidth={1.75} />
-          </span>
-          {title}
-        </h2>
+        <h2 className="text-[18px] font-semibold tracking-[-0.02em]">{title}</h2>
         {action}
       </div>
       {children}

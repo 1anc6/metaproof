@@ -1,4 +1,4 @@
-import { CloudUpload, Lock, MoonStar, WifiOff } from 'lucide-react'
+import { Lock, MoonStar, Plus, WifiOff } from 'lucide-react'
 import { ThinkingOrb } from '../components/ThinkingOrb'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -99,9 +99,8 @@ export function NewAnalysis() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        eyebrow="New analysis"
-        title="Bring your evidence."
-        subtitle="Drop an image to inspect its provenance and authenticity signals."
+        title="New analysis"
+        subtitle="Drop an image to check where it came from and whether it was edited or generated."
       />
 
       <ServerNotice state={server} />
@@ -124,43 +123,22 @@ export function NewAnalysis() {
           const file = e.dataTransfer.files[0]
           if (file && !busy) start(file)
         }}
-        className={`panel animate-rise group relative flex min-h-[380px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl p-8 text-center transition sm:min-h-[440px] ${
-          dragging ? 'panel-raised scale-[1.01]' : ''
+        className={`panel animate-rise group relative flex min-h-[340px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl p-8 text-center transition sm:min-h-[400px] ${
+          dragging ? 'panel-raised outline-2 outline-offset-[-10px] outline-accent outline-dashed' : ''
         }`}
       >
-        {/* measuring grid and viewfinder corners; both turn lime while a file is held over */}
-        {/* dotted orbit rings around the drop target; they spin up while a file is held over */}
-        <svg
-          viewBox="0 0 400 400"
-          className={`pointer-events-none absolute top-1/2 left-1/2 size-[560px] -translate-x-1/2 -translate-y-1/2 text-ink transition-opacity ${
-            dragging ? 'opacity-60' : 'opacity-25'
-          }`}
-          fill="none"
-          stroke="currentColor"
-          aria-hidden
-        >
-          <circle cx="200" cy="200" r="190" strokeDasharray="1 8" strokeLinecap="round" />
-          <circle cx="200" cy="200" r="140" strokeDasharray="1 7" strokeLinecap="round" />
-          <g className={`origin-center [transform-box:fill-box] ${dragging ? 'animate-orbit' : ''}`}>
-            <circle cx="200" cy="200" r="140" strokeWidth="1.5" strokeDasharray="160 720" strokeLinecap="round" />
-          </g>
-          <circle cx="200" cy="200" r="92" strokeDasharray="1 6" strokeLinecap="round" />
-        </svg>
-
         {busy ? (
           <Uploading file={state.file} progress={state.progress} preview={state.preview} />
         ) : (
           <div className="relative flex flex-col items-center">
             <span
-              className={`grid size-20 place-items-center rounded-full transition duration-300 ${
-                dragging
-                  ? 'scale-110 bg-primary text-on-primary shadow-[0_16px_36px_-14px_rgb(0_0_0/0.55)]'
-                  : 'selected text-ink group-hover:scale-105'
+              className={`grid size-16 place-items-center rounded-full bg-primary text-on-primary transition duration-300 ${
+                dragging ? 'scale-110' : 'group-hover:scale-105'
               }`}
             >
-              <CloudUpload className="size-7" strokeWidth={1.5} />
+              <Plus className="size-6" strokeWidth={2.25} />
             </span>
-            <p className="mt-7 text-[26px] font-medium tracking-[-0.03em]">
+            <p className="mt-6 text-[26px] font-normal tracking-[-0.03em]">
               {TOUCH ? 'Choose a photo' : dragging ? 'Release to analyze' : 'Drop an image to analyze'}
             </p>
             {TOUCH ? (
@@ -171,7 +149,7 @@ export function NewAnalysis() {
                 <span className="max-sm:hidden"> · or paste with Ctrl+V</span>
               </p>
             )}
-            <p className="mt-6 text-[13px] text-faint">JPEG, PNG, WebP, TIFF or HEIC · up to {MAX_MB} MB</p>
+            <p className="mt-6 rounded-full bg-raised px-3.5 py-1.5 text-[13px] font-medium text-muted">JPEG, PNG, WebP, TIFF or HEIC · up to {MAX_MB} MB</p>
           </div>
         )}
 
@@ -195,17 +173,19 @@ export function NewAnalysis() {
       )}
 
       {/* What happens to the file, in order. Position carries the sequence; no index numbers. */}
-      <ol className="mt-8 grid gap-x-8 gap-y-5 px-1 sm:grid-cols-3">
+      <ol className="mt-4 grid gap-3 sm:grid-cols-3">
         {[
           ['Hash and read', 'A SHA-256 fingerprint, then metadata and file structure.'],
           ['Run six checks', 'Credentials, watermark, AI detector and seen-before search.'],
           ['Delete the file', 'Only its hash, a thumbnail and the findings stay, so the report can be shared by link. GPS is never stored.'],
         ].map(([title, text], i) => (
-          <li key={title}>
-            <p className="flex items-center gap-2 text-[16px] font-semibold tracking-[-0.01em]">
-              {i === 2 && <Lock className="size-4 text-accent" strokeWidth={2} aria-hidden />}
-              {title}
-            </p>
+          <li key={title} className="panel flex flex-col rounded-xl p-5">
+            {i === 2 && (
+              <span className="tag-hi mb-3 self-start">
+                <Lock className="mr-1 size-3" strokeWidth={2.5} aria-hidden /> Private
+              </span>
+            )}
+            <p className="text-[16px] font-semibold tracking-[-0.01em]">{title}</p>
             <p className="mt-1 text-[14px] leading-relaxed text-muted">{text}</p>
           </li>
         ))}

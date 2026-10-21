@@ -21,7 +21,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       <span className="well size-10">
         <Mark className="size-5" />
       </span>
-      {!compact && <span className="text-[15px] font-bold tracking-[0.08em] uppercase">MetaProof</span>}
+      {!compact && <span className="text-[18px] font-semibold tracking-[-0.03em]">metaproof</span>}
     </span>
   )
 }
@@ -32,22 +32,6 @@ export function CardArrow({ to, label }: { to: string; label: string }) {
     <Link to={to} aria-label={label} className="frost grid size-12 shrink-0 place-items-center rounded-full text-white transition">
       <ArrowUpRight className="size-5" strokeWidth={1.75} />
     </Link>
-  )
-}
-
-/** Three linked orbits, the evidence map in miniature. Takes currentColor. */
-export function OrbitGlyph({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" className={className} aria-hidden>
-      <path d="M28 30H92" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.8" />
-      <circle cx="28" cy="30" r="22" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.7" />
-      <path d="M28 8a22 22 0 0 1 22 22" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="60" cy="30" r="13" strokeWidth="1.5" />
-      <circle cx="92" cy="30" r="22" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.7" />
-      <path d="M92 52a22 22 0 0 1-22-22" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="28" cy="30" r="2.5" fill="currentColor" stroke="none" />
-      <circle cx="92" cy="30" r="2.5" fill="currentColor" stroke="none" />
-    </svg>
   )
 }
 
@@ -278,15 +262,15 @@ export function Thumb({ sha, className = '', blur = false }: { sha: string; clas
   )
 }
 
+/** A screen's title: light and large, named like its nav item, with one line of context. */
 export function PageHeader({
-  eyebrow,
   title,
   dim,
   subtitle,
   action,
 }: {
-  eyebrow: string
   title: string
+  /** A quieter second word set beside the title, like "Data  Records". */
   dim?: string
   subtitle?: string
   action?: ReactNode
@@ -294,17 +278,11 @@ export function PageHeader({
   return (
     <header className="animate-rise mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-3 text-[36px] leading-[1.04] font-medium tracking-[-0.035em] sm:mt-4 sm:text-[56px] sm:leading-[1.02]">
+        <h1 className="text-[36px] leading-[1.04] font-normal tracking-[-0.04em] sm:text-[48px]">
           {title}
-          {dim && (
-            <>
-              <br />
-              <span className="text-faint">{dim}</span>
-            </>
-          )}
+          {dim && <span className="text-faint"> {dim}</span>}
         </h1>
-        {subtitle && <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted sm:mt-4 sm:text-[17px]">{subtitle}</p>}
+        {subtitle && <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted">{subtitle}</p>}
       </div>
       {/* On phones the tab bar's centre button covers the action, so it would only repeat it. */}
       {action && <div className="no-print shrink-0 max-sm:hidden">{action}</div>}

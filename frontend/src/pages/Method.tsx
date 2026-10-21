@@ -1,40 +1,33 @@
-import { BarChart3, Copy, Droplets, Fingerprint, Layers, Scale, ShieldCheck, Sparkles } from 'lucide-react'
 import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
 import { PageHeader } from '../components/ui'
 
 const LAYERS = [
   {
-    icon: Fingerprint,
     name: 'Metadata',
     status: 'Live',
     text: 'Reads EXIF, XMP and PNG text chunks. Generator settings left by Stable Diffusion tools, the IPTC "AI-generated" source type, editor software tags and camera capture data all become findings. Camera data is weak evidence because it is easy to forge. A file that also keeps its maker data, recorded size and a matching preview has the structure of a camera original, which editors and copied EXIF tend to break; it is still only weak evidence, because a phone\'s own editor keeps it too.',
   },
   {
-    icon: Layers,
     name: 'File structure',
     status: 'Live',
     text: 'Walks the file container: JPEG segments and PNG, WebP or HEIC chunks, the JPEG quantization tables and the quality they imply, the ICC colour profile, and any data appended after the image. Standard IJG tables mean common software last saved the file; private chunks and appended data hint at the tools involved. All of it explains the file, and none of it moves the verdict.',
   },
   {
-    icon: ShieldCheck,
     name: 'Content Credentials (C2PA)',
     status: 'Live',
     text: 'Validates signed provenance manifests with the official C2PA SDK. A valid manifest that declares AI generation settles the verdict; a broken signature means the file changed after signing. A valid signature proves who signed and that nothing changed since, not that the scene is real.',
   },
   {
-    icon: Droplets,
     name: 'Invisible watermark',
     status: 'Live',
     text: "Stable Diffusion's reference scripts and the SDXL pipelines hide a fixed message in the pixels of every image they generate. MetaProof reads it with the same method as the open-source decoder. A match is strong AI evidence; finding none means nothing, because most images have no watermark and resizing or recompressing removes it.",
   },
   {
-    icon: Sparkles,
     name: 'AI detector',
     status: 'Live',
     text: 'A small classifier on top of frozen CLIP image features. Foundation-model features generalize better to new generators than a network trained from scratch, and the score is calibrated so 80% means roughly 80%. Every image is resized and re-saved as JPEG first, so file format cannot give the answer away.',
   },
   {
-    icon: Copy,
     name: 'Seen-before search',
     status: 'Live',
     text: "Each image's CLIP embedding is stored in Postgres with pgvector. A nearest-neighbour search finds resized, cropped or recompressed copies that a file hash would miss.",
@@ -52,9 +45,8 @@ export function Method() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        eyebrow="Method"
-        title="Evidence, not guesses."
-        subtitle="MetaProof combines independent checks and shows its working. It never claims absolute truth."
+        title="How it works"
+        subtitle="Six independent checks, a verdict that shows its working, and never a claim of absolute truth."
       />
 
       <nav aria-label="On this page" className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
@@ -71,24 +63,12 @@ export function Method() {
       </nav>
 
       <section id="checks" className="flex scroll-mt-24 flex-col gap-3">
-        {LAYERS.map(({ icon: Icon, name, status, text }, i) => (
-          <article key={name} className="panel animate-rise flex gap-4 rounded-xl p-5">
-            {/* On phones the icon sits beside the title, so the text gets the card's full width. */}
-            <span className="well size-11 max-sm:hidden">
-              <Icon className="size-5" strokeWidth={1.5} />
-            </span>
+        {LAYERS.map(({ name, status, text }) => (
+          <article key={name} className="panel animate-rise rounded-xl p-5 sm:p-6">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="num text-[20px] leading-none text-accent">{String(i + 1).padStart(2, '0')}</span>
-                <Icon className="size-[18px] text-muted sm:hidden" strokeWidth={1.75} />
-                <h2 className="text-[17px] font-semibold tracking-[-0.02em]">{name}</h2>
-                <span
-                  className={`tag ${
-                    status === 'Live' ? 'bg-authentic/10 text-authentic' : ''
-                  }`}
-                >
-                  {status}
-                </span>
+                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">{name}</h2>
+                <span className={status === 'Live' ? 'tag-hi' : 'tag'}>{status}</span>
               </div>
               <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-muted">{text}</p>
             </div>
@@ -97,14 +77,11 @@ export function Method() {
       </section>
 
       <section id="verdict" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
-        <div className="flex items-center gap-3">
-          <Scale className="size-5" strokeWidth={1.5} />
-          <h2 className="text-[17px] font-semibold tracking-[-0.02em]">How the verdict is decided</h2>
-        </div>
+        <h2 className="text-[20px] font-semibold tracking-[-0.02em]">How the verdict is decided</h2>
         <ol className="mt-4 flex flex-col gap-3">
           {RULES.map((rule, i) => (
             <li key={i} className="flex max-w-[62ch] gap-3 text-[15px] leading-relaxed text-muted">
-              <span className="font-mono text-[13px] text-faint">0{i + 1}</span>
+              <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
               {rule}
             </li>
           ))}
@@ -127,11 +104,21 @@ export function Method() {
 function DetectorResults() {
   return (
     <section id="accuracy" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
-      <div className="flex items-center gap-3">
-        <BarChart3 className="size-5" strokeWidth={1.5} />
-        <h2 className="text-[17px] font-semibold tracking-[-0.02em]">How well the detector works</h2>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
+      <h2 className="text-[20px] font-semibold tracking-[-0.02em]">How well the detector works</h2>
+      {/* The headline figures, held out from training, in dot-matrix. */}
+      <dl className="mt-5 grid grid-cols-3 gap-4">
+        {[
+          [SUMMARY.auc.toFixed(2), 'AUC as uploaded', true],
+          [SUMMARY.aucRecompressed.toFixed(2), 'AUC recompressed', false],
+          [`${Math.round(SUMMARY.calibrationError * 100)}%`, 'Calibration error', false],
+        ].map(([value, label, hi]) => (
+          <div key={label as string} className="min-w-0">
+            <dt className={hi ? 'tag-hi' : 'inline-flex rounded-full bg-raised px-2 py-0.5 text-[11px] leading-4 font-semibold text-muted'}>{label}</dt>
+            <dd className="dot-num mt-2 text-[36px] sm:text-[48px]">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-5 text-[15px] leading-relaxed text-muted">
         Tested on {SUMMARY.testImages.toLocaleString()} images from nine generators that were{' '}
         <span className="text-ink">never shown to the model during training</span>. AUC{' '}
         {SUMMARY.auc} as uploaded and {SUMMARY.aucRecompressed} after social-media-style
@@ -158,7 +145,7 @@ function DetectorResults() {
                   <div className="h-full rounded-full bg-accent/40" style={{ width: `${g.recompressed * 100}%` }} />
                 </div>
               </div>
-              <span className="text-right font-mono text-[13px] tabular-nums text-ink">{Math.round(g.clean * 100)}%</span>
+              <span className="text-right text-[13px] font-semibold tabular-nums text-ink">{Math.round(g.clean * 100)}%</span>
             </li>
           ))}
         </ul>
@@ -173,7 +160,7 @@ function DetectorResults() {
               <div className="h-1.5 overflow-hidden rounded-full bg-line">
                 <div className="h-full rounded-full bg-accent" style={{ width: `${g.clean * 100}%` }} />
               </div>
-              <span className="text-right font-mono text-[13px] tabular-nums text-ink">{Math.round(g.clean * 100)}%</span>
+              <span className="text-right text-[13px] font-semibold tabular-nums text-ink">{Math.round(g.clean * 100)}%</span>
             </li>
           ))}
         </ul>
@@ -199,10 +186,10 @@ function DetectorResults() {
             <tbody>
               {BANDS.map((b) => (
                 <tr key={b.range} className="border-b border-line last:border-0 align-top">
-                  <td className="py-2.5 pr-3 font-mono text-ink">{b.range}</td>
+                  <td className="py-2.5 pr-3 font-medium tabular-nums text-ink">{b.range}</td>
                   <td className="py-2.5 pr-3 text-muted">{b.effect}</td>
-                  <td className="py-2.5 pr-3 font-mono text-muted">{b.caught}</td>
-                  <td className="py-2.5 font-mono text-muted">{b.falseAlarm}</td>
+                  <td className="py-2.5 pr-3 tabular-nums text-muted">{b.caught}</td>
+                  <td className="py-2.5 tabular-nums text-muted">{b.falseAlarm}</td>
                 </tr>
               ))}
             </tbody>
