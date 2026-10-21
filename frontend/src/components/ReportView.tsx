@@ -1,5 +1,5 @@
 import { ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
@@ -31,7 +31,13 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">Verdict</p>
             <h1 className="print-dark mt-2 text-[44px] leading-[1] font-medium tracking-[-0.04em] sm:text-[64px]">
-              {v.title}
+              {/* Keep "AI-generated" whole where there is room; a break at the hyphen reads as a typo. */}
+              {v.title.split(' ').map((word, i) => (
+                <Fragment key={i}>
+                  {i > 0 && ' '}
+                  <span className="sm:whitespace-nowrap">{word}</span>
+                </Fragment>
+              ))}
             </h1>
             {lean && (
               <p className="frost mt-3 inline-flex rounded-full px-3.5 py-1 text-[15px] font-semibold">
