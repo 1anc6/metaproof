@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowUpRight, ImageOff, Monitor, Moon, Sun } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { ImageOff, Monitor, Moon, Sun } from 'lucide-react'
 import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
 import { setPref, usePrefs } from '../lib/prefs'
 import { PENDING, SIGNALS, VERDICTS } from '../lib/verdicts'
@@ -26,96 +25,6 @@ export function Logo({ compact = false }: { compact?: boolean }) {
   )
 }
 
-/** A frosted round arrow button for the top-right corner of a gradient card. */
-export function CardArrow({ to, label }: { to: string; label: string }) {
-  return (
-    <Link to={to} aria-label={label} className="frost grid size-12 shrink-0 place-items-center rounded-full text-white transition">
-      <ArrowUpRight className="size-5" strokeWidth={1.75} />
-    </Link>
-  )
-}
-
-/** A label pill floating over the evidence map. */
-function MapLabel({ children, className }: { children: ReactNode; className: string }) {
-  return (
-    <span className={`frost absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide text-white/90 ${className}`}>
-      {children}
-    </span>
-  )
-}
-
-/**
- * The evidence map: the checks drawn as linked orbits on a gradient card, with a slider for the
- * AI likelihood. Decorative; with `src`, the uploaded picture sits in the middle orbit.
- */
-export function EvidenceMap({
-  className = '',
-  src,
-  title = 'Evidence map',
-  to,
-  mesh = 'mesh-gold',
-  score = 0.62,
-}: {
-  className?: string
-  src?: string
-  title?: string
-  to?: string
-  mesh?: string
-  score?: number
-}) {
-  return (
-    <div className={`mesh ${mesh} flex flex-col rounded-xl p-6 sm:p-7 ${className}`}>
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-[22px] font-medium tracking-[-0.02em]">{title}</p>
-        {to && <CardArrow to={to} label="Open" />}
-      </div>
-
-      <div className="relative mt-4 aspect-[2/1] w-full" aria-hidden>
-        <svg viewBox="0 0 400 200" className="absolute inset-0 size-full" fill="none" stroke="white">
-          {/* links between the orbit centres */}
-          <path d="M92 100 H200 H308" strokeWidth="1.5" strokeDasharray="1 6" strokeLinecap="round" opacity="0.8" />
-          {/* left orbit: dotted ring with a solid sweep that turns slowly */}
-          <circle cx="92" cy="100" r="66" strokeWidth="1.5" strokeDasharray="1 7" strokeLinecap="round" opacity="0.7" />
-          <g className="animate-orbit origin-center [transform-box:fill-box]">
-            <circle cx="92" cy="100" r="66" strokeWidth="1.75" strokeDasharray="230 400" strokeLinecap="round" />
-          </g>
-          {/* middle orbit */}
-          <circle cx="200" cy="100" r="46" strokeWidth="1.5" strokeDasharray="1 6" strokeLinecap="round" opacity="0.8" />
-          <path d="M165 130 A46 46 0 0 0 235 130" strokeWidth="1.75" strokeLinecap="round" />
-          {/* right orbit */}
-          <circle cx="308" cy="104" r="66" strokeWidth="1.5" strokeDasharray="1 7" strokeLinecap="round" opacity="0.7" />
-          <g className="animate-orbit-slow origin-center [transform-box:fill-box]">
-            <circle cx="308" cy="104" r="66" strokeWidth="1.75" strokeDasharray="250 420" strokeLinecap="round" />
-          </g>
-          <circle cx="92" cy="100" r="3" fill="white" stroke="none" />
-          <circle cx="146" cy="100" r="3" fill="white" stroke="none" />
-          <circle cx="254" cy="100" r="3" fill="white" stroke="none" />
-          <circle cx="308" cy="104" r="3" fill="white" stroke="none" />
-        </svg>
-        {/* the middle orbit holds the picture, or three bars */}
-        <div className="frost absolute top-1/2 left-1/2 grid aspect-square w-[19%] -translate-x-1/2 -translate-y-1/2 place-items-center overflow-hidden rounded-full">
-          {src ? (
-            <img src={src} alt="" className="size-full object-cover" />
-          ) : (
-            <span className="flex items-end gap-[3px]">
-              <span className="h-3 w-[2px] rotate-12 rounded bg-white" />
-              <span className="h-4 w-[2px] rotate-12 rounded bg-white" />
-              <span className="h-5 w-[2px] rotate-12 rounded bg-white" />
-            </span>
-          )}
-        </div>
-        <MapLabel className="top-[22%] left-[10%]">EXIF</MapLabel>
-        <MapLabel className="top-[76%] left-[30%]">C2PA</MapLabel>
-        <MapLabel className="top-[16%] left-[50%]">PIXELS</MapLabel>
-        <MapLabel className="top-[80%] left-[67%]">WMARK</MapLabel>
-        <MapLabel className="top-[32%] left-[92%]">HASH</MapLabel>
-      </div>
-
-      {/* mt-auto pins the slider to the bottom when the card is stretched beside a taller panel */}
-      <Meter value={score} className="mt-auto pt-5" onDark />
-    </div>
-  )
-}
 
 /**
  * A slider-style meter: a gold fill up to a triangle marker, over a dotted scale with

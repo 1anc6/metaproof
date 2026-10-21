@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
 import { ReportView } from '../components/ReportView'
-import { ErrorPanel, EvidenceMap } from '../components/ui'
+import { ErrorPanel, FileName, Ruler } from '../components/ui'
 import { ThinkingOrb, ThinkingPill } from '../components/ThinkingOrb'
 import { ReportSkeleton } from './Report'
 import { previewFor } from '../lib/preview'
@@ -89,29 +89,43 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
   const active = reported >= 0 ? reported : guessing ? Math.min(1 + tick, STEPS.length - 1) : job ? 1 : 0
   // Queued: the file is in, but nothing has started yet.
   const waiting = job?.status === 'queued'
+  // How far along the checks are; the step under way counts as half done.
+  const pct = job ? Math.round(((active + (waiting ? 0 : 0.5)) / STEPS.length) * 100) : 0
 
   return (
     <div className="mx-auto max-w-5xl pt-2 sm:pt-4">
       <header className="animate-rise mb-6 sm:mb-8">
-        <p className="eyebrow flex items-center gap-2">
-          <span className="animate-blink size-1.5 rounded-full bg-accent" aria-hidden />
-          {waiting ? 'In queue' : 'Analyzing'}
-        </p>
-        <h1 className="mt-3 text-[36px] leading-[1.04] font-medium tracking-[-0.035em] sm:mt-4 sm:text-[52px]">
-          Reading the evidence
-        </h1>
-        {filename && <p className="mt-2 max-w-full truncate text-[15px] text-muted">{filename}</p>}
+        <h1 className="text-[36px] leading-[1.04] font-normal tracking-[-0.04em] sm:text-[48px]">Reading the evidence</h1>
+        <p className="mt-3 text-[16px] text-muted">Six checks run on the file, then the evidence is weighed.</p>
       </header>
 
       {/* Two equal columns that start and end level; on phones the steps come first. */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 lg:items-stretch">
-        {/* The upload in the middle orbit; the slider tracks how far along the checks are. */}
-        <EvidenceMap
-          src={preview}
-          title="Live evidence map"
-          score={(active + (waiting ? 0 : 0.5)) / STEPS.length}
-          className="max-lg:order-2"
-        />
+        {/* Progress on a neutral colour field (no verdict yet): the picture, the share of checks
+            done in dot-matrix, and a ruler that fills as they finish. */}
+        <section className="mesh mesh-graphite flex min-h-[340px] flex-col rounded-xl p-5 max-lg:order-2 sm:p-6" aria-label="Progress">
+          <div className="flex items-start gap-3">
+            {preview ? (
+              <img src={preview} alt="" className="size-14 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <span className="frost grid size-14 shrink-0 place-items-center rounded-lg">
+                <ThinkingOrb size={22} className="text-white" />
+              </span>
+            )}
+            <div className="min-w-0 pt-1">
+              <span className="tag-hi gap-1.5">
+                <span className="animate-blink size-1.5 rounded-full bg-[#18181b]" aria-hidden />
+                {waiting ? 'In queue' : 'Analyzing'}
+              </span>
+              {filename && <FileName name={filename} className="mt-1.5 text-[13px] text-white/85" />}
+            </div>
+          </div>
+          <div className="my-auto py-4 text-center" aria-live="polite">
+            <p className="dot-num text-[84px] text-white sm:text-[104px]">{pct}</p>
+            <p className="mt-2 text-[15px] font-semibold">% of the checks done</p>
+          </div>
+          <Ruler value={pct} />
+        </section>
 
         <section className="panel flex flex-col rounded-xl p-3 sm:p-4">
           {/* Says what is happening now; the list below only swaps markers. */}
@@ -132,7 +146,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
                 >
                   <span
                     className={`grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
-                      state === 'done' ? 'bg-accent-soft text-accent' : 'bg-raised text-faint'
+                      state === 'done' ? 'bg-highlight text-[#18181b]' : 'bg-raised text-faint'
                     }`}
                   >
                     {state === 'done' ? (
@@ -140,7 +154,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
                     ) : state === 'active' ? (
                       <ThinkingOrb size={18} className="text-ink" />
                     ) : (
-                      <span className="text-[13px] font-semibold tabular-nums">{i + 1}</span>
+                      <span className="size-2 rounded-full border border-current" aria-hidden />
                     )}
                   </span>
                   <span className={`text-[15px] transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>
