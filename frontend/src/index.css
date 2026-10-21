@@ -4,22 +4,24 @@
   --font-sans: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  /* Dot-matrix figures: the big numbers only (counts, scores), never running text. */
+  --font-dot: 'Doto Variable', ui-monospace, monospace;
 
-  /* Three roles and nothing else. Primary: ink, for the one main action on a screen.
-     Secondary: champagne gold, for highlights and the hero card. Neutral: warm greys for
-     everything else. Verdict colours carry meaning and appear only on verdicts. */
-  --color-canvas: #e9e7e4;
-  --color-raised: rgb(31 28 26 / 0.045); /* wells, tracks */
-  --color-hover: rgb(255 255 255 / 0.55); /* list rows and nav items under the pointer */
-  --color-line: rgb(31 28 26 / 0.08);
-  --color-line-strong: rgb(31 28 26 / 0.16);
-  --color-ink: #1f1c1a;
-  --color-muted: #4f4a47;
-  --color-faint: #6b6460; /* 4.6:1 on the canvas, above WCAG AA */
-  --color-primary: #1c1a18;
-  --color-on-primary: #fbfaf8; /* text and icons on primary */
-  --color-accent: #b98a3c; /* champagne gold: decoration, not text */
-  --color-accent-soft: rgb(185 138 60 / 0.16);
+  /* Cool neutral greys, white cards, and colour only where it carries meaning: the verdicts,
+     plus one acid-lime highlight for small tags. */
+  --color-canvas: #e7e7e9;
+  --color-raised: rgb(24 24 27 / 0.05); /* wells, tracks */
+  --color-hover: rgb(255 255 255 / 0.6); /* list rows and nav items under the pointer */
+  --color-line: rgb(24 24 27 / 0.08);
+  --color-line-strong: rgb(24 24 27 / 0.16);
+  --color-ink: #18181b;
+  --color-muted: #4b4b52;
+  --color-faint: #616168; /* 4.9:1 on the canvas */
+  --color-primary: #18181b;
+  --color-on-primary: #fafafa; /* text and icons on primary */
+  --color-accent: #5f7a00; /* lime ink: icons and small marks that must read on light grounds */
+  --color-accent-soft: rgb(205 236 70 / 0.35);
+  --color-highlight: #d8f25c; /* lime tag fill; text on it is ink */
 
   /* Verdict colours, dark enough to read as text on the light canvas. */
   --color-authentic: #2e7a6b;
@@ -73,19 +75,20 @@
 }
 
 /* Surface recipes that differ by theme. Light is the default; dark overrides below.
-   Surfaces are flat: a panel is one tone step off the canvas, with no glass, glow or shadow. */
+   Cards are near-white on the grey canvas with a soft, low shadow; no glass. */
 :root {
-  --panel-bg: #f5f4f2;
-  --panel-hover: #fbfaf9;
-  --panel-edge: inset 0 0 0 1px rgb(31 28 26 / 0.05);
-  --bar-bg: rgb(233 231 228 / 0.94); /* sticky bars sit over scrolling content */
-  --soft-bg: rgb(31 28 26 / 0.06); /* secondary buttons, icon controls */
-  --soft-hover: rgb(31 28 26 / 0.1);
+  --panel-bg: #f6f6f7;
+  --panel-hover: #fcfcfc;
+  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.8);
+  --panel-shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 12px 32px -18px rgb(24 24 27 / 0.18);
+  --bar-bg: rgb(231 231 233 / 0.94); /* sticky bars sit over scrolling content */
+  --soft-bg: #fff; /* secondary buttons: white pills, like "See all" */
+  --soft-hover: #f4f4f5;
   --selected-bg: #fff;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-canvas: #0d0d0f;
+  --color-canvas: #0e0e10;
   --color-raised: rgb(255 255 255 / 0.06);
   --color-line: rgb(255 255 255 / 0.08);
   --color-line-strong: rgb(255 255 255 / 0.16);
@@ -99,15 +102,16 @@
   --color-neutral: #aaa39f;
   --color-primary: #f3f1ef;
   --color-on-primary: #141210;
-  --color-accent: #d8b062;
-  --color-accent-soft: rgb(216 176 98 / 0.16);
+  --color-accent: #d8f25c;
+  --color-accent-soft: rgb(216 242 92 / 0.18);
 
   --panel-bg: #18181b;
   --panel-hover: #1e1e22;
-  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --panel-shadow: 0 16px 32px -20px rgb(0 0 0 / 0.6);
   --bar-bg: rgb(13 13 15 / 0.94);
-  --soft-bg: rgb(255 255 255 / 0.07);
-  --soft-hover: rgb(255 255 255 / 0.12);
+  --soft-bg: rgb(255 255 255 / 0.08);
+  --soft-hover: rgb(255 255 255 / 0.13);
   --selected-bg: rgb(255 255 255 / 0.12);
 }
 
@@ -140,7 +144,7 @@
   .panel {
     position: relative;
     background: var(--panel-bg);
-    box-shadow: var(--panel-edge);
+    box-shadow: var(--panel-edge), var(--panel-shadow);
   }
   :is(a, button).panel:hover,
   .panel-raised {
@@ -157,17 +161,37 @@
     box-shadow: var(--panel-edge), 0 16px 32px -16px rgb(0 0 0 / 0.35);
   }
 
-  /* Solid colour fields with white text. Gold is the brand; the rest are verdict colours. */
+  /* Verdict fields: soft gradients in the verdict's hue, and the only gradients in the app.
+     Each one carries a figure (a score, a likelihood), never decoration. White text sits on them. */
   .mesh {
     position: relative;
     overflow: hidden;
     color: #fff;
   }
-  .mesh-gold { background: #7a5c34; }
-  .mesh-graphite { background: #3b3938; }
-  .mesh-teal { background: #2a5e55; }
-  .mesh-copper { background: #7a3a1f; }
-  .mesh-garnet { background: #6a2530; }
+  .mesh-teal { /* likely authentic: spring green */
+    background: radial-gradient(120% 100% at 50% 100%, #1f8f45 0%, #49b45a 45%, #a8d98a 85%, #d9eec4 100%);
+  }
+  .mesh-copper { /* edited: amber */
+    background: radial-gradient(110% 95% at 50% 55%, #f08a1c 0%, #f3a64a 40%, #d9a98a 75%, #b9b4c4 100%);
+  }
+  .mesh-garnet { /* likely AI: hot coral to lilac */
+    background: radial-gradient(105% 95% at 50% 52%, #ff5a2c 0%, #f4683f 30%, #d9798a 62%, #a9a6c4 100%);
+  }
+  .mesh-graphite { /* inconclusive: cool grey-blue */
+    background: radial-gradient(110% 100% at 50% 55%, #6d7488 0%, #8c93a6 45%, #b7bccb 100%);
+  }
+  .mesh-gold { background: #3f3f46; }
+  /* Small lime tag beside a figure: "Total", "Latest". */
+  .tag-hi {
+    @apply inline-flex items-center rounded-full bg-highlight px-2 py-0.5 text-[11px] leading-4 font-semibold text-[#18181b];
+  }
+  /* Dot-matrix figure. */
+  .dot-num {
+    @apply font-dot leading-none tabular-nums;
+    font-weight: 700;
+    font-variation-settings: 'ROND' 100; /* round dots, not squares */
+    letter-spacing: 0.02em;
+  }
   /* A label or control on a colour field. */
   .frost {
     background: rgb(255 255 255 / 0.14);
@@ -185,6 +209,7 @@
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[15px] font-medium text-ink;
     background: var(--soft-bg);
+    box-shadow: var(--panel-edge), 0 1px 2px rgb(24 24 27 / 0.06);
   }
   .btn-ghost:hover {
     background: var(--soft-hover);

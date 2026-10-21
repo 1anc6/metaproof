@@ -1,23 +1,17 @@
-import { ArrowRight, EyeOff, Filter, Plus } from 'lucide-react'
+import { ArrowUpRight, EyeOff, Filter, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { VerdictLabel } from '../lib/api'
+import type { JobSummary, VerdictLabel } from '../lib/api'
 import { formatWhen } from '../lib/format'
+import type { HistoryEntry } from '../lib/history'
 import { useHistory } from '../lib/history'
 import { useSummaries } from '../lib/hooks'
 import { setPref, usePrefs } from '../lib/prefs'
 import { DEMO_REPORT_PATH } from '../lib/demo'
-import { Chip, FileName, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
+import { VERDICTS } from '../lib/verdicts'
+import { Chip, FileName, Ruler, Thumb, VerdictBadge } from '../components/ui'
 
-const LAYERS = [
-  { name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
-  { name: 'File structure', detail: 'JPEG quality, segments and colour profile' },
-  { name: 'Content Credentials', detail: 'Signed C2PA provenance' },
-  { name: 'Invisible watermark', detail: 'Marks hidden by Stable Diffusion tools' },
-  { name: 'AI detector', detail: 'CLIP features, tested on unseen generators' },
-  { name: 'Seen-before search', detail: 'Finds resized or recompressed copies' },
-]
-
-const DEMO_SHA = DEMO_REPORT_PATH.split('/').pop()!
+const CHECKS = ['Metadata', 'File structure', 'Content Credentials', 'Invisible watermark', 'AI detector', 'Seen-before search']
 
 export function Overview() {
   const history = useHistory()
@@ -37,172 +31,255 @@ export function Overview() {
     const label = data[jobId]?.label
     return label === 'edited' || label === 'likely_ai_generated'
   }
-  const recent = (prefs.onlyFlagged ? history.filter((e) => isFlagged(e.jobId)) : history).slice(0, 5)
+  const recent = (prefs.onlyFlagged ? history.filter((e) => isFlagged(e.jobId)) : history).slice(0, 4)
+  const latest = history.find((e) => data[e.jobId]?.status === 'done' && data[e.jobId]?.label)
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Hero: what this is, one action, and a real report beside it instead of decoration. */}
-      <section className="animate-rise grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-end lg:gap-12">
-        <div className="max-w-xl">
-          <h1 className="text-[36px] leading-[1.04] font-medium tracking-[-0.035em] sm:text-[48px]">
+    <div className="flex flex-col gap-8">
+      <header className="animate-rise flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+        <div className="max-w-2xl">
+          <h1 className="text-[36px] leading-[1.04] font-normal tracking-[-0.04em] sm:text-[48px]">
             See what's behind the image
           </h1>
-          <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-muted">
+          <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted">
             MetaProof reads an image's metadata, Content Credentials and pixels, then tells you what the
             evidence shows, and when it isn't enough to say anything.
           </p>
-          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Link to="/new" className="btn-primary h-12 px-6">
-              <Plus className="size-4" strokeWidth={2.5} /> New analysis
-            </Link>
-            <Link to="/method" className="inline-flex items-center gap-1.5 text-[15px] font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
-              How it works
-            </Link>
-          </div>
         </div>
-        <ExampleReport />
-      </section>
+        <Link to="/new" className="btn-primary h-12 px-6">
+          <Plus className="size-4" strokeWidth={2.5} /> New analysis
+        </Link>
+      </header>
 
-      {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing. Two by
-          two on phones, where four columns would wrap the labels and misalign the numbers. */}
+      {/* This browser's analyses: four counts in dot-matrix, then each analysis on a timeline. */}
       {history.length > 0 && (
-        <section className="panel animate-rise grid grid-cols-2 rounded-xl sm:grid-cols-4" aria-label="Your analyses">
-          <Stat to="/history" label="Files analyzed" value={history.length} note="on this device" />
-          <Stat to="/history?filter=flagged" label="Flagged" value={n(flagged)} note="edited or AI" tone={flagged ? 'text-edited' : undefined} />
-          <Stat to="/history?filter=likely_ai_generated" label="Likely AI" value={n(counts.likely_ai_generated)} note={counts.likely_ai_generated === 1 ? 'AI-generated verdict' : 'AI-generated verdicts'} tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
-          <Stat to="/history?filter=inconclusive" label="Inconclusive" value={n(counts.inconclusive)} note="not enough evidence" />
+        <section className="animate-rise flex flex-col gap-5" aria-label="Your analyses">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+            <DotStat to="/history" value={history.length} label="Total" highlight />
+            <DotStat to="/history?filter=flagged" value={n(flagged)} label="Flagged" tone={flagged ? 'text-edited' : undefined} />
+            <DotStat to="/history?filter=likely_ai_generated" value={n(counts.likely_ai_generated)} label="Likely AI" tone={counts.likely_ai_generated ? 'text-ai' : undefined} />
+            <DotStat to="/history?filter=inconclusive" value={n(counts.inconclusive)} label="Inconclusive" />
+          </div>
+          <Timeline entries={history} data={data} />
         </section>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-        {/* Recent analyses */}
-        <section className="panel animate-rise rounded-xl p-2">
-          <div className="flex flex-wrap items-end justify-between gap-4 px-4 pt-4 pb-3 sm:px-5">
-            <PanelTitle title="Recent analyses" />
-            {history.length > 0 && (
-              <Link to="/history" className="inline-flex items-center gap-1 text-[14px] font-medium text-muted hover:text-ink">
-                View all <ArrowRight className="size-3.5" />
-              </Link>
-            )}
+      <section className="animate-rise grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,300px)]">
+        {latest ? (
+          <ScoreCard
+            to={`/analysis/${latest.jobId}`}
+            label="Latest analysis"
+            verdict={data[latest.jobId].label!}
+            pct={data[latest.jobId].confidence}
+            caption="verdict confidence"
+            name={latest.filename}
+          />
+        ) : (
+          // The example's figures mirror the stored demo report (lib/demo.ts).
+          <ScoreCard to={DEMO_REPORT_PATH} label="Example report" verdict="likely_ai_generated" pct={0.99} caption="AI likelihood, pixel detector" />
+        )}
+        <UploadCard />
+        <ChecksCard />
+      </section>
+
+      <section className="animate-rise">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="text-[24px] font-normal tracking-[-0.03em]">Recent analyses</h2>
+            <p className="mt-1 text-[14px] text-muted">What this browser analyzed most recently.</p>
           </div>
           {history.length > 0 && (
-            <div className="flex flex-wrap gap-2 px-4 pb-3 sm:px-5">
-              <Chip icon={EyeOff} label="Blur previews" checked={prefs.blurPreviews} onChange={(v) => setPref('blurPreviews', v)} />
-              <Chip icon={Filter} label="Only flagged" checked={prefs.onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
-            </div>
+            <Link to="/history" className="btn-ghost h-10 px-4 text-[14px]">
+              See all
+            </Link>
           )}
-          {history.length === 0 ? (
-            <EmptyRecent />
-          ) : recent.length === 0 ? (
-            <p className="px-5 pt-2 pb-8 text-[15px] text-faint">
-              {loading ? 'Loading verdicts…' : 'Nothing edited or AI-generated among your analyses.'}
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-1">
-              {recent.map((entry) => {
-                const s = data[entry.jobId]
-                return (
-                  <li key={entry.jobId}>
-                    <Link
-                      to={`/analysis/${entry.jobId}`}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-hover"
-                    >
-                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-md" />
-                      <div className="min-w-0 flex-1">
-                        <FileName name={entry.filename} className="text-[15px] font-semibold" />
-                        {/* On phones the verdict sits under the name, so the name gets the row's full width. */}
-                        <div className="flex min-w-0 items-center gap-2 max-sm:mt-1">
-                          <span className="shrink-0 sm:hidden">
-                            {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
-                          </span>
-                          <span className="truncate text-[13px] text-faint">{formatWhen(entry.uploadedAt)}</span>
-                        </div>
-                      </div>
-                      <span className="shrink-0 max-sm:hidden">
-                        {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-6 w-20" />}
-                      </span>
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
-
-        {/* The six checks, as a plain list: the names carry it, no icons needed. */}
-        <section className="panel animate-rise rounded-xl p-6">
-          <PanelTitle title="Six checks on every image" />
-          {/* Returning visitors on phones came for their files; the checks fold down to the link. */}
-          <dl className={`mt-4 flex flex-col divide-y divide-line ${history.length > 0 ? 'max-sm:hidden' : ''}`}>
-            {LAYERS.map(({ name, detail }) => (
-              <div key={name} className="py-3 first:pt-0">
-                <dt className="text-[15px] font-semibold">{name}</dt>
-                <dd className="mt-0.5 text-[14px] text-muted">{detail}</dd>
-              </div>
-            ))}
-          </dl>
-          <Link to="/method" className="mt-4 inline-flex items-center gap-1 text-[14px] font-medium text-muted hover:text-ink">
-            Read the method <ArrowRight className="size-3.5" />
-          </Link>
-        </section>
-      </div>
+        </div>
+        {history.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Chip icon={EyeOff} label="Blur previews" checked={prefs.blurPreviews} onChange={(v) => setPref('blurPreviews', v)} />
+            <Chip icon={Filter} label="Only flagged" checked={prefs.onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
+          </div>
+        )}
+        {history.length === 0 ? (
+          <EmptyRecent />
+        ) : recent.length === 0 ? (
+          <p className="mt-4 text-[15px] text-muted">
+            {loading ? 'Loading verdicts…' : 'Nothing edited or AI-generated among your analyses.'}
+          </p>
+        ) : (
+          <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {recent.map((entry) => {
+              const s = data[entry.jobId]
+              return (
+                <li key={entry.jobId} className="min-w-0">
+                  <Link to={`/analysis/${entry.jobId}`} className="panel flex h-full flex-col rounded-xl p-2.5 sm:p-3">
+                    <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="aspect-[4/3] w-full rounded-lg" />
+                    <FileName name={entry.filename} className="mt-3 px-1 text-[14px] font-semibold" />
+                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-1 pb-1">
+                      {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
+                      <span className="truncate text-[12px] text-faint">{formatWhen(entry.uploadedAt)}</span>
+                    </div>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }
 
-/**
- * One cell of the counts strip, linking to History filtered to it. Only a count that needs
- * attention takes its verdict colour.
- */
-function Stat({ to, label, value, note, tone }: { to: string; label: string; value: number | null; note?: string; tone?: string }) {
+/** A count in dot-matrix with its label beside it; the first one carries the lime tag. */
+function DotStat({ to, value, label, highlight, tone }: { to: string; value: number | null; label: string; highlight?: boolean; tone?: string }) {
   return (
-    <Link
-      to={to}
-      className="flex min-w-0 flex-col border-line px-4 py-4 transition first:rounded-tl-xl hover:bg-hover max-sm:odd:border-r max-sm:nth-[-n+2]:border-b max-sm:nth-2:rounded-tr-xl max-sm:nth-3:rounded-bl-xl last:rounded-br-xl sm:px-6 sm:py-5 sm:not-last:border-r sm:first:rounded-l-xl sm:last:rounded-r-xl"
-    >
-      <p className="truncate text-[13px] leading-tight font-medium whitespace-nowrap text-muted sm:text-[15px]">{label}</p>
+    <Link to={to} className="group flex min-w-0 items-start gap-2 rounded-lg">
       {value === null ? (
-        <span className="skeleton mt-3 h-9 w-12 sm:mt-4 sm:h-11 sm:w-14" />
+        <span className="skeleton mt-2 h-10 w-14" />
       ) : (
-        <span className={`num mt-2.5 text-[36px] leading-none sm:mt-3 sm:text-[48px] ${tone ?? 'text-ink'}`}>{value}</span>
+        <span className={`dot-num text-[52px] sm:text-[60px] ${tone ?? 'text-ink'} transition-opacity group-hover:opacity-70`}>{value}</span>
       )}
-      {note && <p className="mt-2 text-[12px] text-faint max-sm:hidden">{note}</p>}
+      <span className={highlight ? 'tag-hi mt-1' : 'mt-1 rounded-full bg-raised px-2 py-0.5 text-[11px] leading-4 font-semibold text-muted'}>
+        {label}
+      </span>
     </Link>
+  )
+}
+
+/**
+ * Every analysis on one time axis, oldest at the left and now at the right, each a tick in its
+ * verdict's colour over a faint scale. Pending or unknown verdicts are grey.
+ */
+function Timeline({ entries, data }: { entries: HistoryEntry[]; data: Record<string, JobSummary> }) {
+  const [now] = useState(() => Date.now()) // fixed at mount, so renders stay stable
+  const times = entries.map((e) => new Date(e.uploadedAt).getTime())
+  const start = Math.min(...times, now - 24 * 3600_000)
+  const span = Math.max(now - start, 1)
+  const fmt = (t: number) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+  return (
+    <div className="panel relative rounded-full px-6 pt-5 pb-3 sm:px-8">
+      <div className="relative h-8" aria-hidden>
+        {/* the scale */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between">
+          {Array.from({ length: 61 }, (_, i) => (
+            <span key={i} className={`w-px rounded-full ${i % 10 === 0 ? 'h-4 bg-line-strong' : 'h-2 bg-line-strong/60'}`} />
+          ))}
+        </div>
+        {/* one tick per analysis */}
+        {entries.map((e, i) => {
+          const label = data[e.jobId]?.label
+          const color = label ? VERDICTS[label].color : 'var(--color-line-strong)'
+          return (
+            <span
+              key={e.jobId}
+              className="absolute bottom-0 h-7 w-[3px] -translate-x-1/2 rounded-full"
+              style={{ left: `${((times[i] - start) / span) * 100}%`, background: color }}
+              title={`${e.filename} · ${label ? VERDICTS[label].short : 'pending'}`}
+            />
+          )
+        })}
+      </div>
+      <div className="mt-2 flex justify-between text-[12px] font-medium text-faint">
+        <span>{fmt(start)}</span>
+        <span>Today</span>
+      </div>
+      <p className="sr-only">
+        {entries.length} analyses between {fmt(start)} and today.
+      </p>
+    </div>
+  )
+}
+
+/** A verdict on its own colour field, with its figure in dot-matrix and a 0-100 ruler under it. */
+function ScoreCard({
+  to,
+  label,
+  verdict,
+  pct,
+  caption,
+  name,
+}: {
+  to: string
+  label: string
+  verdict: VerdictLabel
+  pct: number | null
+  caption: string
+  name?: string
+}) {
+  const v = VERDICTS[verdict]
+  const value = pct === null ? null : Math.round(pct * 100)
+  return (
+    <Link to={to} className={`mesh ${v.mesh} group flex min-h-[280px] flex-col rounded-xl p-5 sm:p-6`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[14px] font-medium text-white/90">{label}</p>
+          {name && <FileName name={name} className="text-[13px] text-white/80" />}
+        </div>
+        <span className="frost grid size-9 shrink-0 place-items-center rounded-full">
+          <ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </span>
+      </div>
+      <div className="my-auto py-4 text-center">
+        {value !== null && <p className="dot-num text-[80px] text-white sm:text-[92px]">{value}</p>}
+        <p className="mt-3 text-[17px] font-semibold">{v.title}</p>
+        {value !== null && <p className="text-[13px] text-white/85">{value}% {caption}</p>}
+      </div>
+      {value !== null && <Ruler value={value} />}
+    </Link>
+  )
+}
+
+function UploadCard() {
+  return (
+    <Link to="/new" className="panel group flex flex-col gap-6 rounded-xl p-5 sm:p-6 md:min-h-[280px]">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[17px] leading-snug font-medium tracking-[-0.01em]">
+          Upload an
+          <br />
+          image to check
+        </p>
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-on-primary transition-transform group-hover:scale-105">
+          <Plus className="size-4" strokeWidth={2.5} />
+        </span>
+      </div>
+      <div className="mt-auto">
+        <p className="text-[14px] text-muted">JPEG, PNG, WebP, TIFF or HEIC, up to 25 MB.</p>
+        <p className="mt-3 rounded-lg bg-raised px-3.5 py-3 text-[13px] leading-relaxed text-muted">
+          The file is deleted as soon as it's analyzed. Only its hash, a thumbnail and the findings are kept.
+        </p>
+      </div>
+    </Link>
+  )
+}
+
+function ChecksCard() {
+  return (
+    <section className="panel flex flex-col rounded-xl p-5 sm:p-6 md:col-span-2 xl:col-span-1">
+      <h2 className="text-[17px] font-medium tracking-[-0.01em]">Six checks on every image</h2>
+      <ul className="mt-4 flex flex-wrap gap-2">
+        {CHECKS.map((name) => (
+          <li key={name} className="rounded-full bg-raised px-3 py-1.5 text-[13px] font-medium text-ink">
+            {name}
+          </li>
+        ))}
+      </ul>
+      <Link to="/method" className="btn-ghost mt-auto h-10 self-start px-4 text-[14px] max-xl:mt-5">
+        How it works
+      </Link>
+    </section>
   )
 }
 
 function EmptyRecent() {
   return (
-    <div className="px-5 pt-1 pb-6">
+    <div className="panel mt-4 rounded-xl px-6 py-8">
       <p className="text-[15px] font-semibold">No analyses yet</p>
       <p className="mt-1 max-w-sm text-[15px] text-muted">
         Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
       </p>
-      <Link to="/new" className="btn-ghost mt-5">
+      <Link to="/new" className="btn-primary mt-5">
         <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
       </Link>
     </div>
-  )
-}
-
-/**
- * A real report in miniature: the stored demo image and what its report found. The copy mirrors
- * that report (lib/demo.ts), so keep the two in step if the demo changes.
- */
-function ExampleReport() {
-  return (
-    <Link to={DEMO_REPORT_PATH} className="panel group flex gap-4 rounded-xl p-3 sm:gap-5 sm:p-4">
-      <Thumb sha={DEMO_SHA} className="aspect-square w-28 shrink-0 rounded-lg sm:w-36" />
-      <div className="flex min-w-0 flex-col py-1">
-        <p className="text-[13px] font-medium text-faint">Example report</p>
-        <p className="mt-1 text-[22px] leading-tight font-semibold tracking-[-0.02em] text-ai">Likely AI-generated</p>
-        <p className="mt-2 text-[14px] leading-relaxed text-muted">
-          The pixel detector rates it 99% AI. No camera metadata, no Content Credentials.
-        </p>
-        <span className="mt-auto inline-flex items-center gap-1 pt-2 text-[14px] font-medium text-ink">
-          Open the report <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-        </span>
-      </div>
-    </Link>
   )
 }

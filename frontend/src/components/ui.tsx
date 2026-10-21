@@ -243,6 +243,20 @@ export function FileName({ name, className = '' }: { name: string; className?: s
   )
 }
 
+/** Fine white ticks from 0 to 100 with one tall tick at the value. */
+export function Ruler({ value }: { value: number }) {
+  return (
+    <div className="relative h-5" aria-hidden>
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between">
+        {Array.from({ length: 41 }, (_, i) => (
+          <span key={i} className={`w-px bg-white/45 ${i % 10 === 0 ? 'h-3' : 'h-1.5'}`} />
+        ))}
+      </div>
+      <span className="absolute bottom-0 h-5 w-[3px] -translate-x-1/2 rounded-full bg-white" style={{ left: `${value}%` }} />
+    </div>
+  )
+}
+
 export function Thumb({ sha, className = '', blur = false }: { sha: string; className?: string; blur?: boolean }) {
   const [failed, setFailed] = useState(false)
   return (
