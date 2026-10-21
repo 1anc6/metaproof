@@ -74,52 +74,60 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
   const history = useHistory()
   return (
     <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col px-5 pt-7 pb-6 lg:flex">
-      <NavLink to="/" className="self-start pb-9">
+      <NavLink to="/" className="self-start pb-8">
         <Logo />
       </NavLink>
 
-      {/* Same height, padding, gap and icon disc as the nav rows below, so everything lines up. */}
-      <NavLink to="/new" className="btn-ghost mb-8 h-12 justify-start gap-3 py-0 pr-4 pl-2 font-semibold">
-        <span className="grid size-8 place-items-center rounded-full bg-primary text-on-primary">
-          <Plus className="size-4" strokeWidth={2.5} />
-        </span>
+      <NavLink to="/new" className="btn-primary mb-7 h-13 w-full">
+        <Plus className="size-4" strokeWidth={2} />
         New analysis
       </NavLink>
 
-      <nav className="flex flex-col gap-1.5" aria-label="Main">
+      <nav className="flex flex-col gap-2" aria-label="Main">
         {NAV.filter((n) => n.to !== '/new').map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex h-12 items-center gap-3 rounded-full pr-2 pl-2 text-[15px] transition ${
-                isActive ? 'selected font-semibold shadow-[0_1px_2px_rgb(24_24_27/0.06)]' : 'text-muted hover:bg-hover hover:text-ink'
+              `flex h-12 items-center gap-3 rounded-full pr-2 pl-1.5 text-[15px] transition ${
+                isActive ? 'selected' : 'text-muted hover:bg-hover hover:text-ink'
               }`
             }
           >
-            <span className="grid size-8 place-items-center rounded-full">
-              <Icon className="size-[18px]" strokeWidth={1.75} />
+            <span className="grid size-9 place-items-center rounded-full">
+              <Icon className="size-[18px]" strokeWidth={1.5} />
             </span>
             <span className="flex-1">{label}</span>
             {to === '/history' && history.length > 0 && (
-              <span className="rounded-full bg-raised px-2.5 py-1 text-[12px] font-semibold text-muted tabular-nums">{history.length}</span>
+              <span className="rounded-full bg-raised px-2.5 py-1 text-[12px] text-muted tabular-nums">{history.length}</span>
             )}
           </NavLink>
         ))}
       </nav>
 
-      {/* One card for everything below the nav: privacy, theme, status. Every row is full width. */}
-      <div className="panel mt-auto flex flex-col gap-3 rounded-lg p-3">
-        <div className="px-1 pt-1">
-          <span className="tag-hi">Private by design</span>
-          <p className="mt-2.5 text-[13px] leading-relaxed text-muted">
-            Files are deleted after analysis. Only a hash, a thumbnail and the findings are kept, for
-            90 days.
-          </p>
+      {/* Privacy, theme and status in one cream card, in the reference's label-and-leader rows. */}
+      <div className="cream mt-auto flex flex-col gap-3 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <p className="eyebrow">Privacy</p>
+          <span className="status text-[13px]">
+            <span className="size-2 rounded-full bg-accent" aria-hidden /> On
+          </span>
         </div>
+        <dl className="-my-1">
+          <div className="flex items-center gap-2 py-1 text-[13px]">
+            <dt className="text-muted">Files</dt>
+            <span className="leader" aria-hidden />
+            <dd>Deleted</dd>
+          </div>
+          <div className="flex items-center gap-2 py-1 text-[13px]">
+            <dt className="text-muted">Findings kept</dt>
+            <span className="leader" aria-hidden />
+            <dd>90 days</dd>
+          </div>
+        </dl>
         <ThemeSwitch stretch />
-        <div className="flex items-center justify-between gap-2 border-t border-line px-1 pt-3">
+        <div className="flex items-center justify-between gap-2 px-1">
           <ServerBadge />
           <div className="flex items-center gap-1">
             <button
@@ -127,7 +135,7 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
               onClick={onShortcuts}
               aria-label="Keyboard shortcuts"
               title="Keyboard shortcuts (?)"
-              className="grid size-8 place-items-center rounded-full text-[13px] font-semibold text-faint transition hover:bg-hover hover:text-ink"
+              className="grid size-8 place-items-center rounded-full text-[13px] text-faint transition hover:bg-hover hover:text-ink"
             >
               ?
             </button>
@@ -170,7 +178,7 @@ export function ServerBadge({ compact = false }: { compact?: boolean }) {
 
 function MobileTopBar({ theme }: { theme: 'light' | 'dark' }) {
   return (
-    <header className="no-print panel-bar sticky top-0 z-30 px-4 pt-[env(safe-area-inset-top)] lg:hidden">
+    <header className="no-print sticky top-0 z-30 bg-canvas/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:hidden">
       <div className="flex h-16 items-center justify-between gap-3">
         <NavLink to="/">
           <Logo />
@@ -184,25 +192,25 @@ function MobileTopBar({ theme }: { theme: 'light' | 'dark' }) {
   )
 }
 
-/** Floating pill tab bar: two tabs either side of the lime centre action. */
+/** The reference's bottom row: raised round buttons either side of a dark pill for the main action. */
 function MobileTabBar() {
   const items = NAV.filter((n) => n.to !== '/new')
   const half = items.length / 2
   return (
     <nav
-      className="no-print fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),16px)] lg:hidden"
+      className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center bg-gradient-to-t from-canvas via-canvas/80 to-transparent px-4 pt-6 pb-[max(env(safe-area-inset-bottom),16px)] lg:hidden"
       aria-label="Main"
     >
-      <div className="panel-bar pill-bar flex w-full max-w-sm items-center justify-between rounded-full p-2">
+      <div className="pointer-events-auto flex w-full max-w-sm items-center justify-between gap-2">
         {items.slice(0, half).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}
         <NavLink
           to="/new"
           aria-label="New analysis"
-          className="mx-1 grid size-14 shrink-0 place-items-center rounded-full bg-primary text-on-primary shadow-[0_12px_28px_-12px_rgb(0_0_0/0.55)] transition active:scale-95"
+          className="grid h-14 w-24 shrink-0 place-items-center rounded-full bg-primary text-on-primary shadow-[0_14px_28px_-12px_rgb(0_0_0/0.55)] transition active:scale-95"
         >
-          <Plus className="size-6" strokeWidth={2} />
+          <Plus className="size-6" strokeWidth={1.75} />
         </NavLink>
         {items.slice(half).map((item) => (
           <TabLink key={item.to} {...item} />
@@ -218,16 +226,12 @@ function TabLink({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
       to={to}
       end={end}
       aria-label={label}
-      // The focus ring goes round the icon disc, not the whole tab-wide hit area.
+      // The focus ring goes round the button, not the whole tab-wide hit area.
       className="flex min-w-0 flex-1 basis-0 justify-center outline-none [&:focus-visible>span]:outline-2 [&:focus-visible>span]:outline-offset-2 [&:focus-visible>span]:outline-ink"
     >
       {({ isActive }) => (
-        <span
-          className={`grid size-12 place-items-center rounded-full transition ${
-            isActive ? 'selected' : 'text-faint hover:text-ink'
-          }`}
-        >
-          <Icon className="size-5" strokeWidth={1.75} />
+        <span className={`well size-13 ${isActive ? 'text-ink' : 'text-faint'}`}>
+          <Icon className="size-5" strokeWidth={isActive ? 2 : 1.5} />
         </span>
       )}
     </NavLink>

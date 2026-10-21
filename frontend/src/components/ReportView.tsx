@@ -3,9 +3,9 @@ import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
-import { formatBytes, formatDateTime, formatType, formatWhen, shortHash } from '../lib/format'
-import { leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
-import { Meter, PanelTitle, Ruler, SignalDot, Thumb, VerdictBadge } from './ui'
+import { formatBytes, formatType, formatWhen, shortHash } from '../lib/format'
+import { leaning, SIGNALS, STRENGTH_LABEL, toneOf, VERDICTS } from '../lib/verdicts'
+import { DeviceCircle, FileName, Figure, LeaderRow, Meter, PanelTitle, RangeRuler, SignalDot, Thumb, VerdictBadge } from './ui'
 import { ErrorLevel } from './ErrorLevel'
 
 export function ReportView({ job, filename }: { job: Job; filename?: string }) {
@@ -22,43 +22,47 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
 
   return (
     <div className="stagger flex flex-col gap-6">
-      {/* Two cards side by side: the verdict on its colour field with the detector's figure, and
-          the image itself with its file facts. */}
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className={`mesh ${v.mesh} animate-rise flex min-h-[320px] flex-col rounded-xl p-5 sm:p-6`}>
-          <p className="text-[14px] font-medium text-white/90">Verdict</p>
-          <div className="my-auto py-4 text-center">
-            {reading && <p className="dot-num text-[84px] text-white sm:text-[104px]">{reading.pct}</p>}
-            <h1 className="print-dark mt-3 text-[30px] leading-[1.05] font-semibold tracking-[-0.03em] sm:text-[36px]">
-              {/* Keep "AI-generated" whole; a break at the hyphen reads as a typo. */}
-              {v.title.split(' ').map((word, i) => (
-                <Fragment key={i}>
-                  {i > 0 && ' '}
-                  <span className="whitespace-nowrap">{word}</span>
-                </Fragment>
-              ))}
-            </h1>
-            {lean && <p className="mt-1 text-[15px] font-semibold text-white/90">Leaning {lean.label}</p>}
-            {reading && <p className="mt-1 text-[13px] text-white/85">{reading.pct}% AI likelihood from the pixel detector</p>}
-          </div>
-          {reading && <Ruler value={reading.pct} />}
-        </div>
+      {/* The reference's device screen: the image in a ringed circle with its file facts as spec
+          chips, beside a cream card holding the verdict, its figures and one row per check. */}
+      <section className="grid gap-6 lg:grid-cols-2 lg:items-center">
+        <DeviceCircle
+          className="animate-rise"
+          chips={[
+            { label: 'Type', value: formatType(job.media.mime_type) },
+            { label: 'Pixels', value: `${job.media.width}×${job.media.height}` },
+            { label: 'Size', value: formatBytes(job.media.size_bytes) },
+            { label: 'SHA', value: shortHash(sha).slice(0, 8) },
+            { label: 'Analyzed', value: job.finished_at ? formatWhen(job.finished_at) : '—' },
+          ]}
+        >
+          <Thumb sha={sha} eager className="aspect-square w-full rounded-full shadow-[0_18px_40px_-18px_rgb(0_0_0/0.5)]" />
+        </DeviceCircle>
 
-        <div className="panel animate-rise flex flex-col rounded-xl p-3">
-          <Thumb sha={sha} className="aspect-[4/3] w-full rounded-lg" />
-          <dl className="flex flex-wrap gap-x-8 gap-y-3 px-2 pt-4 pb-2">
-            {[
-              ...(filename ? [['File', filename]] : []), // shared links never carry the file name
-              ['Type', formatType(job.media.mime_type)],
-              ['Pixels', `${job.media.width}×${job.media.height}`],
-              ['Size', formatBytes(job.media.size_bytes)],
-              ['SHA-256', shortHash(sha)],
-              ['Analyzed', job.finished_at ? formatDateTime(job.finished_at) : '—'],
-            ].map(([k, val]) => (
-              <div key={k} className="min-w-0" title={k === 'SHA-256' ? sha : val}>
-                <dt className="text-[12px] text-faint">{k}</dt>
-                <dd className="mt-0.5 truncate text-[14px] font-medium tabular-nums">{val}</dd>
-              </div>
+        <div className={`cream ${toneOf(verdict.label)} animate-rise rounded-xl p-5 sm:p-7`}>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="eyebrow">Verdict</p>
+            {filename && <FileName name={filename} className="max-w-[60%] text-[13px] text-faint" />}
+          </div>
+          <h1 className={`print-dark mt-2 text-[32px] leading-[1.05] font-normal tracking-[-0.03em] sm:text-[40px] ${v.text}`}>
+            {/* Keep "AI-generated" whole; a break at the hyphen reads as a typo. */}
+            {v.title.split(' ').map((word, i) => (
+              <Fragment key={i}>
+                {i > 0 && ' '}
+                <span className="whitespace-nowrap">{word}</span>
+              </Fragment>
+            ))}
+          </h1>
+          {lean && <p className="mt-1 text-[16px] text-ink">Leaning {lean.label}</p>}
+
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            {reading ? <Figure label="Detector" value={reading.pct} unit="% AI" /> : <Figure label="Detector" value="–" />}
+            <Figure label="Evidence" value={Math.max(verdict.scores.authentic, verdict.scores.edited, verdict.scores.ai).toFixed(1)} unit="weight" />
+            <Figure label="Findings" value={job.analyzers.reduce((n, a) => n + a.findings.length, 0)} unit="found" />
+          </div>
+
+          <dl className="mt-4">
+            {job.analyzers.map((a) => (
+              <LeaderRow key={a.analyzer} icon={ANALYZER_META[a.analyzer]?.icon} label={SHORT_NAME[a.analyzer] ?? a.analyzer} value={checkSummary(a)} />
             ))}
           </dl>
         </div>
@@ -70,7 +74,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
         <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Key findings */}
         <section className="panel animate-rise rounded-xl p-5 sm:p-6">
           <PanelTitle title="Key findings" />
@@ -87,6 +91,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
           )}
         </section>
 
+        <div className="flex flex-col gap-6">
         {/* Evidence balance */}
         <section className="panel animate-rise rounded-xl p-5 sm:p-6">
           <PanelTitle title="Balance of signals" />
@@ -97,6 +102,8 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
               : 'Weights add up the findings for each outcome. A verdict needs enough weight and a clear lead; otherwise MetaProof says inconclusive.'}
           </p>
         </section>
+        <DetectorRange job={job} />
+        </div>
       </div>
 
       {verdict.label === 'inconclusive' && <NextSteps />}
@@ -212,6 +219,50 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
         )
       })}
     </ul>
+  )
+}
+
+/** One check's outcome in a few words, for its leader row: its first non-neutral finding. */
+function checkSummary(a: AnalyzerResult): string {
+  if (!a.ok) return 'Error'
+  const f = a.findings.find((x) => x.signal !== 'neutral') ?? a.findings[0]
+  if (!f) return 'Nothing found'
+  return SIGNALS[f.signal].label
+}
+
+const SHORT_NAME: Record<string, string> = {
+  metadata: 'Metadata',
+  structure: 'Structure',
+  c2pa: 'Credentials',
+  watermark: 'Watermark',
+  detector: 'Pixel detector',
+}
+
+/** The detector's score on the reference's range ruler, with the bands the engine decides on. */
+function DetectorRange({ job }: { job: Job }) {
+  const raw = job.analyzers.find((a) => a.analyzer === 'detector')?.raw
+  const reading = detectorReading(job)
+  if (!raw || !reading) return null
+  const b = detectorBands(raw)
+  return (
+    <section className="panel animate-rise rounded-xl p-5 sm:p-6">
+      <PanelTitle title="AI likelihood" />
+      <p className="mt-3 flex items-baseline gap-1">
+        <span className="num text-[48px] leading-none">{reading.pct}</span>
+        <span className="text-[14px] text-faint">% · {reading.band.label.toLowerCase()}</span>
+      </p>
+      <RangeRuler
+        className="mt-5"
+        value={reading.pct}
+        bands={[{ from: b.weak, to: 100 }]}
+        marks={[
+          { at: 0, label: '0' },
+          { at: Math.round(b.weak), label: String(Math.round(b.weak)) },
+          { at: 100, label: '100' },
+        ]}
+      />
+      <p className="mt-3 text-[13px] leading-relaxed text-faint">The shaded band is where the score counts as AI evidence.</p>
+    </section>
   )
 }
 

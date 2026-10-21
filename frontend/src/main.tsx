@@ -1,7 +1,6 @@
 import '@fontsource-variable/inter'
 import '@fontsource-variable/urbanist'
 import '@fontsource-variable/jetbrains-mono'
-import '@fontsource-variable/doto/full.css' // weight and ROND (dot roundness) axes
 import './index.css'
 
 import { StrictMode } from 'react'

@@ -9,7 +9,7 @@ import { useServerStatus } from '../lib/hooks'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { rememberPreview } from '../lib/preview'
 import { takeSharedImage } from '../lib/share'
-import { PageHeader } from '../components/ui'
+import { PageHeader, DeviceCircle, LeaderRow } from '../components/ui'
 
 // Touch screens have no drag and drop, so the drop zone words itself as a picker there.
 const TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
@@ -97,7 +97,7 @@ export function NewAnalysis() {
   const server = useServerStatus()
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         title="New analysis"
         subtitle="Drop an image to check where it came from and whether it was edited or generated."
@@ -105,6 +105,7 @@ export function NewAnalysis() {
 
       <ServerNotice state={server} />
 
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
       <div
         role="button"
         tabIndex={0}
@@ -123,22 +124,34 @@ export function NewAnalysis() {
           const file = e.dataTransfer.files[0]
           if (file && !busy) start(file)
         }}
-        className={`panel animate-rise group relative flex min-h-[340px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl p-8 text-center transition sm:min-h-[400px] ${
+        className={`panel animate-rise group relative flex min-h-[420px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl p-5 text-center transition sm:p-8 ${
           dragging ? 'panel-raised outline-2 outline-offset-[-10px] outline-accent outline-dashed' : ''
         }`}
       >
         {busy ? (
           <Uploading file={state.file} progress={state.progress} preview={state.preview} />
         ) : (
-          <div className="relative flex flex-col items-center">
-            <span
-              className={`grid size-16 place-items-center rounded-full bg-primary text-on-primary transition duration-300 ${
-                dragging ? 'scale-110' : 'group-hover:scale-105'
-              }`}
+          <div className="relative flex w-full flex-col items-center">
+            {/* The drop target as the reference's device: formats as spec chips, a dark + at the centre. */}
+            <DeviceCircle
+              className="max-w-[380px]"
+              chips={[
+                { label: 'JPEG', value: 'PNG' },
+                { label: 'WebP', value: 'TIFF' },
+                { label: 'HEIC', value: 'HEIF' },
+                { label: 'Max', value: `${MAX_MB} MB` },
+                { label: 'File', value: 'deleted after' },
+              ]}
             >
-              <Plus className="size-6" strokeWidth={2.25} />
-            </span>
-            <p className="mt-6 text-[26px] font-normal tracking-[-0.03em]">
+              <span
+                className={`grid h-14 w-24 place-items-center rounded-full bg-primary text-on-primary shadow-[0_14px_28px_-12px_rgb(0_0_0/0.55)] transition duration-300 ${
+                  dragging ? 'scale-110' : 'group-hover:scale-105'
+                }`}
+              >
+                <Plus className="size-6" strokeWidth={1.75} />
+              </span>
+            </DeviceCircle>
+            <p className="mt-2 text-[26px] font-normal tracking-[-0.03em]">
               {TOUCH ? 'Choose a photo' : dragging ? 'Release to analyze' : 'Drop an image to analyze'}
             </p>
             {TOUCH ? (
@@ -149,7 +162,6 @@ export function NewAnalysis() {
                 <span className="max-sm:hidden"> · or paste with Ctrl+V</span>
               </p>
             )}
-            <p className="mt-6 rounded-full bg-raised px-3.5 py-1.5 text-[13px] font-medium text-muted">JPEG, PNG, WebP, TIFF or HEIC · up to {MAX_MB} MB</p>
           </div>
         )}
 
@@ -166,30 +178,32 @@ export function NewAnalysis() {
         />
       </div>
 
+      {/* What happens to the file, as the reference's leader rows. */}
+      <section className="cream animate-rise rounded-xl p-5 sm:p-7">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h2 className="eyebrow">What happens</h2>
+          <span className="status">
+            <Lock className="size-3.5" strokeWidth={1.75} aria-hidden /> Private
+          </span>
+        </div>
+        <dl className="mt-4">
+          <LeaderRow label="Fingerprint" value="SHA-256" />
+          <LeaderRow label="Checks" value="Six, in seconds" />
+          <LeaderRow label="Your file" value="Deleted after" />
+          <LeaderRow label="Findings kept" value="90 days" />
+          <LeaderRow label="GPS" value="Never stored" />
+        </dl>
+        <p className="mt-4 text-[14px] leading-relaxed text-muted">
+          Only the hash, a thumbnail and the findings stay, so the report can be shared by link.
+        </p>
+      </section>
+      </div>
+
       {state.kind === 'error' && (
         <p role="alert" className="animate-rise mt-4 rounded-lg bg-ai/10 px-5 py-3 text-[15px] font-medium text-ai">
           {state.message}
         </p>
       )}
-
-      {/* What happens to the file, in order. Position carries the sequence; no index numbers. */}
-      <ol className="mt-4 grid gap-3 sm:grid-cols-3">
-        {[
-          ['Hash and read', 'A SHA-256 fingerprint, then metadata and file structure.'],
-          ['Run six checks', 'Credentials, watermark, AI detector and seen-before search.'],
-          ['Delete the file', 'Only its hash, a thumbnail and the findings stay, so the report can be shared by link. GPS is never stored.'],
-        ].map(([title, text], i) => (
-          <li key={title} className="panel flex flex-col rounded-xl p-5">
-            {i === 2 && (
-              <span className="tag-hi mb-3 self-start">
-                <Lock className="mr-1 size-3" strokeWidth={2.5} aria-hidden /> Private
-              </span>
-            )}
-            <p className="text-[16px] font-semibold tracking-[-0.01em]">{title}</p>
-            <p className="mt-1 text-[14px] leading-relaxed text-muted">{text}</p>
-          </li>
-        ))}
-      </ol>
 
       <p className="mt-6 px-1 text-[14px] text-muted">
         No image at hand?{' '}

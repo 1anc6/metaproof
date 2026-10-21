@@ -37,8 +37,8 @@ export function Settings() {
 
         <Card title="This device">
           <p className="flex items-start gap-2">
-            <span className="dot-num text-[48px]">{history.length}</span>
-            <span className="tag-hi mt-1">Saved here</span>
+            <span className="num text-[56px] leading-none">{history.length}</span>
+            <span className="mt-1 text-[14px] text-faint">saved here</span>
           </p>
           <p className="mt-3 text-[15px] text-muted">
             {history.length === 0
@@ -130,7 +130,7 @@ function ServiceFigures() {
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <span className="text-muted">Database storage</span>
           <span className="text-[13px] text-muted tabular-nums">
-            <span className="dot-num text-[28px] text-ink">{used.toFixed(1)}</span> MB of {limit} MB
+            <span className="num text-[28px] text-ink">{used.toFixed(1)}</span> MB of {limit} MB
           </span>
         </div>
         <div
@@ -169,7 +169,7 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
   return (
     <div className="min-w-0 rounded-lg bg-raised p-3">
       <dt className="text-[12px] leading-tight text-faint">{label}</dt>
-      <dd className={`mt-2 ${/^\d+$/.test(value) ? 'dot-num text-[32px]' : 'text-base leading-tight font-semibold tracking-tight sm:text-lg'}`}>{value}</dd>
+      <dd className={`mt-2 ${/^\d+$/.test(value) ? 'num text-[34px] leading-none' : 'text-base leading-tight sm:text-lg'}`}>{value}</dd>
       {note && <dd className="mt-0.5 text-[12px] leading-tight text-faint">{note}</dd>}
     </div>
   )
@@ -226,9 +226,9 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className={`panel animate-rise rounded-xl p-5 sm:p-6 ${className}`}>
+    <section className={`panel animate-rise rounded-xl p-5 sm:p-7 ${className}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-[18px] font-semibold tracking-[-0.02em]">{title}</h2>
+        <h2 className="eyebrow">{title}</h2>
         {action}
       </div>
       {children}

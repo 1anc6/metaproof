@@ -59,11 +59,11 @@ export function History() {
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center">
         {/* How many rows the current search and filter leave, in dot-matrix, tagged with the filter. */}
         <p className="flex shrink-0 items-start gap-2" aria-live="polite">
-          <span className="dot-num text-[56px]">{rows.length}</span>
-          <span className="tag-hi mt-1">{filter === 'all' ? 'Total' : FILTERS.find((f) => f.key === filter)!.label}</span>
+          <span className="num text-[56px] leading-none">{rows.length}</span>
+          <span className="mt-1 text-[14px] text-faint">{filter === 'all' ? 'total' : FILTERS.find((f) => f.key === filter)!.label.toLowerCase()}</span>
           <span className="sr-only">analyses shown</span>
         </p>
-        <label className="panel flex flex-1 items-center gap-2.5 rounded-full px-4 py-2.5">
+        <label className="well flex !flex-1 !place-items-stretch items-center gap-2.5 rounded-full px-4 py-3">
           <Search className="size-4 text-faint" aria-hidden />
           <input
             type="search"
@@ -83,8 +83,8 @@ export function History() {
               type="button"
               onClick={() => setFilter(f.key)}
               aria-pressed={filter === f.key}
-              className={`shrink-0 rounded-full px-3.5 py-2 text-[13px] font-medium transition ${
-                filter === f.key ? 'bg-primary text-on-primary' : 'btn-ghost !px-3.5 !py-2 !text-[13px] text-muted hover:text-ink'
+              className={`flex h-10 shrink-0 items-center rounded-full px-4 text-[14px] transition ${
+                filter === f.key ? 'bg-primary text-on-primary' : 'well text-muted hover:text-ink'
               }`}
             >
               {f.label}
@@ -109,8 +109,9 @@ export function History() {
       ) : (
         <div className="panel overflow-hidden rounded-xl">
           {/* header row, desktop only */}
-          <div className="grid grid-cols-[1fr_150px_120px_40px] gap-4 border-b border-line px-5 py-3 text-[12px] font-medium text-faint max-md:hidden">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(24px,0.35fr)_150px_120px_40px] gap-4 border-b border-line px-5 py-3 text-[13px] text-faint max-md:hidden">
             <span>File</span>
+            <span />
             <span>Verdict</span>
             <span>Analyzed</span>
             <span />
@@ -122,10 +123,10 @@ export function History() {
                 <li key={entry.jobId} className="group animate-rise relative border-b border-line last:border-0">
                   <Link
                     to={`/analysis/${entry.jobId}`}
-                    className="grid grid-cols-[1fr_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
+                    className="grid grid-cols-[1fr_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[minmax(0,1fr)_minmax(24px,0.35fr)_150px_120px_40px] md:gap-4 md:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-lg" />
+                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-full" />
                       <div className="min-w-0 flex-1">
                         <FileName name={entry.filename} className="text-sm font-medium" />
                         <p className="truncate text-[13px] whitespace-nowrap text-faint max-md:hidden">{formatBytes(entry.sizeBytes)}</p>
@@ -136,6 +137,7 @@ export function History() {
                         </div>
                       </div>
                     </div>
+                    <span className="leader max-md:hidden" aria-hidden />
                     <div className="max-md:hidden">{s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}</div>
                     <span className="text-[13px] text-faint max-md:hidden">{formatWhen(entry.uploadedAt)}</span>
                     <span />

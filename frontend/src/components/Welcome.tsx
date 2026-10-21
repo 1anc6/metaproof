@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { useHistory } from '../lib/history'
-import { Ruler, Logo } from './ui'
+import { Mark, RadialChecks, Thumb } from './ui'
+import { CHECKS, DEMO_SHA } from '../lib/checks'
 
 const KEY = 'metaproof.welcome.v1'
 let seenThisSession = false // fallback when storage is blocked (private mode)
@@ -36,6 +37,7 @@ export function Welcome() {
   const navigate = useNavigate()
   const history = useHistory()
   const primary = useRef<HTMLButtonElement>(null)
+  const [active, setActive] = useState('c2pa')
   const [open, setOpen] = useState(
     () =>
       pathname === '/' &&
@@ -74,11 +76,18 @@ export function Welcome() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-title"
-      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-canvas px-5 sm:px-[max(1.25rem,calc((100vw-28rem)/2))] pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] lg:hidden"
+      className="fixed inset-0 z-50 isolate flex flex-col overflow-y-auto bg-[#2a2620] px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] text-white sm:px-[max(1.25rem,calc((100vw-28rem)/2))] lg:hidden"
     >
+      {/* The example image, blurred into a warm dark backdrop, like the reference's photo screen. */}
+      <Thumb sha={DEMO_SHA} eager className="!fixed inset-0 -z-10 scale-125 !bg-transparent opacity-80 blur-2xl brightness-[0.5]" />
       <div className="flex items-center justify-between">
-        <Logo />
-        <button type="button" onClick={() => close()} className="well h-10 px-4 text-sm font-medium">
+        <span className="flex items-center gap-2.5">
+          <span className="grid size-10 place-items-center rounded-full bg-white text-[#1d1b17]">
+            <Mark className="size-5" />
+          </span>
+          <span className="text-[16px] font-bold tracking-[0.01em] uppercase">MetaProof</span>
+        </span>
+        <button type="button" onClick={() => close()} className="glass h-10 rounded-full px-4 text-sm">
           Skip
         </button>
       </div>
@@ -86,34 +95,30 @@ export function Welcome() {
       <div className="stagger mt-8 [&>*]:animate-rise [@media(max-height:720px)]:mt-5">
         <h1
           id="welcome-title"
-          className="text-[44px] leading-[0.98] font-normal tracking-[-0.045em] [@media(max-height:720px)]:text-[36px]"
+          className="text-[44px] leading-[0.98] font-normal tracking-[-0.04em] [@media(max-height:720px)]:text-[36px]"
         >
           See what's behind the image
         </h1>
-        <p className="mt-3 text-sm text-faint">
-          Metadata <span aria-hidden>›</span> Credentials <span aria-hidden>›</span> Pixels
-        </p>
-        <p className="tag-hi mt-5 gap-1 [@media(max-height:720px)]:mt-3">
-          <Lock className="size-3" strokeWidth={2.5} /> No account needed
+        <p className="mt-3 flex items-center gap-1.5 text-[14px] text-white/80">
+          <Lock className="size-3.5" strokeWidth={1.75} /> No account needed
         </p>
       </div>
 
-      {/* A real example verdict; it gives way on short phones so both buttons stay above the fold.
-          The figures mirror the stored demo report (lib/demo.ts). */}
-      <div className="flex flex-1 items-center py-5 [@media(max-height:720px)]:hidden">
-        <button
-          type="button"
-          onClick={() => close(DEMO_REPORT_PATH)}
-          className="mesh mesh-garnet flex w-full flex-col rounded-xl p-5 text-left"
-        >
-          <span className="text-[14px] font-medium text-white/90">Example report</span>
-          <span className="py-5 text-center">
-            <span className="dot-num block text-[80px] text-white">99</span>
-            <span className="mt-3 block text-[17px] font-semibold">Likely AI-generated</span>
-            <span className="block text-[13px] text-white/85">99% AI likelihood, pixel detector</span>
-          </span>
-          <Ruler value={99} />
-        </button>
+      {/* The six checks around the lens; it gives way on short phones so both buttons stay above the fold. */}
+      <div className="flex flex-1 items-center py-4 [@media(max-height:720px)]:hidden">
+        <RadialChecks
+          items={CHECKS}
+          active={active}
+          onSelect={setActive}
+          className="mx-auto max-w-[340px]"
+          center={
+            <span className="grid size-full place-items-center rounded-full bg-[#1d1b17] p-[14%]">
+              <span className="grid size-full place-items-center rounded-full bg-[#e6ec8f]">
+                <span className="size-[9%] rounded-full bg-[#1d1b17]" />
+              </span>
+            </span>
+          }
+        />
       </div>
 
       <div className="flex flex-col gap-3 [@media(max-height:720px)]:mt-auto">
@@ -121,18 +126,14 @@ export function Welcome() {
           ref={primary}
           type="button"
           onClick={() => close('/new')}
-          className="btn-primary h-14 w-full justify-center text-[16px]"
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-white text-[16px] font-medium text-[#1d1b17]"
         >
-          Analyze an image <ArrowRight className="size-4" strokeWidth={2.25} />
+          Analyze an image <ArrowRight className="size-4" strokeWidth={2} />
         </button>
-        <button
-          type="button"
-          onClick={() => close(DEMO_REPORT_PATH)}
-          className="btn-ghost h-14 w-full justify-center text-[16px]"
-        >
+        <button type="button" onClick={() => close(DEMO_REPORT_PATH)} className="glass h-14 w-full rounded-full text-[16px]">
           See an example report
         </button>
-        <p className="mt-1 text-center text-[12px] leading-relaxed text-faint">
+        <p className="mt-1 text-center text-[12px] leading-relaxed text-white/70">
           Files are deleted after analysis. Your history stays on this device.
         </p>
       </div>

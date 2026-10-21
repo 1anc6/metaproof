@@ -4,36 +4,34 @@
   --font-sans: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
-  /* Dot-matrix figures: the big numbers only (counts, scores), never running text. */
-  --font-dot: 'Doto Variable', ui-monospace, monospace;
 
-  /* Cool neutral greys, white cards, and colour only where it carries meaning: the verdicts,
-     plus one acid-lime highlight for small tags. */
-  --color-canvas: #e7e7e9;
-  --color-raised: rgb(24 24 27 / 0.05); /* wells, tracks */
-  --color-hover: rgb(255 255 255 / 0.6); /* list rows and nav items under the pointer */
-  --color-line: rgb(24 24 27 / 0.08);
-  --color-line-strong: rgb(24 24 27 / 0.16);
-  --color-ink: #18181b;
-  --color-muted: #4b4b52;
-  --color-faint: #616168; /* 4.9:1 on the canvas */
-  --color-primary: #18181b;
-  --color-on-primary: #fafafa; /* text and icons on primary */
-  --color-accent: #5f7a00; /* lime ink: icons and small marks that must read on light grounds */
-  --color-accent-soft: rgb(205 236 70 / 0.35);
-  --color-highlight: #d8f25c; /* lime tag fill; text on it is ink */
+  /* A soft instrument: off-white with a faint dot grid, raised white controls, cream cards that
+     glow lemon in the middle, one lemon accent, and a dark pill for the main action. Verdict
+     colours appear only on verdicts. */
+  --color-canvas: #f1f1ee;
+  --color-raised: rgb(28 28 26 / 0.05); /* wells, tracks */
+  --color-hover: rgb(255 255 255 / 0.7);
+  --color-line: rgb(28 28 26 / 0.08);
+  --color-line-strong: rgb(28 28 26 / 0.18);
+  --color-ink: #1c1c1a;
+  --color-muted: #55554f;
+  --color-faint: #6c6c66; /* 4.6:1 on the canvas */
+  --color-primary: #1c1c1a;
+  --color-on-primary: #fafaf7;
+  --color-accent: #d9e021; /* lemon: dots and marks */
+  --color-accent-soft: rgb(228 236 60 / 0.3);
+  --color-highlight: #eef27a;
 
   /* Verdict colours, dark enough to read as text on the light canvas. */
-  --color-authentic: #2e7a6b;
-  --color-edited: #b4561f; /* copper, kept apart from the gold accent */
-  --color-ai: #a3323f; /* garnet: warm like the gold, distinct from copper */
-  --color-neutral: #6b6460;
+  --color-authentic: #2e7a5b;
+  --color-edited: #b4561f;
+  --color-ai: #b23a48;
+  --color-neutral: #6c6c66;
 
-  /* Generous, pebble-like corners. */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.875rem;
-  --radius-lg: 1.375rem;
-  --radius-xl: 2rem;
+  --radius-sm: 0.625rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2.25rem;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -46,6 +44,7 @@
   --animate-pop: pop 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
   --animate-grow: grow 0.8s cubic-bezier(0.23, 1, 0.32, 1) 0.15s both;
   --animate-blink: blink 1.1s steps(1) infinite;
+  --animate-spin-slow: spin 2.4s linear infinite;
 
   @keyframes shimmer {
     from { background-position: -200% 0; }
@@ -69,45 +68,56 @@
   }
 }
 
-/* Surface recipes that differ by theme. Light is the default; dark overrides below.
-   Cards are near-white on the grey canvas with a soft, low shadow; no glass. */
+/* Surface recipes that differ by theme. Light is the default; dark overrides below. */
 :root {
-  --panel-bg: #f6f6f7;
-  --panel-hover: #fcfcfc;
-  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.8);
-  --panel-shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 12px 32px -18px rgb(24 24 27 / 0.18);
-  --bar-bg: rgb(231 231 233 / 0.94); /* sticky bars sit over scrolling content */
-  --soft-bg: #fff; /* secondary buttons: white pills, like "See all" */
-  --soft-hover: #f4f4f5;
-  --selected-bg: #fff;
+  --dots: rgb(28 28 26 / 0.07);
+  --panel-bg: #fafaf8;
+  --panel-hover: #ffffff;
+  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --panel-shadow: 0 1px 2px rgb(40 40 20 / 0.04), 0 14px 32px -18px rgb(40 40 20 / 0.2);
+  --soft-shadow: 0 1px 1px rgb(40 40 20 / 0.04), 0 8px 20px -10px rgb(40 40 20 / 0.22);
+  --bar-bg: rgb(241 241 238 / 0.9);
+  --soft-bg: #fbfbf9;
+  --soft-hover: #ffffff;
+  --selected-bg: #ffffff;
+  /* cream card: lemon light in the middle, fading to the paper at the edges */
+  --cream-core: #fbfbdf;
+  --cream-mid: #f7f7e7;
+  --cream-edge: #f3f3ee;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-canvas: #0e0e10;
+  --color-canvas: #121210;
   --color-raised: rgb(255 255 255 / 0.06);
   --color-line: rgb(255 255 255 / 0.08);
-  --color-line-strong: rgb(255 255 255 / 0.16);
+  --color-line-strong: rgb(255 255 255 / 0.18);
   --color-hover: rgb(255 255 255 / 0.06);
-  --color-ink: #f3f1ef;
-  --color-muted: #c9c3bf;
-  --color-faint: #9b9490; /* 6.6:1 on the canvas */
-  --color-authentic: #6fd6bf;
-  --color-edited: #f0965a;
-  --color-ai: #ec8a7f;
-  --color-neutral: #aaa39f;
-  --color-primary: #f3f1ef;
-  --color-on-primary: #141210;
-  --color-accent: #d8f25c;
-  --color-accent-soft: rgb(216 242 92 / 0.18);
+  --color-ink: #f4f3ee;
+  --color-muted: #c9c8bf;
+  --color-faint: #9d9c93;
+  --color-authentic: #7fd6aa;
+  --color-edited: #f0a066;
+  --color-ai: #ef8f8a;
+  --color-neutral: #aaa99f;
+  --color-primary: #f4f3ee;
+  --color-on-primary: #161614;
+  --color-accent: #e8f04a;
+  --color-accent-soft: rgb(232 240 74 / 0.18);
 
-  --panel-bg: #18181b;
-  --panel-hover: #1e1e22;
-  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.06);
-  --panel-shadow: 0 16px 32px -20px rgb(0 0 0 / 0.6);
-  --bar-bg: rgb(13 13 15 / 0.94);
-  --soft-bg: rgb(255 255 255 / 0.08);
-  --soft-hover: rgb(255 255 255 / 0.13);
-  --selected-bg: rgb(255 255 255 / 0.12);
+  --dots: rgb(255 255 255 / 0.05);
+  --panel-bg: #1c1c19;
+  --panel-hover: #22221e;
+  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --panel-shadow: 0 16px 32px -20px rgb(0 0 0 / 0.7);
+  --soft-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.7);
+  --bar-bg: rgb(18 18 16 / 0.9);
+  --soft-bg: #22221e;
+  --soft-hover: #2a2a25;
+  --selected-bg: #2c2c27;
+  /* olive glass, like the reference's photo cards */
+  --cream-core: #43431f;
+  --cream-mid: #2f2f1f;
+  --cream-edge: #23231c;
 }
 
 @layer base {
@@ -120,9 +130,12 @@
   h3 {
     text-wrap: balance;
   }
+  /* The faint dot grid of the reference's device screen. */
   body {
     @apply bg-canvas text-ink font-sans antialiased;
     min-height: 100dvh;
+    background-image: radial-gradient(var(--dots) 1px, transparent 1.3px);
+    background-size: 22px 22px;
     transition: background-color 300ms var(--ease-out);
   }
   ::selection {
@@ -135,7 +148,7 @@
 }
 
 @layer components {
-  /* A panel: one tone step off the canvas. */
+  /* A soft card, raised off the canvas. */
   .panel {
     position: relative;
     background: var(--panel-bg);
@@ -145,65 +158,62 @@
   .panel-raised {
     background: var(--panel-hover);
   }
-  /* Sticky bars over scrolling content: the one place that keeps a blur. */
   .panel-bar {
     background: var(--bar-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
-  /* The floating phone tab bar really floats, so it keeps a shadow. */
   .pill-bar {
-    box-shadow: var(--panel-edge), 0 16px 32px -16px rgb(0 0 0 / 0.35);
+    box-shadow: var(--panel-edge), 0 16px 32px -16px rgb(0 0 0 / 0.3);
   }
 
-  /* Verdict fields: soft gradients in the verdict's hue, and the only gradients in the app.
-     Each one carries a figure (a score, a likelihood), never decoration. White text sits on them. */
-  .mesh {
+  /* The cream card: lemon light in its middle. A verdict tone shifts the light's hue. */
+  .cream {
+    --glow: var(--cream-core);
     position: relative;
-    overflow: hidden;
+    background:
+      radial-gradient(60% 55% at 50% 42%, var(--glow) 0%, var(--cream-mid) 55%, var(--cream-edge) 100%);
+    box-shadow: var(--panel-edge), var(--panel-shadow);
+  }
+  .tone-ai { --glow: color-mix(in srgb, var(--cream-core) 62%, #f6b8ad); }
+  .tone-edited { --glow: color-mix(in srgb, var(--cream-core) 60%, #f6cf9c); }
+  .tone-authentic { --glow: color-mix(in srgb, var(--cream-core) 60%, #bfe6c4); }
+  :root[data-theme='dark'] .tone-ai { --glow: color-mix(in srgb, var(--cream-core) 55%, #6e2b2b); }
+  :root[data-theme='dark'] .tone-edited { --glow: color-mix(in srgb, var(--cream-core) 55%, #6e4a1e); }
+  :root[data-theme='dark'] .tone-authentic { --glow: color-mix(in srgb, var(--cream-core) 55%, #1f5a3a); }
+
+  /* Frosted glass over a photograph, for the dark photo panels. White text sits on it. */
+  .glass {
+    position: relative;
     color: #fff;
+    background: rgb(70 66 40 / 0.42);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 20px 40px -24px rgb(0 0 0 / 0.6);
   }
-  .mesh-teal { /* likely authentic: spring green */
-    background: radial-gradient(120% 100% at 50% 100%, #1f8f45 0%, #49b45a 45%, #a8d98a 85%, #d9eec4 100%);
+
+  /* "• Diam 35 mm": a raised pill with a dot, a label and a fainter value. */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap text-ink;
+    background: var(--soft-bg);
+    box-shadow: var(--panel-edge), var(--soft-shadow);
   }
-  .mesh-copper { /* edited: amber */
-    background: radial-gradient(110% 95% at 50% 55%, #f08a1c 0%, #f3a64a 40%, #d9a98a 75%, #b9b4c4 100%);
-  }
-  .mesh-garnet { /* likely AI: hot coral to lilac */
-    background: radial-gradient(105% 95% at 50% 52%, #ff5a2c 0%, #f4683f 30%, #d9798a 62%, #a9a6c4 100%);
-  }
-  .mesh-graphite { /* inconclusive: cool grey-blue */
-    background: radial-gradient(110% 100% at 50% 55%, #6d7488 0%, #8c93a6 45%, #b7bccb 100%);
-  }
-  /* Small lime tag beside a figure: "Total", "Latest". */
-  .tag-hi {
-    @apply inline-flex items-center rounded-full bg-highlight px-2 py-0.5 text-[11px] leading-4 font-semibold text-[#18181b];
-  }
-  /* Dot-matrix figure. */
-  .dot-num {
-    @apply font-dot leading-none tabular-nums;
-    font-weight: 700;
-    font-variation-settings: 'ROND' 100; /* round dots, not squares */
-    letter-spacing: 0.02em;
-  }
-  /* A label or control on a colour field. */
-  .frost {
-    background: rgb(255 255 255 / 0.14);
-  }
-  :is(a, button).frost:hover {
-    background: rgb(255 255 255 / 0.22);
+  /* Status pill: "• Active". */
+  .status {
+    @apply inline-flex items-center gap-1.5 text-[14px] text-muted;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[15px] font-semibold text-on-primary;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-[15px] font-medium text-on-primary;
+    box-shadow: 0 12px 24px -14px rgb(0 0 0 / 0.55);
   }
   .btn-primary:hover {
-    background: color-mix(in srgb, var(--color-primary) 86%, var(--color-canvas));
+    background: color-mix(in srgb, var(--color-primary) 88%, var(--color-canvas));
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[15px] font-medium text-ink;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[15px] text-ink;
     background: var(--soft-bg);
-    box-shadow: var(--panel-edge), 0 1px 2px rgb(24 24 27 / 0.06);
+    box-shadow: var(--panel-edge), var(--soft-shadow);
   }
   .btn-ghost:hover {
     background: var(--soft-hover);
@@ -217,33 +227,42 @@
   .btn-ghost:active {
     transform: scale(0.97);
   }
-  /* Section label: plain sentence case, quieter than the heading it sits with. */
+  /* A card title in the reference's voice: plain capitals at reading size. */
   .eyebrow {
-    @apply text-[13px] font-medium text-faint;
+    @apply text-[15px] font-normal tracking-[0.02em] text-ink uppercase;
   }
-  /* Figures: light, large, with even-width digits so columns of numbers line up. */
+  /* Figures: large, light, even-width digits. */
   .num {
-    @apply font-display font-light tracking-[-0.03em] tabular-nums;
+    @apply font-display font-light tracking-[-0.04em] tabular-nums;
   }
-  /* Round icon control. */
+  /* Raised round control. */
   .well {
     @apply grid shrink-0 place-items-center rounded-full text-ink transition;
     background: var(--soft-bg);
+    box-shadow: var(--panel-edge), var(--soft-shadow);
   }
   :is(a, button).well:hover {
     background: var(--soft-hover);
   }
-  /* Selected item: a lighter step, not a lifted card. */
   .selected {
     @apply text-ink;
     background: var(--selected-bg);
+    box-shadow: var(--panel-edge), var(--soft-shadow);
   }
-  /* Small label pill: "EXIF", strengths. */
   .tag {
-    @apply inline-flex items-center gap-1.5 rounded-full bg-raised px-2.5 py-0.5 text-[11px] font-semibold text-muted;
+    @apply inline-flex items-center gap-1.5 rounded-full bg-raised px-2.5 py-0.5 text-[12px] text-muted;
+  }
+  /* The dotted leader between a label and its value. */
+  .leader {
+    @apply min-w-6 flex-1 self-center;
+    height: 3px;
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--color-faint) 75%, transparent) 1.1px, transparent 1.5px);
+    background-size: 9px 3px;
+    background-repeat: repeat-x;
+    background-position: 0 50%;
   }
   .skeleton {
-    background: linear-gradient(90deg, rgb(31 28 26 / 0.04), rgb(31 28 26 / 0.09), rgb(31 28 26 / 0.04));
+    background: linear-gradient(90deg, rgb(28 28 26 / 0.04), rgb(28 28 26 / 0.09), rgb(28 28 26 / 0.04));
     background-size: 200% 100%;
     @apply animate-shimmer rounded-full;
   }
@@ -257,18 +276,16 @@
 .stagger > :nth-child(6) { animation-delay: 250ms; }
 .stagger > :nth-child(n + 7) { animation-delay: 300ms; }
 
-/* Sonner toasts, dressed as frosted pills. */
+/* Sonner toasts, dressed as soft pills. */
 [data-sonner-toaster] {
-  --normal-bg: var(--bar-bg);
+  --normal-bg: var(--panel-bg);
   --normal-border: var(--color-line);
   --normal-text: var(--color-ink);
   --border-radius: 22px;
   font-family: var(--font-sans);
 }
 [data-sonner-toast] {
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: 0 20px 40px -20px rgb(0 0 0 / 0.4) !important;
+  box-shadow: 0 20px 40px -20px rgb(0 0 0 / 0.35) !important;
 }
 [data-sonner-toast] [data-button] {
   background: var(--color-primary) !important;
@@ -290,23 +307,17 @@
   body {
     background: #fff !important;
   }
-  body::before,
-  body::after {
-    display: none;
-  }
   .no-print {
     display: none !important;
   }
   .panel,
-  .mesh {
+  .cream,
+  .glass {
     background: #fff !important;
     color: #000 !important;
     box-shadow: none !important;
     border: 1px solid #d4d4d8;
     backdrop-filter: none !important;
-  }
-  .mesh::after {
-    display: none;
   }
   .print-dark {
     color: #000 !important;

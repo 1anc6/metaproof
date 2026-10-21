@@ -81,3 +81,8 @@ export function leaning(scores: Record<'authentic' | 'edited' | 'ai', number>) {
   if (scores[top] <= 0 || scores[top] === scores[second]) return null
   return { key: top, label: LEAN_LABEL[top], color: LEAN_COLOR[top] }
 }
+
+/** The cream card's light takes the verdict's hue: a class from index.css. */
+export function toneOf(verdict: VerdictLabel | null | undefined) {
+  return verdict === 'likely_ai_generated' ? 'tone-ai' : verdict === 'edited' ? 'tone-edited' : verdict === 'likely_authentic' ? 'tone-authentic' : ''
+}

@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from 'react'
-import { ImageOff, Monitor, Moon, Sun } from 'lucide-react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
+import { ImageOff, Monitor, Moon, Sun, type LucideIcon } from 'lucide-react'
 import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
 import { setPref, usePrefs } from '../lib/prefs'
 import { PENDING, SIGNALS, VERDICTS } from '../lib/verdicts'
 
-/** A viewfinder: four corner brackets around a lime point of focus. */
+/** A viewfinder: four corner brackets around a lemon point of focus. */
 export function Mark({ className = 'size-6' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
@@ -14,26 +14,25 @@ export function Mark({ className = 'size-6' }: { className?: string }) {
   )
 }
 
+/** The mark on a dark disc beside the name, like an instrument maker's badge. */
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <span className="flex items-center gap-2.5 text-ink">
-      <span className="well size-10">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
         <Mark className="size-5" />
       </span>
-      {!compact && <span className="text-[18px] font-semibold tracking-[-0.03em]">metaproof</span>}
+      {!compact && <span className="text-[16px] font-bold tracking-[0.01em] uppercase">MetaProof</span>}
     </span>
   )
 }
 
-
 /**
- * A slider-style meter: a gold fill up to a triangle marker, over a dotted scale with
- * labels. `onDark` draws it in white for gradient cards.
+ * A slider-style meter: a fill up to a marker over a dotted scale with labels. Kept for the
+ * detector's band scale in the report details.
  */
 export function Meter({
   value,
   className = '',
-  onDark = false,
   color,
   labels = ['0.0', '0.25', '0.5', '0.75', '1.0'],
   ticks = [],
@@ -46,37 +45,24 @@ export function Meter({
   ticks?: number[]
 }) {
   const pct = Math.max(0, Math.min(1, value)) * 100
-  const fill = color ?? (onDark ? '#efd9a6' : 'var(--color-accent)')
   return (
     <div className={className}>
       <div className="relative h-5">
-        <div className={`absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full ${onDark ? 'bg-white/30' : 'bg-line-strong'}`} />
+        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-line-strong" />
         <div
           className="animate-grow absolute top-1/2 left-0 h-[3px] origin-left -translate-y-1/2 rounded-full"
-          style={{ width: `${pct}%`, background: fill }}
+          style={{ width: `${pct}%`, background: color ?? 'var(--color-ink)' }}
         />
         {ticks.map((t) => (
-          <span
-            key={t}
-            className={`absolute top-1/2 h-2.5 w-px -translate-y-1/2 ${onDark ? 'bg-white/60' : 'bg-faint/60'}`}
-            style={{ left: `${t * 100}%` }}
-          />
+          <span key={t} className="absolute top-1/2 h-2.5 w-px -translate-y-1/2 bg-faint/60" style={{ left: `${t * 100}%` }} />
         ))}
-        {/* triangle marker */}
-        <svg
-          viewBox="0 0 20 18"
-          className="absolute top-1/2 size-5 -translate-x-1/2 -translate-y-[55%] drop-shadow-[0_2px_4px_rgb(0_0_0/0.25)]"
+        <span
+          className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink bg-accent"
           style={{ left: `${pct}%` }}
           aria-hidden
-        >
-          <path d="M10 2 L18 16 H2 Z" fill="white" stroke={onDark ? '#6f5232' : 'var(--color-ink)'} strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
+        />
       </div>
-      <div
-        className={`mt-1 h-px bg-[length:8px_1px] bg-repeat-x ${onDark ? 'opacity-50' : 'opacity-40'}`}
-        style={{ backgroundImage: `radial-gradient(circle, ${onDark ? 'white' : 'var(--color-ink)'} 0.8px, transparent 1px)` }}
-      />
-      <div className={`mt-2 flex justify-between text-[12px] font-medium tabular-nums ${onDark ? 'text-white/75' : 'text-faint'}`}>
+      <div className="mt-2 flex justify-between text-[12px] text-faint tabular-nums">
         {labels.map((l) => (
           <span key={l}>{l}</span>
         ))}
@@ -85,32 +71,21 @@ export function Meter({
   )
 }
 
+/** "• Active": a status dot and a word, as the reference marks state. */
 export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel | null; status?: JobStatus }) {
   if (status !== 'done' || !label) {
     const p = PENDING[status === 'done' ? 'queued' : status]
     return (
-      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-raised px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${p.text}`}>
-        <span className={`size-1.5 rounded-full bg-current ${status === 'running' || status === 'queued' ? 'animate-pulse' : ''}`} />
+      <span className={`inline-flex shrink-0 items-center gap-1.5 text-[13px] whitespace-nowrap ${p.text}`}>
+        <span className={`size-2 rounded-full bg-current ${status === 'running' || status === 'queued' ? 'animate-pulse' : ''}`} />
         {p.title}
       </span>
     )
   }
   const v = VERDICTS[label]
-  if (label === 'inconclusive') {
-    // Not a finding, so no pill: it should not weigh as much as a real flag beside it.
-    return (
-      <span className="inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-faint">
-        <span className="size-1.5 rounded-full bg-current" />
-        {v.short}
-      </span>
-    )
-  }
   return (
-    <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${v.text}`}
-      style={{ background: `color-mix(in srgb, ${v.color} 12%, transparent)` }}
-    >
-      <span className="size-1.5 rounded-full bg-current" />
+    <span className={`inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium whitespace-nowrap ${v.text}`}>
+      <span className="size-2 rounded-full bg-current" />
       {v.short}
     </span>
   )
@@ -136,21 +111,294 @@ export function FileName({ name, className = '' }: { name: string; className?: s
   )
 }
 
-/** Fine white ticks from 0 to 100 with one tall tick at the value. */
-export function Ruler({ value }: { value: number }) {
+/** "• Diam 35 mm": a raised pill with a dot, a label and a fainter value. */
+export function SpecChip({ label, value, className = '', style }: { label: string; value?: ReactNode; className?: string; style?: CSSProperties }) {
   return (
-    <div className="relative h-5" aria-hidden>
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between">
-        {Array.from({ length: 41 }, (_, i) => (
-          <span key={i} className={`w-px bg-white/45 ${i % 10 === 0 ? 'h-3' : 'h-1.5'}`} />
-        ))}
-      </div>
-      <span className="absolute bottom-0 h-5 w-[3px] -translate-x-1/2 rounded-full bg-white" style={{ left: `${value}%` }} />
+    <span className={`chip ${className}`} style={style}>
+      <span className="size-1.5 shrink-0 rounded-full bg-ink" aria-hidden />
+      {label}
+      {value !== undefined && <span className="text-[12px] text-faint">{value}</span>}
+    </span>
+  )
+}
+
+/** "Signal ········ Strong": a label, a dotted leader and the value. Use inside a <dl>. */
+export function LeaderRow({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 py-2.5 text-[15px]">
+      {Icon && <Icon className="size-[18px] shrink-0 text-faint" strokeWidth={1.5} aria-hidden />}
+      <dt className="shrink-0 text-muted">{label}</dt>
+      <span className="leader" aria-hidden />
+      <dd className="min-w-0 truncate text-right text-ink">{value}</dd>
     </div>
   )
 }
 
-export function Thumb({ sha, className = '', blur = false }: { sha: string; className?: string; blur?: boolean }) {
+/** "Accuracy / 98 %": a label over a large light figure and its unit. */
+export function Figure({
+  label,
+  value,
+  unit,
+  size = 'md',
+  className = '',
+}: {
+  label: string
+  value: ReactNode
+  unit?: string
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}) {
+  const text = size === 'lg' ? 'text-[64px] sm:text-[76px]' : size === 'sm' ? 'text-[34px]' : 'text-[48px] sm:text-[56px]'
+  return (
+    <div className={`min-w-0 ${className}`}>
+      <p className="text-[15px] text-muted">{label}</p>
+      <p className="mt-1 flex items-baseline gap-1">
+        <span className={`num leading-none ${text}`}>{value}</span>
+        {unit && <span className="text-[14px] text-faint">{unit}</span>}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * The reference's arc gauge: a dotted arc for the whole range, a solid arc up to the value, and a
+ * marked point with its label. `value` runs from 0 to 1.
+ */
+export function ArcGauge({
+  value,
+  valueLabel,
+  startLabel,
+  endLabel,
+  className = '',
+}: {
+  value: number
+  valueLabel: string
+  startLabel?: string
+  endLabel?: string
+  className?: string
+}) {
+  const t = Math.max(0, Math.min(1, value))
+  const cx = 160
+  const cy = 170
+  const r = 130
+  const at = (f: number, rad = r) => {
+    const a = ((160 - 140 * f) * Math.PI) / 180
+    return [cx + rad * Math.cos(a), cy - rad * Math.sin(a)] as const
+  }
+  const arc = (f0: number, f1: number, rad = r) => {
+    const [x0, y0] = at(f0, rad)
+    const [x1, y1] = at(f1, rad)
+    return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${rad} ${rad} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`
+  }
+  const [mx, my] = at(t)
+  const [s0x, s0y] = at(0, r + 22)
+  const [s1x, s1y] = at(1, r + 22)
+  return (
+    <svg viewBox="0 0 320 150" className={`w-full ${className}`} aria-hidden>
+      <path d={arc(0, 1, r + 14)} fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.2" strokeDasharray="1 5" strokeLinecap="round" />
+      <path d={arc(0, 1)} fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1.5" strokeDasharray="4 5" />
+      {t > 0.005 && <path d={arc(0, t)} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />}
+      <circle cx={at(0)[0]} cy={at(0)[1]} r="3.5" fill="currentColor" fillOpacity="0.45" />
+      <circle cx={at(1)[0]} cy={at(1)[1]} r="3.5" fill="currentColor" fillOpacity="0.45" />
+      <line x1={mx} y1={my - 16} x2={mx} y2={my - 6} stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx={mx} cy={my} r="6" fill="var(--color-accent)" stroke="currentColor" strokeWidth="2" />
+      <text x={mx} y={my + 24} textAnchor="middle" fontSize="13" fill="currentColor">{valueLabel}</text>
+      {startLabel && <text x={s0x} y={s0y + 26} textAnchor="middle" fontSize="12" fill="currentColor" fillOpacity="0.55">{startLabel}</text>}
+      {endLabel && <text x={s1x} y={s1y + 26} textAnchor="middle" fontSize="12" fill="currentColor" fillOpacity="0.55">{endLabel}</text>}
+    </svg>
+  )
+}
+
+/**
+ * The reference's range ruler: fine ticks, taller marks with labels, shaded bands, and a lemon
+ * marker at the value. Positions run from 0 to 100.
+ */
+export function RangeRuler({
+  value,
+  marks,
+  bands = [],
+  className = '',
+}: {
+  value: number
+  marks: { at: number; label: string }[]
+  bands?: { from: number; to: number; label?: string }[]
+  className?: string
+}) {
+  const v = Math.max(0, Math.min(100, value))
+  return (
+    <div className={className} aria-hidden>
+      <div className="relative h-10">
+        {bands.map((b) => (
+          <span
+            key={`${b.from}-${b.to}`}
+            className="absolute bottom-0 h-6 rounded-sm bg-accent-soft"
+            style={{ left: `${b.from}%`, width: `${b.to - b.from}%` }}
+          />
+        ))}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between">
+          {Array.from({ length: 51 }, (_, i) => (
+            <span key={i} className={`w-px ${i % 10 === 0 ? 'h-5 bg-ink/60' : 'h-2.5 bg-ink/25'}`} />
+          ))}
+        </div>
+        <span className="absolute bottom-0 h-9 w-[3px] -translate-x-1/2 rounded-full bg-ink" style={{ left: `${v}%` }}>
+          <span className="absolute -top-1.5 left-1/2 size-3 -translate-x-1/2 rounded-full border-2 border-ink bg-accent" />
+        </span>
+      </div>
+      <div className="relative mt-2 h-4 text-[12px] text-faint tabular-nums">
+        {marks.map((m) => (
+          <span key={m.at} className="absolute -translate-x-1/2" style={{ left: `${m.at}%` }}>
+            {m.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export interface RadialItem {
+  key: string
+  label: string
+  icon: LucideIcon
+}
+
+/**
+ * The reference's radial menu: the items as ring segments around a centre disc. Each segment is a
+ * button; the chosen one lifts out and brightens. Drawn for a dark photo backdrop.
+ */
+export function RadialChecks({
+  items,
+  active,
+  onSelect,
+  center,
+  className = '',
+}: {
+  items: RadialItem[]
+  active: string
+  onSelect: (key: string) => void
+  center?: ReactNode
+  className?: string
+}) {
+  const n = items.length
+  const R = 168
+  const r = 88
+  const gap = 3 // degrees between segments
+  const c = 180
+  const pt = (deg: number, rad: number) => {
+    const a = ((deg - 90) * Math.PI) / 180
+    return [c + rad * Math.cos(a), c + rad * Math.sin(a)] as const
+  }
+  const sector = (a0: number, a1: number, lift: number) => {
+    const mid = (((a0 + a1) / 2 - 90) * Math.PI) / 180
+    const dx = Math.cos(mid) * lift
+    const dy = Math.sin(mid) * lift
+    const [x0, y0] = pt(a0, R)
+    const [x1, y1] = pt(a1, R)
+    const [x2, y2] = pt(a1, r)
+    const [x3, y3] = pt(a0, r)
+    const f = (v: number) => v.toFixed(1)
+    return {
+      d: `M${f(x0)} ${f(y0)} A${R} ${R} 0 0 1 ${f(x1)} ${f(y1)} L${f(x2)} ${f(y2)} A${r} ${r} 0 0 0 ${f(x3)} ${f(y3)} Z`,
+      transform: `translate(${f(dx)} ${f(dy)})`,
+    }
+  }
+  return (
+    <div className={`relative aspect-square w-full ${className}`}>
+      <svg viewBox="0 0 360 360" className="absolute inset-0 size-full overflow-visible">
+        {items.map((item, i) => {
+          const step = 360 / n
+          const a0 = i * step + gap / 2 - step / 2
+          const a1 = a0 + step - gap
+          const on = item.key === active
+          const s = sector(a0, a1, on ? 10 : 0)
+          return (
+            <path
+              key={item.key}
+              d={s.d}
+              transform={s.transform}
+              role="button"
+              tabIndex={0}
+              aria-label={item.label}
+              aria-pressed={on}
+              onClick={() => onSelect(item.key)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSelect(item.key))}
+              className="cursor-pointer outline-none transition-[fill,transform] duration-300 focus-visible:stroke-white"
+              fill={on ? 'rgb(255 255 255 / 0.34)' : 'rgb(255 255 255 / 0.12)'}
+              stroke="rgb(255 255 255 / 0.22)"
+              strokeWidth="1"
+              style={{ backdropFilter: 'blur(12px)' }}
+            />
+          )
+        })}
+      </svg>
+      {/* labels and icons sit over the segment centres; the paths take the clicks */}
+      {items.map((item, i) => {
+        const step = 360 / n
+        const mid = i * step
+        const lift = item.key === active ? 10 : 0
+        const [x, y] = pt(mid, (R + r) / 2 + lift)
+        const Icon = item.icon
+        return (
+          <span
+            key={item.key}
+            className={`pointer-events-none absolute flex w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 text-center text-[12px] leading-tight text-white transition-opacity sm:text-[13px] ${
+              item.key === active ? 'opacity-100' : 'opacity-80'
+            }`}
+            style={{ left: `${(x / 360) * 100}%`, top: `${(y / 360) * 100}%` }}
+          >
+            <Icon className="size-5" strokeWidth={1.25} />
+            {item.label}
+          </span>
+        )
+      })}
+      {center && (
+        <div className="absolute top-1/2 left-1/2 grid aspect-square w-[40%] -translate-x-1/2 -translate-y-1/2 place-items-center">{center}</div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * The reference's device view: a ringed circle with a dotted texture, its subject in the middle,
+ * and spec chips floating around it.
+ */
+export function DeviceCircle({
+  children,
+  chips,
+  className = '',
+}: {
+  children: ReactNode
+  chips: { label: string; value?: ReactNode }[]
+  className?: string
+}) {
+  // six places around the circle, top-left first, clockwise
+  const SLOTS = ['left-[2%] top-[14%]', 'right-[0%] top-[6%]', 'right-[-2%] top-[52%]', 'right-[6%] bottom-[2%]', 'left-[0%] bottom-[10%]', 'left-[-2%] top-[48%]']
+  return (
+    <div className={`relative mx-auto aspect-square w-full max-w-[460px] ${className}`}>
+      <div className="absolute inset-[12%] rounded-full border border-line-strong p-[3%]">
+        <div className="relative size-full rounded-full border border-line-strong">
+          {/* two dotted clusters, like the reference's perforated face */}
+          <div
+            className="absolute inset-[8%] rounded-full opacity-70"
+            style={{
+              backgroundImage: 'radial-gradient(var(--color-faint) 1.2px, transparent 1.6px)',
+              backgroundSize: '12px 12px',
+              maskImage: 'radial-gradient(40% 40% at 28% 30%, #000 40%, transparent 72%), radial-gradient(38% 38% at 72% 72%, #000 40%, transparent 72%)',
+              WebkitMaskImage: 'radial-gradient(40% 40% at 28% 30%, #000 40%, transparent 72%), radial-gradient(38% 38% at 72% 72%, #000 40%, transparent 72%)',
+            }}
+            aria-hidden
+          />
+          <div className="absolute inset-[22%] grid place-items-center">{children}</div>
+        </div>
+      </div>
+      {chips.slice(0, SLOTS.length).map((c, i) => (
+        <SpecChip key={c.label} label={c.label} value={c.value} className={`absolute ${SLOTS[i]}`} />
+      ))}
+    </div>
+  )
+}
+
+/** `eager` for a picture that is the screen's main subject, so it is not held back as offscreen. */
+export function Thumb({ sha, className = '', blur = false, eager = false }: { sha: string; className?: string; blur?: boolean; eager?: boolean }) {
   const [failed, setFailed] = useState(false)
   return (
     <div className={`relative overflow-hidden bg-raised ${className}`}>
@@ -162,7 +410,7 @@ export function Thumb({ sha, className = '', blur = false }: { sha: string; clas
         <img
           src={api.thumbnailUrl(sha)}
           alt=""
-          loading="lazy"
+          loading={eager ? 'eager' : 'lazy'}
           onError={() => setFailed(true)}
           className={`size-full object-cover transition-[filter] duration-300 ${blur ? 'scale-110 blur-xl' : ''}`}
         />
@@ -171,7 +419,7 @@ export function Thumb({ sha, className = '', blur = false }: { sha: string; clas
   )
 }
 
-/** A screen's title: light and large, named like its nav item, with one line of context. */
+/** A screen's title, named like its nav item, with one line of context. */
 export function PageHeader({
   title,
   dim,
@@ -179,7 +427,6 @@ export function PageHeader({
   action,
 }: {
   title: string
-  /** A quieter second word set beside the title, like "Data  Records". */
   dim?: string
   subtitle?: string
   action?: ReactNode
@@ -187,25 +434,25 @@ export function PageHeader({
   return (
     <header className="animate-rise mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-[36px] leading-[1.04] font-normal tracking-[-0.04em] sm:text-[48px]">
+        <h1 className="text-[34px] leading-[1.05] font-normal tracking-[-0.03em] sm:text-[44px]">
           {title}
           {dim && <span className="text-faint"> {dim}</span>}
         </h1>
         {subtitle && <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted">{subtitle}</p>}
       </div>
-      {/* On phones the tab bar's centre button covers the action, so it would only repeat it. */}
+      {/* On phones the bottom bar's centre button covers the action, so it would only repeat it. */}
       {action && <div className="no-print shrink-0 max-sm:hidden">{action}</div>}
     </header>
   )
 }
 
-/** Section heading inside a panel: a small capitals label over a short title. */
-export function PanelTitle({ eyebrow, title, action }: { eyebrow?: string; title: ReactNode; action?: ReactNode }) {
+/** A card's title in the reference's voice: plain capitals, with an optional status and action. */
+export function PanelTitle({ title, status, action }: { eyebrow?: string; title: ReactNode; status?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex items-end justify-between gap-4">
-      <div>
-        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-        <h2 className={`text-[20px] font-semibold tracking-[-0.02em] ${eyebrow ? 'mt-1' : ''}`}>{title}</h2>
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        <h2 className="eyebrow">{title}</h2>
+        {status}
       </div>
       {action}
     </div>
@@ -224,10 +471,10 @@ export function ErrorPanel({
   children?: ReactNode
 }) {
   return (
-    <div className="mesh mesh-graphite rounded-xl p-8 text-center sm:p-10">
-      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">{label}</p>
-      <h1 className="mt-2 text-3xl font-medium tracking-[-0.02em]">{title}</h1>
-      <p className="mx-auto mt-3 max-w-md text-[15px] text-white/85">{message}</p>
+    <div className="cream rounded-xl p-8 text-center sm:p-10">
+      <p className="eyebrow text-faint">{label}</p>
+      <h1 className="mt-3 text-3xl font-normal tracking-[-0.02em]">{title}</h1>
+      <p className="mx-auto mt-3 max-w-md text-[15px] text-muted">{message}</p>
       {children && <div className="mt-7 flex justify-center gap-3">{children}</div>}
     </div>
   )
@@ -241,7 +488,7 @@ export function GithubMark({ className = '' }: { className?: string }) {
   )
 }
 
-/** Pill switch: a soft track with a white knob that slides right and turns the track gold. */
+/** Pill switch: a soft track with a white knob that slides right and turns the track lemon. */
 export function Toggle({
   checked,
   onChange,
@@ -263,7 +510,7 @@ export function Toggle({
       className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-line-strong'} ${className}`}
     >
       <span
-        className={`absolute top-[3px] left-[3px] size-[22px] rounded-full bg-white shadow-[0_2px_6px_rgb(60_40_30/0.3)] transition-transform duration-300 ease-[var(--ease-out)] ${
+        className={`absolute top-[3px] left-[3px] size-[22px] rounded-full bg-white shadow-[0_2px_6px_rgb(40_40_20/0.3)] transition-transform duration-300 ease-[var(--ease-out)] ${
           checked ? 'translate-x-5' : ''
         }`}
       />
@@ -293,7 +540,7 @@ export function ThemeSwitch({
   const { theme } = usePrefs()
   return (
     <div
-      className={`well gap-0.5 p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`}
+      className={`gap-0.5 rounded-full bg-raised p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`}
       role="radiogroup"
       aria-label="Colour theme"
     >
@@ -306,11 +553,11 @@ export function ThemeSwitch({
           aria-label={labels ? undefined : label}
           title={label}
           onClick={() => setPref('theme', value)}
-          className={`flex h-8 items-center justify-center gap-1.5 rounded-full text-[13px] font-medium transition ${
+          className={`flex h-8 items-center justify-center gap-1.5 rounded-full text-[13px] transition ${
             stretch ? 'flex-1' : labels ? 'px-3.5' : 'w-8'
           } ${theme === value ? 'selected' : 'text-faint hover:text-ink'}`}
         >
-          <Icon className="size-4" strokeWidth={1.75} />
+          <Icon className="size-4" strokeWidth={1.5} />
           {labels && label}
         </button>
       ))}
@@ -323,20 +570,20 @@ export function ThemeToggle({ resolved }: { resolved: 'light' | 'dark' }) {
   const next = resolved === 'dark' ? 'light' : 'dark'
   const Icon = resolved === 'dark' ? Sun : Moon
   return (
-    <button type="button" onClick={() => setPref('theme', next)} className="well size-10" aria-label={`Switch to ${next} theme`}>
-      <Icon className="size-[18px]" strokeWidth={1.75} />
+    <button type="button" onClick={() => setPref('theme', next)} className="well size-11" aria-label={`Switch to ${next} theme`}>
+      <Icon className="size-[18px]" strokeWidth={1.5} />
     </button>
   )
 }
 
-/** A pill-shaped on/off filter: ink when on, quiet when off. Announced as a switch. */
+/** A pill tab, like the reference's "Cholesterol / Metabolic" row: dark when on, raised when off. */
 export function Chip({
   icon: Icon,
   label,
   checked,
   onChange,
 }: {
-  icon: typeof Sun
+  icon?: LucideIcon
   label: string
   checked: boolean
   onChange: (next: boolean) => void
@@ -347,11 +594,11 @@ export function Chip({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium transition ${
-        checked ? 'bg-primary text-on-primary' : 'bg-raised text-muted hover:text-ink'
+      className={`inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14px] transition ${
+        checked ? 'bg-primary text-on-primary' : 'well text-muted hover:text-ink'
       }`}
     >
-      <Icon className="size-3.5" strokeWidth={2} />
+      {Icon && <Icon className="size-4" strokeWidth={1.5} />}
       {label}
     </button>
   )
