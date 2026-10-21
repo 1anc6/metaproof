@@ -30,6 +30,8 @@ function read(): HistoryEntry[] {
 }
 
 function write(entries: HistoryEntry[]) {
+  // Dev fixtures are read-only: removing or clearing one must never overwrite the real history.
+  if (devFixture()) return
   cache = entries
   try {
     localStorage.setItem(KEY, JSON.stringify(entries))

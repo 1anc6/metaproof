@@ -4,7 +4,7 @@ import type { HistoryEntry } from './history'
 // Development only: swaps the history list and its verdicts for fixed datasets, so the lists can be
 // checked against realistic worst-case data. Chosen with ?data=worst|empty|one|max (kept for the
 // tab in sessionStorage, since the History filters rewrite the query string). Never active in a
-// production build: import.meta.env.DEV is false there and the whole module is dead code.
+// production build: import.meta.env.DEV is false there, so devDataMode is always 'off'.
 
 export type DevDataMode = 'off' | 'worst' | 'empty' | 'one' | 'max'
 export const DEV_DATA_MODES: { key: DevDataMode; label: string }[] = [
@@ -60,7 +60,9 @@ function build(rows: Row[]): { entries: HistoryEntry[]; summaries: Record<string
 }
 
 const LABELS: VerdictLabel[] = ['likely_ai_generated', 'edited', 'likely_authentic', 'inconclusive']
-const FIXTURES: Record<Exclude<DevDataMode, 'off'>, ReturnType<typeof build>> = {
+// Built on first use, so a production bundle (where devDataMode is always 'off') never runs it.
+let fixtures: Record<Exclude<DevDataMode, 'off'>, ReturnType<typeof build>> | null = null
+const getFixtures = () => (fixtures ??= {
   worst: build(WORST_ROWS),
   empty: build([]),
   one: build([['photo.jpg', 2_048_000, 1, 'likely_ai_generated', 'done']]),
@@ -68,13 +70,13 @@ const FIXTURES: Record<Exclude<DevDataMode, 'off'>, ReturnType<typeof build>> = 
   max: build(
     Array.from({ length: 100 }, (_, i): Row => [`IMG_${String(4000 + i)}.JPG`, 3_000_000 + i * 997, i * 90, LABELS[i % 4], 'done']),
   ),
-}
+})
 
 export function devDataMode(): DevDataMode {
   if (!import.meta.env.DEV) return 'off'
   const fromUrl = new URLSearchParams(location.search).get('data')
   const mode = fromUrl ?? sessionStorage.getItem(SESSION_KEY) ?? 'off'
-  return mode in FIXTURES ? (mode as DevDataMode) : 'off'
+  return DEV_DATA_MODES.some((m) => m.key === mode) ? (mode as DevDataMode) : 'off'
 }
 
 export function setDevDataMode(mode: DevDataMode) {
@@ -92,6 +94,7 @@ export function subscribeDevData(listener: () => void) {
 }
 
 export function devFixture() {
+  if (!import.meta.env.DEV) return null // lets the production build drop the fixtures entirely
   const mode = devDataMode()
-  return mode === 'off' ? null : FIXTURES[mode]
+  return mode === 'off' ? null : getFixtures()[mode]
 }

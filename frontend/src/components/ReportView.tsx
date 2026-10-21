@@ -311,7 +311,7 @@ function Fields({ rows }: { rows: [string, ReactNode][] }) {
       )}
       {missing.length > 0 && (
         <p className={`text-[13px] leading-relaxed text-faint ${shown.length > 0 ? 'mt-4' : ''}`}>
-          Not in this file: {missing.join(', ')}.
+          Not recorded: {missing.join(', ')}.
         </p>
       )}
     </div>
