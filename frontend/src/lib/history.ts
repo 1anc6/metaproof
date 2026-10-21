@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { devFixture, subscribeDevData } from './devData'
 
 // There are no accounts: each browser remembers its own uploads. The server only ever
 // sees job ids, and filenames stay on this device.
@@ -16,6 +17,8 @@ const listeners = new Set<() => void>()
 let cache: HistoryEntry[] | null = null
 
 function read(): HistoryEntry[] {
+  const fixture = devFixture()
+  if (fixture) return fixture.entries
   if (cache) return cache
   try {
     const parsed = JSON.parse(localStorage.getItem(KEY) ?? '[]')
@@ -71,8 +74,10 @@ function subscribe(listener: () => void) {
     }
   }
   window.addEventListener('storage', onStorage) // keep several tabs in sync
+  const offDev = subscribeDevData(listener)
   return () => {
     listeners.delete(listener)
+    offDev()
     window.removeEventListener('storage', onStorage)
   }
 }
