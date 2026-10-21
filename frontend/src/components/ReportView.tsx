@@ -285,18 +285,30 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
   )
 }
 
+// Empty fields collapse into one line, so a stripped file doesn't read as a wall of dashes.
 function Fields({ rows }: { rows: [string, ReactNode][] }) {
+  const shown = rows.filter(([, v]) => v !== null && v !== undefined)
+  const missing = rows.filter(([, v]) => v === null || v === undefined).map(([k]) => k)
   return (
-    <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-      {rows.map(([k, v]) => (
-        <div key={k} className="min-w-0">
-          <dt className="text-[12px] text-faint">{k}</dt>
-          <dd className="mt-0.5 truncate text-sm text-ink" title={typeof v === 'string' ? v : undefined}>
-            {v ?? <span className="text-faint">—</span>}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <div>
+      {shown.length > 0 && (
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {shown.map(([k, v]) => (
+            <div key={k} className="min-w-0">
+              <dt className="text-[12px] text-faint">{k}</dt>
+              <dd className="mt-0.5 truncate text-sm text-ink" title={typeof v === 'string' ? v : undefined}>
+                {v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {missing.length > 0 && (
+        <p className={`text-[13px] leading-relaxed text-faint ${shown.length > 0 ? 'mt-4' : ''}`}>
+          Not in this file: {missing.join(', ')}.
+        </p>
+      )}
+    </div>
   )
 }
 
