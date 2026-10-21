@@ -90,7 +90,7 @@ export function Method() {
                   {status}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{text}</p>
+              <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-muted">{text}</p>
             </div>
           </article>
         ))}
@@ -103,7 +103,7 @@ export function Method() {
         </div>
         <ol className="mt-4 flex flex-col gap-3">
           {RULES.map((rule, i) => (
-            <li key={i} className="flex gap-3 text-sm leading-relaxed text-muted">
+            <li key={i} className="flex max-w-[62ch] gap-3 text-[15px] leading-relaxed text-muted">
               <span className="font-mono text-[13px] text-faint">0{i + 1}</span>
               {rule}
             </li>
