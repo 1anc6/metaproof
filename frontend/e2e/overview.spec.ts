@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test('the blur and only-flagged switches work and are remembered', async ({ page }) => {
   await page.goto('/')
-  const recent = page.locator('section', { has: page.getByRole('heading', { name: 'Latest analyses' }) })
+  const recent = page.locator('section', { has: page.getByRole('heading', { name: 'Recent analyses' }) })
   await expect(recent.getByText('holiday.jpg')).toBeVisible()
 
   const blur = page.getByRole('switch', { name: 'Blur previews' })
@@ -38,5 +38,5 @@ test('each count opens History filtered to it', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Flagged' }).click()
   await expect(page).toHaveURL(/\/history\?filter=flagged$/)
-  await expect(page.getByText('No analyses match.')).toBeVisible()
+  await expect(page.getByText('No analyses match this search and filter.')).toBeVisible()
 })
