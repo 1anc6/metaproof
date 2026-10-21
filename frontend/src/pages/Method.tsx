@@ -1,5 +1,5 @@
 import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
-import { PageHeader } from '../components/ui'
+import { ArcGauge, Figure, PageHeader } from '../components/ui'
 
 const LAYERS = [
   {
@@ -67,8 +67,10 @@ export function Method() {
           <article key={name} className="panel animate-rise rounded-xl p-5 sm:p-6">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">{name}</h2>
-                <span className={status === 'Live' ? 'tag-hi' : 'tag'}>{status}</span>
+                <h2 className="eyebrow">{name}</h2>
+                <span className="status">
+                  <span className={`size-2 rounded-full ${status === 'Live' ? 'bg-accent' : 'bg-faint'}`} aria-hidden /> {status}
+                </span>
               </div>
               <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-muted">{text}</p>
             </div>
@@ -77,7 +79,7 @@ export function Method() {
       </section>
 
       <section id="verdict" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
-        <h2 className="text-[20px] font-semibold tracking-[-0.02em]">How the verdict is decided</h2>
+        <h2 className="eyebrow">How the verdict is decided</h2>
         <ol className="mt-4 flex flex-col gap-3">
           {RULES.map((rule, i) => (
             <li key={i} className="flex max-w-[62ch] gap-3 text-[15px] leading-relaxed text-muted">
@@ -104,20 +106,17 @@ export function Method() {
 function DetectorResults() {
   return (
     <section id="accuracy" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
-      <h2 className="text-[20px] font-semibold tracking-[-0.02em]">How well the detector works</h2>
-      {/* The headline figures, held out from training, in dot-matrix. */}
-      <dl className="mt-5 grid grid-cols-3 gap-4">
-        {[
-          [SUMMARY.auc.toFixed(2), 'AUC as uploaded', true],
-          [SUMMARY.aucRecompressed.toFixed(2), 'AUC recompressed', false],
-          [`${Math.round(SUMMARY.calibrationError * 100)}%`, 'Calibration error', false],
-        ].map(([value, label, hi]) => (
-          <div key={label as string} className="min-w-0">
-            <dt className={hi ? 'tag-hi' : 'inline-flex rounded-full bg-raised px-2 py-0.5 text-[11px] leading-4 font-semibold text-muted'}>{label}</dt>
-            <dd className="dot-num mt-2 text-[36px] sm:text-[48px]">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <h2 className="eyebrow">How well the detector works</h2>
+      {/* AUC on the reference's arc gauge, from chance (0.5) to perfect (1.0), held out from training. */}
+      <div className="cream mt-5 grid gap-4 rounded-lg p-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center">
+        <div className="text-ink">
+          <ArcGauge value={(SUMMARY.auc - 0.5) / 0.5} valueLabel={`AUC ${SUMMARY.auc.toFixed(2)}`} startLabel="0.5" endLabel="1.0" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Figure label="Recompressed" value={SUMMARY.aucRecompressed.toFixed(2)} unit="AUC" size="sm" />
+          <Figure label="Calibration" value={Math.round(SUMMARY.calibrationError * 100)} unit="% error" size="sm" />
+        </div>
+      </div>
       <p className="mt-5 text-[15px] leading-relaxed text-muted">
         Tested on {SUMMARY.testImages.toLocaleString()} images from nine generators that were{' '}
         <span className="text-ink">never shown to the model during training</span>. AUC{' '}

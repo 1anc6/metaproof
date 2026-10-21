@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
 import { ReportView } from '../components/ReportView'
-import { ErrorPanel, FileName, Ruler } from '../components/ui'
+import { DeviceCircle, ErrorPanel, FileName, Figure } from '../components/ui'
 import { ThinkingOrb, ThinkingPill } from '../components/ThinkingOrb'
 import { ReportSkeleton } from './Report'
 import { previewFor } from '../lib/preview'
@@ -92,79 +92,92 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
   // How far along the checks are; the step under way counts as half done.
   const pct = job ? Math.round(((active + (waiting ? 0 : 0.5)) / STEPS.length) * 100) : 0
 
+  const steps = STEPS.map((step, i) => ({ ...step, state: i < active ? 'done' : i === active && !waiting ? 'active' : 'todo' }))
+  const done = steps.filter((x) => x.state === 'done').length
+
   return (
     <div className="mx-auto max-w-5xl pt-2 sm:pt-4">
       <header className="animate-rise mb-6 sm:mb-8">
-        <h1 className="text-[36px] leading-[1.04] font-normal tracking-[-0.04em] sm:text-[48px]">Reading the evidence</h1>
+        <h1 className="text-[34px] leading-[1.05] font-normal tracking-[-0.03em] sm:text-[44px]">Reading the evidence</h1>
         <p className="mt-3 text-[16px] text-muted">Six checks run on the file, then the evidence is weighed.</p>
       </header>
 
-      {/* Two equal columns that start and end level; on phones the steps come first. */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 lg:items-stretch">
-        {/* Progress on a neutral colour field (no verdict yet): the picture, the share of checks
-            done in dot-matrix, and a ruler that fills as they finish. */}
-        <section className="mesh mesh-graphite flex min-h-[340px] flex-col rounded-xl p-5 max-lg:order-2 sm:p-6" aria-label="Progress">
-          <div className="flex items-start gap-3">
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
+        {/* The upload in the device circle, with a ring that fills as the checks finish. */}
+        <DeviceCircle
+          className="max-lg:order-2"
+          chips={[
+            { label: 'Hash', value: 'SHA-256' },
+            { label: 'Checks', value: '6' },
+            { label: 'Done', value: `${pct}%` },
+            { label: 'File', value: 'deleted after' },
+          ]}
+        >
+          <div className="relative aspect-square w-full">
+            <svg viewBox="0 0 100 100" className="absolute -inset-[9%] size-[118%] -rotate-90" aria-hidden>
+              <circle cx="50" cy="50" r="47" fill="none" stroke="var(--color-line-strong)" strokeWidth="1.2" />
+              <circle
+                cx="50"
+                cy="50"
+                r="47"
+                fill="none"
+                stroke="var(--color-ink)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeDasharray={`${(pct / 100) * 295.3} 295.3`}
+                className="transition-[stroke-dasharray] duration-700 ease-(--ease-out)"
+              />
+            </svg>
             {preview ? (
-              <img src={preview} alt="" className="size-14 shrink-0 rounded-lg object-cover" />
+              <img src={preview} alt="" className="size-full rounded-full object-cover shadow-[0_18px_40px_-18px_rgb(0_0_0/0.5)]" />
             ) : (
-              <span className="frost grid size-14 shrink-0 place-items-center rounded-lg">
-                <ThinkingOrb size={22} className="text-white" />
+              <span className="grid size-full place-items-center rounded-full bg-raised">
+                <ThinkingOrb size={36} className="text-ink" />
               </span>
             )}
-            <div className="min-w-0 pt-1">
-              <span className="tag-hi gap-1.5">
-                <span className="animate-blink size-1.5 rounded-full bg-[#18181b]" aria-hidden />
-                {waiting ? 'In queue' : 'Analyzing'}
-              </span>
-              {filename && <FileName name={filename} className="mt-1.5 text-[13px] text-white/85" />}
-            </div>
           </div>
-          <div className="my-auto py-4 text-center" aria-live="polite">
-            <p className="dot-num text-[84px] text-white sm:text-[104px]">{pct}</p>
-            <p className="mt-2 text-[15px] font-semibold">% of the checks done</p>
-          </div>
-          <Ruler value={pct} />
-        </section>
+        </DeviceCircle>
 
-        <section className="panel flex flex-col rounded-xl p-3 sm:p-4">
-          {/* Says what is happening now; the list below only swaps markers. */}
+        <section className="cream flex flex-col rounded-xl p-5 sm:p-7" aria-label="Progress">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="eyebrow">{waiting ? 'In queue' : 'Analyzing'}</p>
+            <span className="status">
+              <span className="animate-blink size-2 rounded-full bg-accent" aria-hidden /> Active
+            </span>
+          </div>
+          {filename && <FileName name={filename} className="mt-1 text-[14px] text-faint" />}
+
+          <div className="mt-6 grid grid-cols-2 gap-4" aria-live="polite">
+            <Figure label="Progress" value={pct} unit="%" />
+            <Figure label="Steps done" value={done} unit={`/ ${STEPS.length}`} />
+          </div>
+
+          {/* Says what is happening now; the rows below only swap their values. */}
           <ThinkingPill
-            className="w-full justify-start"
+            className="mt-5 w-full justify-start"
             variant={job && !waiting ? 'dots' : 'lines'}
             label={!job ? 'Connecting…' : waiting ? 'Waiting in the queue…' : `${STEPS[active].label}…`}
           />
-          <ol className="stagger mt-2 flex flex-col gap-0.5">
-            {STEPS.map((step, i) => {
-              const state = i < active ? 'done' : i === active && !waiting ? 'active' : 'todo'
-              return (
-                <li
-                  key={step.key}
-                  className={`animate-rise flex items-center gap-3 rounded-full py-1.5 pr-4 pl-1.5 ${
-                    state === 'active' ? 'selected' : ''
+          <dl className="mt-3">
+            {steps.map((step) => (
+              <div key={step.key} className="flex items-center gap-3 py-2 text-[15px]">
+                <span
+                  className={`grid size-6 shrink-0 place-items-center rounded-full ${
+                    step.state === 'done' ? 'bg-ink text-on-primary' : step.state === 'active' ? 'bg-accent text-ink' : 'bg-raised text-faint'
                   }`}
+                  aria-hidden
                 >
-                  <span
-                    className={`grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
-                      state === 'done' ? 'bg-highlight text-[#18181b]' : 'bg-raised text-faint'
-                    }`}
-                  >
-                    {state === 'done' ? (
-                      <Check className="animate-pop size-4" strokeWidth={2.5} />
-                    ) : state === 'active' ? (
-                      <ThinkingOrb size={18} className="text-ink" />
-                    ) : (
-                      <span className="size-2 rounded-full border border-current" aria-hidden />
-                    )}
-                  </span>
-                  <span className={`text-[15px] transition-colors duration-300 ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>
-                    {step.label}
-                  </span>
-                </li>
-              )
-            })}
-          </ol>
-          <p className="mt-auto border-t border-line px-2 pt-3 text-[13px] text-faint">
+                  {step.state === 'done' ? <Check className="animate-pop size-3.5" strokeWidth={2.5} /> : <span className="size-1.5 rounded-full bg-current" />}
+                </span>
+                <dt className={step.state === 'todo' ? 'text-faint' : 'text-ink'}>{step.label}</dt>
+                <span className="leader" aria-hidden />
+                <dd className={step.state === 'todo' ? 'text-faint' : 'text-ink'}>
+                  {step.state === 'done' ? 'Done' : step.state === 'active' ? 'Running' : 'Waiting'}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-3 text-[13px] text-faint">
             {job ? 'This usually takes a few seconds.' : 'Connecting to the server… it may be waking up.'}
           </p>
         </section>
