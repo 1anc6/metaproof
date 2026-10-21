@@ -194,26 +194,24 @@ export function NewAnalysis() {
         </p>
       )}
 
-      <ol className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+      {/* What happens to the file, in order. Position carries the sequence; no index numbers. */}
+      <ol className="mt-8 grid gap-x-8 gap-y-5 px-1 sm:grid-cols-3">
         {[
           ['Hash and read', 'A SHA-256 fingerprint, then metadata and file structure.'],
-          ['Six checks', 'Credentials, watermark, AI detector and seen-before search.'],
-          ['Delete the file', 'Only the hash, a thumbnail and the findings remain.'],
+          ['Run six checks', 'Credentials, watermark, AI detector and seen-before search.'],
+          ['Delete the file', 'Only its hash, a thumbnail and the findings stay, so the report can be shared by link. GPS is never stored.'],
         ].map(([title, text], i) => (
-          <li key={title} className="panel rounded-lg p-3 sm:rounded-xl sm:p-5">
-            <p className="num text-[24px] leading-none text-accent sm:text-[34px]">{String(i + 1).padStart(2, '0')}</p>
-            <p className="mt-2 text-[14px] leading-tight font-medium sm:mt-4 sm:text-[17px]">{title}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-faint max-sm:hidden">{text}</p>
+          <li key={title}>
+            <p className="flex items-center gap-2 text-[16px] font-semibold tracking-[-0.01em]">
+              {i === 2 && <Lock className="size-4 text-accent" strokeWidth={2} aria-hidden />}
+              {title}
+            </p>
+            <p className="mt-1 text-[14px] leading-relaxed text-muted">{text}</p>
           </li>
         ))}
       </ol>
 
-      <p className="mt-6 flex items-start gap-2 text-[13px] leading-relaxed text-faint">
-        <Lock className="mt-0.5 size-3.5 shrink-0" />
-        Your file is deleted as soon as it is analyzed. MetaProof keeps only its SHA-256 hash, a small
-        thumbnail and the findings, so the report can be shared by link. GPS coordinates are never stored.
-      </p>
-      <p className="mt-3 text-[13px] text-faint">
+      <p className="mt-6 px-1 text-[14px] text-muted">
         No image at hand?{' '}
         <Link to={DEMO_REPORT_PATH} className="text-ink underline decoration-faint underline-offset-4">
           See an example report
