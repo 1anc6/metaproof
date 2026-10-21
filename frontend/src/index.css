@@ -4,22 +4,24 @@
   --font-sans: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  /* Dot-matrix figures: the big numbers only (counts, scores), never running text. */
+  --font-dot: 'Doto Variable', ui-monospace, monospace;
 
-  /* Three roles and nothing else. Primary: ink, for the one main action on a screen.
-     Secondary: champagne gold, for highlights and the hero card. Neutral: warm greys for
-     everything else. Verdict colours carry meaning and appear only on verdicts. */
-  --color-canvas: #e9e7e4;
-  --color-raised: rgb(31 28 26 / 0.045); /* wells, tracks */
-  --color-hover: rgb(255 255 255 / 0.55); /* list rows and nav items under the pointer */
-  --color-line: rgb(31 28 26 / 0.08);
-  --color-line-strong: rgb(31 28 26 / 0.16);
-  --color-ink: #1f1c1a;
-  --color-muted: #4f4a47;
-  --color-faint: #6b6460; /* 4.6:1 on the canvas, above WCAG AA */
-  --color-primary: #1c1a18;
-  --color-on-primary: #fbfaf8; /* text and icons on primary */
-  --color-accent: #b98a3c; /* champagne gold: decoration, not text */
-  --color-accent-soft: rgb(185 138 60 / 0.16);
+  /* Cool neutral greys, white cards, and colour only where it carries meaning: the verdicts,
+     plus one acid-lime highlight for small tags. */
+  --color-canvas: #e7e7e9;
+  --color-raised: rgb(24 24 27 / 0.05); /* wells, tracks */
+  --color-hover: rgb(255 255 255 / 0.6); /* list rows and nav items under the pointer */
+  --color-line: rgb(24 24 27 / 0.08);
+  --color-line-strong: rgb(24 24 27 / 0.16);
+  --color-ink: #18181b;
+  --color-muted: #4b4b52;
+  --color-faint: #616168; /* 4.9:1 on the canvas */
+  --color-primary: #18181b;
+  --color-on-primary: #fafafa; /* text and icons on primary */
+  --color-accent: #5f7a00; /* lime ink: icons and small marks that must read on light grounds */
+  --color-accent-soft: rgb(205 236 70 / 0.35);
+  --color-highlight: #d8f25c; /* lime tag fill; text on it is ink */
 
   /* Verdict colours, dark enough to read as text on the light canvas. */
   --color-authentic: #2e7a6b;
@@ -43,10 +45,7 @@
   --animate-rise: rise 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
   --animate-pop: pop 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
   --animate-grow: grow 0.8s cubic-bezier(0.23, 1, 0.32, 1) 0.15s both;
-  --animate-orbit: orbit 18s linear infinite;
-  --animate-orbit-slow: orbit 32s linear infinite reverse;
   --animate-blink: blink 1.1s steps(1) infinite;
-  --animate-drift: drift 40s ease-in-out infinite alternate;
 
   @keyframes shimmer {
     from { background-position: -200% 0; }
@@ -65,40 +64,26 @@
     from { transform: scaleX(0); }
     to { transform: scaleX(1); }
   }
-  @keyframes orbit {
-    to { transform: rotate(360deg); }
-  }
   @keyframes blink {
     50% { opacity: 0; }
   }
-  /* The background glows wander slowly, so the glass panels catch shifting light. */
-  @keyframes drift {
-    0% { transform: translate3d(0, 0, 0) scale(1); }
-    50% { transform: translate3d(3%, -2%, 0) scale(1.06); }
-    100% { transform: translate3d(-2%, 3%, 0) scale(1.02); }
-  }
 }
 
-/* Surface recipes that differ by theme. Light is the default; dark overrides below. */
+/* Surface recipes that differ by theme. Light is the default; dark overrides below.
+   Cards are near-white on the grey canvas with a soft, low shadow; no glass. */
 :root {
-  --panel-bg: linear-gradient(160deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.3));
-  --panel-hover: linear-gradient(160deg, rgb(255 255 255 / 0.75), rgb(255 255 255 / 0.45));
-  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.65), inset 0 1px 0 rgb(255 255 255 / 0.95);
-  --panel-shadow: 0 1px 2px rgb(60 40 30 / 0.04), 0 24px 48px -28px rgb(60 40 30 / 0.25);
-  --bar-bg: rgb(244 242 240 / 0.93); /* bars sit over busy content, so they stay mostly opaque */
-  --soft-bg: rgb(255 255 255 / 0.6); /* ghost buttons, wells */
-  --soft-hover: rgb(255 255 255 / 0.9);
+  --panel-bg: #f6f6f7;
+  --panel-hover: #fcfcfc;
+  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.8);
+  --panel-shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 12px 32px -18px rgb(24 24 27 / 0.18);
+  --bar-bg: rgb(231 231 233 / 0.94); /* sticky bars sit over scrolling content */
+  --soft-bg: #fff; /* secondary buttons: white pills, like "See all" */
+  --soft-hover: #f4f4f5;
   --selected-bg: #fff;
-  /* Warm studio light on silver: champagne gold, a white haze, warm sand, a cool glint. */
-  --glow-1: rgb(226 186 110 / 0.55); /* champagne gold, top right */
-  --glow-2: rgb(255 255 255 / 0.75); /* white haze, left */
-  --glow-3: rgb(206 168 120 / 0.45); /* warm sand, bottom */
-  --glow-4: rgb(160 180 230 / 0.28); /* cool glint, centre right */
-  --grain: 0.05;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-canvas: #0d0d0f;
+  --color-canvas: #0e0e10;
   --color-raised: rgb(255 255 255 / 0.06);
   --color-line: rgb(255 255 255 / 0.08);
   --color-line-strong: rgb(255 255 255 / 0.16);
@@ -112,23 +97,17 @@
   --color-neutral: #aaa39f;
   --color-primary: #f3f1ef;
   --color-on-primary: #141210;
-  --color-accent: #d8b062;
-  --color-accent-soft: rgb(216 176 98 / 0.16);
+  --color-accent: #d8f25c;
+  --color-accent-soft: rgb(216 242 92 / 0.18);
 
-  --panel-bg: linear-gradient(160deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.025));
-  --panel-hover: linear-gradient(160deg, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.05));
-  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.14);
-  --panel-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.7);
-  --bar-bg: rgb(20 20 23 / 0.94);
+  --panel-bg: #18181b;
+  --panel-hover: #1e1e22;
+  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --panel-shadow: 0 16px 32px -20px rgb(0 0 0 / 0.6);
+  --bar-bg: rgb(13 13 15 / 0.94);
   --soft-bg: rgb(255 255 255 / 0.08);
-  --soft-hover: rgb(255 255 255 / 0.14);
-  --selected-bg: rgb(255 255 255 / 0.14);
-  /* Charcoal lit by a gold lamp, with silver haze and a faint iridescent blue glint. */
-  --glow-1: rgb(218 170 82 / 0.45); /* gold, top right */
-  --glow-2: rgb(205 205 212 / 0.16); /* silver haze, left */
-  --glow-3: rgb(176 120 56 / 0.34); /* amber, bottom */
-  --glow-4: rgb(130 160 235 / 0.14); /* cool glint */
-  --grain: 0.07;
+  --soft-hover: rgb(255 255 255 / 0.13);
+  --selected-bg: rgb(255 255 255 / 0.12);
 }
 
 @layer base {
@@ -146,32 +125,6 @@
     min-height: 100dvh;
     transition: background-color 300ms var(--ease-out);
   }
-  /* Coloured light behind the glass: large soft glows that the frosted panels blur and pick up.
-     The layer overhangs the screen by 15% for the drift, so 12%-88% below is the visible area. */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: -15%;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(40% 36% at 80% 18%, var(--glow-1), transparent 70%),
-      radial-gradient(36% 42% at 18% 40%, var(--glow-2), transparent 70%),
-      radial-gradient(44% 34% at 52% 84%, var(--glow-3), transparent 70%),
-      radial-gradient(30% 30% at 70% 58%, var(--glow-4), transparent 70%);
-    filter: blur(20px);
-    @apply animate-drift;
-  }
-  /* Fine grain over everything, like the soft-focus photos in the reference. */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-    opacity: var(--grain);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
   ::selection {
     background: var(--color-accent-soft);
   }
@@ -182,101 +135,67 @@
 }
 
 @layer components {
-  /* Frosted white panel for lists and details. */
-  /* Frosted glass: translucent, saturating the glow behind it, lit along the top edge. */
+  /* A panel: one tone step off the canvas. */
   .panel {
     position: relative;
     background: var(--panel-bg);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow: var(--panel-edge), var(--panel-shadow);
   }
   :is(a, button).panel:hover,
   .panel-raised {
     background: var(--panel-hover);
   }
-  /* Bars floating over scrolling content. */
+  /* Sticky bars over scrolling content: the one place that keeps a blur. */
   .panel-bar {
     background: var(--bar-bg);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
-  /* The floating tab bar: glass with a lit rim. */
+  /* The floating phone tab bar really floats, so it keeps a shadow. */
   .pill-bar {
-    box-shadow: var(--panel-edge), 0 24px 48px -20px rgb(0 0 0 / 0.4);
+    box-shadow: var(--panel-edge), 0 16px 32px -16px rgb(0 0 0 / 0.35);
   }
 
-  /* Gradient cards: soft mesh light with grain. White text sits on them. */
+  /* Verdict fields: soft gradients in the verdict's hue, and the only gradients in the app.
+     Each one carries a figure (a score, a likelihood), never decoration. White text sits on them. */
   .mesh {
     position: relative;
-    isolation: isolate;
     overflow: hidden;
     color: #fff;
-    box-shadow: 0 30px 60px -30px rgb(80 40 30 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.25);
   }
-  .mesh::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.22;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  .mesh-teal { /* likely authentic: spring green */
+    background: radial-gradient(120% 100% at 50% 100%, #1f8f45 0%, #49b45a 45%, #a8d98a 85%, #d9eec4 100%);
   }
-  /* Champagne through bronze: the one brand card, for the hero. */
-  .mesh-gold {
-    background:
-      radial-gradient(60% 70% at 10% 15%, #5a4128, transparent 70%),
-      radial-gradient(55% 60% at 90% 20%, #c9a466, transparent 70%),
-      radial-gradient(70% 60% at 95% 100%, #b5925d, transparent 70%),
-      radial-gradient(60% 60% at 15% 100%, #8f6a3f, transparent 70%),
-      linear-gradient(135deg, #6f5232, #a6844f);
+  .mesh-copper { /* edited: amber */
+    background: radial-gradient(110% 95% at 50% 55%, #f08a1c 0%, #f3a64a 40%, #d9a98a 75%, #b9b4c4 100%);
   }
-  /* Charcoal through silver: neutral, and the inconclusive verdict. */
-  .mesh-graphite {
-    background:
-      radial-gradient(60% 70% at 10% 15%, #2c2b2c, transparent 70%),
-      radial-gradient(55% 60% at 90% 20%, #77736f, transparent 70%),
-      radial-gradient(70% 60% at 95% 100%, #b9b4ad, transparent 70%),
-      linear-gradient(135deg, #3b3938, #8a857f);
+  .mesh-garnet { /* likely AI: hot coral to lilac */
+    background: radial-gradient(105% 95% at 50% 52%, #ff5a2c 0%, #f4683f 30%, #d9798a 62%, #a9a6c4 100%);
   }
-  /* Verdict cards, each a muted version of its verdict colour. */
-  .mesh-teal {
-    background:
-      radial-gradient(60% 70% at 10% 20%, #24524b, transparent 70%),
-      radial-gradient(50% 50% at 85% 15%, #6a9a8e, transparent 70%),
-      radial-gradient(70% 60% at 90% 100%, #b7cfc6, transparent 70%),
-      linear-gradient(135deg, #2f655c, #7fa79b);
+  .mesh-graphite { /* inconclusive: cool grey-blue */
+    background: radial-gradient(110% 100% at 50% 55%, #6d7488 0%, #8c93a6 45%, #b7bccb 100%);
   }
-  .mesh-copper {
-    background:
-      radial-gradient(60% 70% at 10% 15%, #5e2a17, transparent 70%),
-      radial-gradient(55% 60% at 90% 20%, #c27a4a, transparent 70%),
-      radial-gradient(70% 60% at 95% 100%, #e3c3a5, transparent 70%),
-      linear-gradient(135deg, #7d3a1f, #c58a5e);
+  /* Small lime tag beside a figure: "Total", "Latest". */
+  .tag-hi {
+    @apply inline-flex items-center rounded-full bg-highlight px-2 py-0.5 text-[11px] leading-4 font-semibold text-[#18181b];
   }
-  .mesh-garnet {
-    background:
-      radial-gradient(60% 70% at 10% 10%, #3d1418, transparent 70%),
-      radial-gradient(55% 60% at 90% 25%, #96404a, transparent 70%),
-      radial-gradient(70% 60% at 85% 110%, #c99a8c, transparent 70%),
-      linear-gradient(135deg, #5e2128, #a5605f);
+  /* Dot-matrix figure. */
+  .dot-num {
+    @apply font-dot leading-none tabular-nums;
+    font-weight: 700;
+    font-variation-settings: 'ROND' 100; /* round dots, not squares */
+    letter-spacing: 0.02em;
   }
-  /* A frosted pill on a gradient card: labels, values, controls. */
+  /* A label or control on a colour field. */
   .frost {
-    background: rgb(255 255 255 / 0.16);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+    background: rgb(255 255 255 / 0.14);
   }
   :is(a, button).frost:hover {
-    background: rgb(255 255 255 / 0.26);
+    background: rgb(255 255 255 / 0.22);
   }
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[15px] font-semibold text-on-primary;
-    box-shadow: 0 12px 28px -14px rgb(0 0 0 / 0.5);
   }
   .btn-primary:hover {
     background: color-mix(in srgb, var(--color-primary) 86%, var(--color-canvas));
@@ -284,25 +203,23 @@
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[15px] font-medium text-ink;
     background: var(--soft-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: var(--panel-edge), 0 8px 20px -14px rgb(0 0 0 / 0.35);
+    box-shadow: var(--panel-edge), 0 1px 2px rgb(24 24 27 / 0.06);
   }
   .btn-ghost:hover {
     background: var(--soft-hover);
   }
   .btn-primary,
   .btn-ghost {
-    transition-property: color, background-color, box-shadow, transform;
+    transition-property: color, background-color, transform;
     transition-duration: 160ms;
   }
   .btn-primary:active,
   .btn-ghost:active {
     transform: scale(0.97);
   }
-  /* Section label: small spaced capitals, like "METABOLIC SCORE". */
+  /* Section label: plain sentence case, quieter than the heading it sits with. */
   .eyebrow {
-    @apply text-[11px] font-semibold tracking-[0.16em] text-faint uppercase;
+    @apply text-[13px] font-medium text-faint;
   }
   /* Figures: light, large, with even-width digits so columns of numbers line up. */
   .num {
@@ -312,18 +229,14 @@
   .well {
     @apply grid shrink-0 place-items-center rounded-full text-ink transition;
     background: var(--soft-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: var(--panel-edge), 0 6px 16px -10px rgb(0 0 0 / 0.35);
   }
   :is(a, button).well:hover {
     background: var(--soft-hover);
   }
-  /* Selected item: the bright white disc of the reference tab bar. */
+  /* Selected item: a lighter step, not a lifted card. */
   .selected {
     @apply text-ink;
     background: var(--selected-bg);
-    box-shadow: var(--panel-edge), 0 10px 24px -12px rgb(0 0 0 / 0.4);
   }
   /* Small label pill: "EXIF", strengths. */
   .tag {

@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowUpRight, ImageOff, Monitor, Moon, Sun } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { ImageOff, Monitor, Moon, Sun } from 'lucide-react'
 import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
 import { setPref, usePrefs } from '../lib/prefs'
 import { PENDING, SIGNALS, VERDICTS } from '../lib/verdicts'
@@ -21,117 +20,11 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       <span className="well size-10">
         <Mark className="size-5" />
       </span>
-      {!compact && <span className="text-[15px] font-bold tracking-[0.08em] uppercase">MetaProof</span>}
+      {!compact && <span className="text-[18px] font-semibold tracking-[-0.03em]">metaproof</span>}
     </span>
   )
 }
 
-/** A frosted round arrow button for the top-right corner of a gradient card. */
-export function CardArrow({ to, label }: { to: string; label: string }) {
-  return (
-    <Link to={to} aria-label={label} className="frost grid size-12 shrink-0 place-items-center rounded-full text-white transition">
-      <ArrowUpRight className="size-5" strokeWidth={1.75} />
-    </Link>
-  )
-}
-
-/** Three linked orbits, the evidence map in miniature. Takes currentColor. */
-export function OrbitGlyph({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" className={className} aria-hidden>
-      <path d="M28 30H92" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.8" />
-      <circle cx="28" cy="30" r="22" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.7" />
-      <path d="M28 8a22 22 0 0 1 22 22" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="60" cy="30" r="13" strokeWidth="1.5" />
-      <circle cx="92" cy="30" r="22" strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.7" />
-      <path d="M92 52a22 22 0 0 1-22-22" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="28" cy="30" r="2.5" fill="currentColor" stroke="none" />
-      <circle cx="92" cy="30" r="2.5" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-/** A label pill floating over the evidence map. */
-function MapLabel({ children, className }: { children: ReactNode; className: string }) {
-  return (
-    <span className={`frost absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide text-white/90 ${className}`}>
-      {children}
-    </span>
-  )
-}
-
-/**
- * The evidence map: the checks drawn as linked orbits on a gradient card, with a slider for the
- * AI likelihood. Decorative; with `src`, the uploaded picture sits in the middle orbit.
- */
-export function EvidenceMap({
-  className = '',
-  src,
-  title = 'Evidence map',
-  to,
-  mesh = 'mesh-gold',
-  score = 0.62,
-}: {
-  className?: string
-  src?: string
-  title?: string
-  to?: string
-  mesh?: string
-  score?: number
-}) {
-  return (
-    <div className={`mesh ${mesh} flex flex-col rounded-xl p-6 sm:p-7 ${className}`}>
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-[22px] font-medium tracking-[-0.02em]">{title}</p>
-        {to && <CardArrow to={to} label="Open" />}
-      </div>
-
-      <div className="relative mt-4 aspect-[2/1] w-full" aria-hidden>
-        <svg viewBox="0 0 400 200" className="absolute inset-0 size-full" fill="none" stroke="white">
-          {/* links between the orbit centres */}
-          <path d="M92 100 H200 H308" strokeWidth="1.5" strokeDasharray="1 6" strokeLinecap="round" opacity="0.8" />
-          {/* left orbit: dotted ring with a solid sweep that turns slowly */}
-          <circle cx="92" cy="100" r="66" strokeWidth="1.5" strokeDasharray="1 7" strokeLinecap="round" opacity="0.7" />
-          <g className="animate-orbit origin-center [transform-box:fill-box]">
-            <circle cx="92" cy="100" r="66" strokeWidth="1.75" strokeDasharray="230 400" strokeLinecap="round" />
-          </g>
-          {/* middle orbit */}
-          <circle cx="200" cy="100" r="46" strokeWidth="1.5" strokeDasharray="1 6" strokeLinecap="round" opacity="0.8" />
-          <path d="M165 130 A46 46 0 0 0 235 130" strokeWidth="1.75" strokeLinecap="round" />
-          {/* right orbit */}
-          <circle cx="308" cy="104" r="66" strokeWidth="1.5" strokeDasharray="1 7" strokeLinecap="round" opacity="0.7" />
-          <g className="animate-orbit-slow origin-center [transform-box:fill-box]">
-            <circle cx="308" cy="104" r="66" strokeWidth="1.75" strokeDasharray="250 420" strokeLinecap="round" />
-          </g>
-          <circle cx="92" cy="100" r="3" fill="white" stroke="none" />
-          <circle cx="146" cy="100" r="3" fill="white" stroke="none" />
-          <circle cx="254" cy="100" r="3" fill="white" stroke="none" />
-          <circle cx="308" cy="104" r="3" fill="white" stroke="none" />
-        </svg>
-        {/* the middle orbit holds the picture, or three bars */}
-        <div className="frost absolute top-1/2 left-1/2 grid aspect-square w-[19%] -translate-x-1/2 -translate-y-1/2 place-items-center overflow-hidden rounded-full">
-          {src ? (
-            <img src={src} alt="" className="size-full object-cover" />
-          ) : (
-            <span className="flex items-end gap-[3px]">
-              <span className="h-3 w-[2px] rotate-12 rounded bg-white" />
-              <span className="h-4 w-[2px] rotate-12 rounded bg-white" />
-              <span className="h-5 w-[2px] rotate-12 rounded bg-white" />
-            </span>
-          )}
-        </div>
-        <MapLabel className="top-[22%] left-[10%]">EXIF</MapLabel>
-        <MapLabel className="top-[76%] left-[30%]">C2PA</MapLabel>
-        <MapLabel className="top-[16%] left-[50%]">PIXELS</MapLabel>
-        <MapLabel className="top-[80%] left-[67%]">WMARK</MapLabel>
-        <MapLabel className="top-[32%] left-[92%]">HASH</MapLabel>
-      </div>
-
-      {/* mt-auto pins the slider to the bottom when the card is stretched beside a taller panel */}
-      <Meter value={score} className="mt-auto pt-5" onDark />
-    </div>
-  )
-}
 
 /**
  * A slider-style meter: a gold fill up to a triangle marker, over a dotted scale with
@@ -196,7 +89,7 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
   if (status !== 'done' || !label) {
     const p = PENDING[status === 'done' ? 'queued' : status]
     return (
-      <span className={`inline-flex items-center gap-1.5 rounded-full bg-raised px-2.5 py-1 text-xs font-semibold ${p.text}`}>
+      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-raised px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${p.text}`}>
         <span className={`size-1.5 rounded-full bg-current ${status === 'running' || status === 'queued' ? 'animate-pulse' : ''}`} />
         {p.title}
       </span>
@@ -206,7 +99,7 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
   if (label === 'inconclusive') {
     // Not a finding, so no pill: it should not weigh as much as a real flag beside it.
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-faint">
+      <span className="inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-faint">
         <span className="size-1.5 rounded-full bg-current" />
         {v.short}
       </span>
@@ -214,7 +107,7 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
   }
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${v.text}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${v.text}`}
       style={{ background: `color-mix(in srgb, ${v.color} 12%, transparent)` }}
     >
       <span className="size-1.5 rounded-full bg-current" />
@@ -225,6 +118,36 @@ export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel |
 
 export function SignalDot({ signal }: { signal: Signal }) {
   return <span className="mt-[7px] size-2 shrink-0 rounded-full" style={{ background: SIGNALS[signal].color }} aria-hidden />
+}
+
+/**
+ * A file name cut in the middle: phone photos share long prefixes (IMG_2025…), so cutting the end
+ * would make them all look alike. The last characters and the extension always stay visible.
+ */
+export function FileName({ name, className = '' }: { name: string; className?: string }) {
+  const chars = Array.from(name) // code points, so an emoji or accent is never split
+  const tail = chars.length > 16 ? chars.slice(-10).join('') : ''
+  const head = tail ? chars.slice(0, -10).join('') : name
+  return (
+    <p className={`flex min-w-0 ${className}`} title={name}>
+      <span className="truncate">{head}</span>
+      {tail && <span className="shrink-0 whitespace-pre">{tail}</span>}
+    </p>
+  )
+}
+
+/** Fine white ticks from 0 to 100 with one tall tick at the value. */
+export function Ruler({ value }: { value: number }) {
+  return (
+    <div className="relative h-5" aria-hidden>
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between">
+        {Array.from({ length: 41 }, (_, i) => (
+          <span key={i} className={`w-px bg-white/45 ${i % 10 === 0 ? 'h-3' : 'h-1.5'}`} />
+        ))}
+      </div>
+      <span className="absolute bottom-0 h-5 w-[3px] -translate-x-1/2 rounded-full bg-white" style={{ left: `${value}%` }} />
+    </div>
+  )
 }
 
 export function Thumb({ sha, className = '', blur = false }: { sha: string; className?: string; blur?: boolean }) {
@@ -248,15 +171,15 @@ export function Thumb({ sha, className = '', blur = false }: { sha: string; clas
   )
 }
 
+/** A screen's title: light and large, named like its nav item, with one line of context. */
 export function PageHeader({
-  eyebrow,
   title,
   dim,
   subtitle,
   action,
 }: {
-  eyebrow: string
   title: string
+  /** A quieter second word set beside the title, like "Data  Records". */
   dim?: string
   subtitle?: string
   action?: ReactNode
@@ -264,17 +187,11 @@ export function PageHeader({
   return (
     <header className="animate-rise mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-3 text-[36px] leading-[1.04] font-medium tracking-[-0.035em] sm:mt-4 sm:text-[56px] sm:leading-[1.02]">
+        <h1 className="text-[36px] leading-[1.04] font-normal tracking-[-0.04em] sm:text-[48px]">
           {title}
-          {dim && (
-            <>
-              <br />
-              <span className="text-faint">{dim}</span>
-            </>
-          )}
+          {dim && <span className="text-faint"> {dim}</span>}
         </h1>
-        {subtitle && <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted sm:mt-4 sm:text-[17px]">{subtitle}</p>}
+        {subtitle && <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted">{subtitle}</p>}
       </div>
       {/* On phones the tab bar's centre button covers the action, so it would only repeat it. */}
       {action && <div className="no-print shrink-0 max-sm:hidden">{action}</div>}
@@ -283,12 +200,12 @@ export function PageHeader({
 }
 
 /** Section heading inside a panel: a small capitals label over a short title. */
-export function PanelTitle({ eyebrow, title, action }: { eyebrow: string; title: ReactNode; action?: ReactNode }) {
+export function PanelTitle({ eyebrow, title, action }: { eyebrow?: string; title: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-end justify-between gap-4">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h2 className="mt-1 text-[22px] font-medium tracking-[-0.02em]">{title}</h2>
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+        <h2 className={`text-[20px] font-semibold tracking-[-0.02em] ${eyebrow ? 'mt-1' : ''}`}>{title}</h2>
       </div>
       {action}
     </div>

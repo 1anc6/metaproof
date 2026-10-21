@@ -1,11 +1,11 @@
 import { ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
 import { formatBytes, formatDateTime, formatType, formatWhen, shortHash } from '../lib/format'
 import { leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
-import { Meter, PanelTitle, SignalDot, Thumb, VerdictBadge } from './ui'
+import { Meter, PanelTitle, Ruler, SignalDot, Thumb, VerdictBadge } from './ui'
 import { ErrorLevel } from './ErrorLevel'
 
 export function ReportView({ job, filename }: { job: Job; filename?: string }) {
@@ -13,6 +13,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   const v = VERDICTS[verdict.label]
   const lean = verdict.label === 'inconclusive' ? leaning(verdict.scores) : null
   const sha = job.media.sha256
+  const reading = detectorReading(job)
   const summary = lean
     ? lean.key === 'authentic'
       ? leansRealSummary(job)
@@ -21,51 +22,58 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
 
   return (
     <div className="stagger flex flex-col gap-6">
-      {/* Verdict hero */}
-      {/* The verdict on a gradient card in its own hue. */}
-      <section className={`mesh ${v.mesh} animate-rise rounded-xl`}>
-        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8 sm:pb-6">
-          <div className="frost w-28 shrink-0 rounded-lg p-1.5 sm:w-44 sm:rounded-xl sm:p-2">
-            <Thumb sha={sha} className="aspect-square w-full rounded-lg" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/80">Verdict</p>
-            <h1 className="print-dark mt-2 text-[44px] leading-[1] font-medium tracking-[-0.04em] sm:text-[64px]">
-              {v.title}
+      {/* Two cards side by side: the verdict on its colour field with the detector's figure, and
+          the image itself with its file facts. */}
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className={`mesh ${v.mesh} animate-rise flex min-h-[320px] flex-col rounded-xl p-5 sm:p-6`}>
+          <p className="text-[14px] font-medium text-white/90">Verdict</p>
+          <div className="my-auto py-4 text-center">
+            {reading && <p className="dot-num text-[84px] text-white sm:text-[104px]">{reading.pct}</p>}
+            <h1 className="print-dark mt-3 text-[30px] leading-[1.05] font-semibold tracking-[-0.03em] sm:text-[36px]">
+              {/* Keep "AI-generated" whole; a break at the hyphen reads as a typo. */}
+              {v.title.split(' ').map((word, i) => (
+                <Fragment key={i}>
+                  {i > 0 && ' '}
+                  <span className="whitespace-nowrap">{word}</span>
+                </Fragment>
+              ))}
             </h1>
-            {lean && (
-              <p className="frost mt-3 inline-flex rounded-full px-3.5 py-1 text-[15px] font-semibold">
-                leaning {lean.label}
-              </p>
-            )}
-            <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-white/90">
-              {summary}
-            </p>
-            <EvidenceChips job={job} verdict={verdict} />
+            {lean && <p className="mt-1 text-[15px] font-semibold text-white/90">Leaning {lean.label}</p>}
+            {reading && <p className="mt-1 text-[13px] text-white/85">{reading.pct}% AI likelihood from the pixel detector</p>}
           </div>
+          {reading && <Ruler value={reading.pct} />}
         </div>
+
+        <div className="panel animate-rise flex flex-col rounded-xl p-3">
+          <Thumb sha={sha} className="aspect-[4/3] w-full rounded-lg" />
+          <dl className="flex flex-wrap gap-x-8 gap-y-3 px-2 pt-4 pb-2">
+            {[
+              ...(filename ? [['File', filename]] : []), // shared links never carry the file name
+              ['Type', formatType(job.media.mime_type)],
+              ['Pixels', `${job.media.width}×${job.media.height}`],
+              ['Size', formatBytes(job.media.size_bytes)],
+              ['SHA-256', shortHash(sha)],
+              ['Analyzed', job.finished_at ? formatDateTime(job.finished_at) : '—'],
+            ].map(([k, val]) => (
+              <div key={k} className="min-w-0" title={k === 'SHA-256' ? sha : val}>
+                <dt className="text-[12px] text-faint">{k}</dt>
+                <dd className="mt-0.5 truncate text-[14px] font-medium tabular-nums">{val}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <section className="panel animate-rise rounded-xl p-5 sm:p-6">
+        <p className="max-w-2xl text-[17px] leading-relaxed text-ink">{summary}</p>
+        <EvidenceChips job={job} verdict={verdict} />
         <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
-        <dl className="frost mx-3 mb-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg px-5 py-4 sm:mx-5 sm:mb-5 sm:grid-cols-3 lg:grid-cols-6">
-          {[
-            ['File', filename ?? '—'],
-            ['Type', formatType(job.media.mime_type)],
-            ['Pixels', `${job.media.width}×${job.media.height}`],
-            ['Size', formatBytes(job.media.size_bytes)],
-            ['SHA-256', shortHash(sha)],
-            ['Analyzed', job.finished_at ? formatDateTime(job.finished_at) : '—'],
-          ].map(([k, val]) => (
-            <div key={k} className="min-w-0" title={k === 'SHA-256' ? sha : val}>
-              <dt className="text-[12px] text-white/70">{k}</dt>
-              <dd className="mt-0.5 truncate text-[15px] font-medium tabular-nums">{val}</dd>
-            </div>
-          ))}
-        </dl>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Key findings */}
         <section className="panel animate-rise rounded-xl p-5 sm:p-6">
-          <PanelTitle eyebrow="Why" title="Key findings" />
+          <PanelTitle title="Key findings" />
           {verdict.top_reasons.length === 0 ? (
             <p className="mt-4 text-sm text-faint">
               No single finding stood out. Every check is listed under analyzer details below.
@@ -81,7 +89,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
 
         {/* Evidence balance */}
         <section className="panel animate-rise rounded-xl p-5 sm:p-6">
-          <PanelTitle eyebrow="Evidence weight" title="Balance of signals" />
+          <PanelTitle title="Balance of signals" />
           <EvidenceBars verdict={verdict} />
           <p className="mt-5 text-[13px] leading-relaxed text-faint">
             {decisive(verdict)
@@ -99,7 +107,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
 
       {/* Analyzer details */}
       <section className="flex flex-col gap-3">
-        <p className="eyebrow px-2 pt-2">Analyzer details</p>
+        <h2 className="px-1 pt-2 text-[20px] font-semibold tracking-[-0.02em]">Analyzer details</h2>
         {job.analyzers.map((a) => (
           <AnalyzerPanel key={a.analyzer} result={a} />
         ))}
@@ -138,7 +146,7 @@ function Actions({ sha, title }: { sha: string; title: string }) {
     }
   }
   return (
-    <div className="no-print flex flex-wrap gap-2 px-3 pb-4 sm:px-5 sm:pb-5">
+    <div className="no-print flex flex-wrap gap-2 pt-5">
       <button type="button" onClick={share} className="btn-ghost">
         {nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
         {nativeShare ? 'Share report' : 'Copy share link'}
@@ -146,7 +154,7 @@ function Actions({ sha, title }: { sha: string; title: string }) {
       <button type="button" onClick={() => window.print()} className="btn-ghost">
         <Printer className="size-4" /> Save as PDF
       </button>
-      <Link to="/new" className="btn-primary ml-auto max-sm:w-full">
+      <Link to="/new" className="btn-primary max-sm:w-full">
         <Plus className="size-4" strokeWidth={2.5} /> Analyze another
       </Link>
     </div>
@@ -285,18 +293,30 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
   )
 }
 
+// Empty fields collapse into one line, so a stripped file doesn't read as a wall of dashes.
 function Fields({ rows }: { rows: [string, ReactNode][] }) {
+  const shown = rows.filter(([, v]) => v !== null && v !== undefined)
+  const missing = rows.filter(([, v]) => v === null || v === undefined).map(([k]) => k)
   return (
-    <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-      {rows.map(([k, v]) => (
-        <div key={k} className="min-w-0">
-          <dt className="text-[12px] text-faint">{k}</dt>
-          <dd className="mt-0.5 truncate text-sm text-ink" title={typeof v === 'string' ? v : undefined}>
-            {v ?? <span className="text-faint">—</span>}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <div>
+      {shown.length > 0 && (
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {shown.map(([k, v]) => (
+            <div key={k} className="min-w-0">
+              <dt className="text-[12px] text-faint">{k}</dt>
+              <dd className="mt-0.5 truncate text-sm text-ink" title={typeof v === 'string' ? v : undefined}>
+                {v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {missing.length > 0 && (
+        <p className={`text-[13px] leading-relaxed text-faint ${shown.length > 0 ? 'mt-4' : ''}`}>
+          Not recorded: {missing.join(', ')}.
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -634,28 +654,28 @@ function EvidenceChips({ job, verdict }: { job: Job; verdict: Verdict }) {
   const missedAi = verdict.label === 'likely_ai_generated' && reading && !flagsAi && source !== SOURCE.detector
   const outweighed = verdict.label === 'likely_authentic' && flagsAi
   return (
-    <div className="mt-4 flex flex-col items-start gap-2">
+    <div className="mt-4 flex flex-wrap items-start gap-2">
       {source && verdict.label !== 'inconclusive' && (
-        <span className="frost inline-flex items-start gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+        <span className="inline-flex items-start gap-2 rounded-full bg-raised px-3.5 py-1.5 text-[13px] font-semibold text-ink">
           <ShieldCheck className="mt-px size-4 shrink-0" />
           <span>
-            <span className="font-medium text-white/75">{settled ? 'Decided by ' : 'Mainly from '}</span>
+            <span className="font-medium text-muted">{settled ? 'Decided by ' : 'Mainly from '}</span>
             {source}
           </span>
         </span>
       )}
       {reading && (
-        <span className="frost inline-flex items-start gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+        <span className="inline-flex items-start gap-2 rounded-full bg-raised px-3.5 py-1.5 text-[13px] font-semibold text-ink">
           <Sparkles className="mt-px size-4 shrink-0" />
           <span>
-            <span className="font-medium text-white/75">Pixel detector: </span>
+            <span className="font-medium text-muted">Pixel detector: </span>
             {reading.band.label}
           </span>
         </span>
       )}
-      {missedAi && <p className="max-w-lg text-[13px] leading-relaxed text-white/80">{KNOWN_GAP}</p>}
+      {missedAi && <p className="max-w-lg text-[13px] leading-relaxed text-muted">{KNOWN_GAP}</p>}
       {outweighed && (
-        <p className="max-w-lg text-[13px] leading-relaxed text-white/80">
+        <p className="max-w-lg text-[13px] leading-relaxed text-muted">
           The pixel detector flags this image, but stronger evidence outweighs it. It also flags some real
           photos, especially heavily filtered ones.
         </p>
@@ -681,7 +701,6 @@ function SeenBefore({ sha }: { sha: string }) {
   return (
     <section className="panel animate-rise rounded-xl p-5 sm:p-6">
       <PanelTitle
-        eyebrow="Seen before"
         title={items.length === 1 ? 'A near-identical image was analyzed before' : `${items.length} near-identical images were analyzed before`}
       />
       <p className="mt-1 text-[13px] text-faint">

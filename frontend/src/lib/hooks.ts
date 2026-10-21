@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type JobSummary } from './api'
 import type { HistoryEntry } from './history'
+import { devFixture } from './devData'
 
 export type ServerState = 'checking' | 'waking' | 'online' | 'offline'
 
@@ -31,6 +32,7 @@ export function useSummaries(entries: HistoryEntry[]) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (devFixture()) return // dev worst-case data: verdicts come from the fixture below
     let cancelled = false
     let timer: ReturnType<typeof setTimeout> | undefined
     const load = () => {
@@ -55,5 +57,7 @@ export function useSummaries(entries: HistoryEntry[]) {
     }
   }, [ids])
 
+  const fixture = devFixture()
+  if (fixture) return { data: fixture.summaries, loading: false, error: null }
   return { data, loading, error }
 }

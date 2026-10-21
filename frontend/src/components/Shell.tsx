@@ -86,16 +86,15 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
         New analysis
       </NavLink>
 
-      <p className="eyebrow px-2 pb-3">Workspace</p>
-      <nav className="flex flex-col gap-1" aria-label="Main">
+      <nav className="flex flex-col gap-1.5" aria-label="Main">
         {NAV.filter((n) => n.to !== '/new').map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex h-12 items-center gap-3 rounded-full pr-4 pl-2 text-[15px] transition ${
-                isActive ? 'selected font-semibold' : 'text-muted hover:bg-hover hover:text-ink'
+              `flex h-12 items-center gap-3 rounded-full pr-2 pl-2 text-[15px] transition ${
+                isActive ? 'selected font-semibold shadow-[0_1px_2px_rgb(24_24_27/0.06)]' : 'text-muted hover:bg-hover hover:text-ink'
               }`
             }
           >
@@ -104,7 +103,7 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
             </span>
             <span className="flex-1">{label}</span>
             {to === '/history' && history.length > 0 && (
-              <span className="text-[13px] font-medium text-faint tabular-nums">{history.length}</span>
+              <span className="rounded-full bg-raised px-2.5 py-1 text-[12px] font-semibold text-muted tabular-nums">{history.length}</span>
             )}
           </NavLink>
         ))}
@@ -113,8 +112,8 @@ function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
       {/* One card for everything below the nav: privacy, theme, status. Every row is full width. */}
       <div className="panel mt-auto flex flex-col gap-3 rounded-lg p-3">
         <div className="px-1 pt-1">
-          <p className="eyebrow">Privacy</p>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+          <span className="tag-hi">Private by design</span>
+          <p className="mt-2.5 text-[13px] leading-relaxed text-muted">
             Files are deleted after analysis. Only a hash, a thumbnail and the findings are kept, for
             90 days.
           </p>
@@ -155,15 +154,16 @@ const SERVER_LABEL: Record<ServerState, { text: string; dot: string }> = {
   offline: { text: 'API offline', dot: 'bg-ai' },
 }
 
-/** `compact` shows only the dot while the API is up, and words once something needs saying. */
+/** `compact` shows only the dot while the API is up, and words once something needs saying.
+ *  Below 380px the words don't fit beside the wordmark, so compact keeps just the dot there. */
 export function ServerBadge({ compact = false }: { compact?: boolean }) {
   const state = useServerStatus()
   const s = SERVER_LABEL[state]
   const quiet = compact && state === 'online'
   return (
     <span className="flex items-center gap-2 text-[13px] font-medium text-faint" title={s.text}>
-      <span className={`size-2 rounded-full ${s.dot}`} />
-      <span className={quiet ? 'sr-only' : ''}>{s.text}</span>
+      <span className={`size-2 shrink-0 rounded-full ${s.dot}`} />
+      <span className={quiet ? 'sr-only' : compact ? 'whitespace-nowrap max-[379px]:sr-only' : 'whitespace-nowrap'}>{s.text}</span>
     </span>
   )
 }
@@ -171,7 +171,7 @@ export function ServerBadge({ compact = false }: { compact?: boolean }) {
 function MobileTopBar({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <header className="no-print panel-bar sticky top-0 z-30 px-4 pt-[env(safe-area-inset-top)] lg:hidden">
-      <div className="flex h-16 items-center justify-between">
+      <div className="flex h-16 items-center justify-between gap-3">
         <NavLink to="/">
           <Logo />
         </NavLink>

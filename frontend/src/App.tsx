@@ -8,9 +8,11 @@ import { Overview } from './pages/Overview'
 import { Report } from './pages/Report'
 import { Settings } from './pages/Settings'
 import { ErrorPanel } from './components/ui'
+import { DevDataToggle } from './components/DevDataToggle'
 
 export default function App() {
   return (
+    <>
     <Routes>
       <Route element={<Shell />}>
         <Route index element={<Overview />} />
@@ -30,5 +32,7 @@ export default function App() {
         />
       </Route>
     </Routes>
+    {import.meta.env.DEV && <DevDataToggle />}
+    </>
   )
 }

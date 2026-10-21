@@ -8,7 +8,7 @@ import { usePrefs } from '../lib/prefs'
 import { clearWithUndo, removeWithUndo } from '../lib/undo'
 import { useSummaries } from '../lib/hooks'
 import { VERDICTS } from '../lib/verdicts'
-import { OrbitGlyph, PageHeader, Thumb, VerdictBadge } from '../components/ui'
+import { FileName, PageHeader, Thumb, VerdictBadge } from '../components/ui'
 
 type Filter = 'all' | 'flagged' | VerdictLabel
 
@@ -45,8 +45,7 @@ export function History() {
   return (
     <div>
       <PageHeader
-        eyebrow="Archive"
-        title="Analysis history."
+        title="History"
         subtitle="Every image you analyzed on this device. The list lives in your browser, not on the server."
         action={
           <Link to="/new" className="btn-primary">
@@ -55,8 +54,16 @@ export function History() {
         }
       />
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="panel flex flex-1 items-center gap-2.5 rounded-md px-3.5 py-2 focus-within:border-primary">
+      {/* Search and filters only once there is something to search. */}
+      {history.length > 0 && (
+      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center">
+        {/* How many rows the current search and filter leave, in dot-matrix, tagged with the filter. */}
+        <p className="flex shrink-0 items-start gap-2" aria-live="polite">
+          <span className="dot-num text-[56px]">{rows.length}</span>
+          <span className="tag-hi mt-1">{filter === 'all' ? 'Total' : FILTERS.find((f) => f.key === filter)!.label}</span>
+          <span className="sr-only">analyses shown</span>
+        </p>
+        <label className="panel flex flex-1 items-center gap-2.5 rounded-full px-4 py-2.5">
           <Search className="size-4 text-faint" aria-hidden />
           <input
             type="search"
@@ -76,8 +83,8 @@ export function History() {
               type="button"
               onClick={() => setFilter(f.key)}
               aria-pressed={filter === f.key}
-              className={`shrink-0 rounded-md px-3 py-2 text-[13px] transition ${
-                filter === f.key ? 'selected font-medium' : 'panel text-muted hover:text-ink'
+              className={`shrink-0 rounded-full px-3.5 py-2 text-[13px] font-medium transition ${
+                filter === f.key ? 'bg-primary text-on-primary' : 'btn-ghost !px-3.5 !py-2 !text-[13px] text-muted hover:text-ink'
               }`}
             >
               {f.label}
@@ -85,24 +92,24 @@ export function History() {
           ))}
         </div>
       </div>
+      )}
 
       {error && <p className="mb-4 text-sm text-ai">{error}</p>}
 
       {history.length === 0 ? (
-        <div className="panel flex flex-col items-center rounded-xl px-6 py-14 text-center">
-          <OrbitGlyph className="h-14 w-28 text-faint" />
-          <p className="mt-4 text-[17px] font-semibold">Nothing here yet</p>
-          <p className="mt-1 max-w-xs text-[15px] text-faint">Analyses you run on this device will appear here.</p>
-          <Link to="/new" className="btn-ghost mt-6">
+        <div className="panel rounded-xl px-6 py-8">
+          <p className="text-[17px] font-semibold">Nothing here yet</p>
+          <p className="mt-1 max-w-sm text-[15px] text-muted">Analyses you run on this device will appear here.</p>
+          <Link to="/new" className="btn-primary mt-5">
             <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
           </Link>
         </div>
       ) : rows.length === 0 ? (
-        <div className="panel rounded-xl px-6 py-12 text-center text-sm text-faint">No analyses match.</div>
+        <div className="panel rounded-xl px-6 py-8 text-[15px] text-muted">No analyses match this search and filter.</div>
       ) : (
         <div className="panel overflow-hidden rounded-xl">
           {/* header row, desktop only */}
-          <div className="grid grid-cols-[1fr_150px_120px_40px] gap-4 border-b border-line px-5 py-3 font-mono text-[11px] tracking-widest text-faint uppercase max-md:hidden">
+          <div className="grid grid-cols-[1fr_150px_120px_40px] gap-4 border-b border-line px-5 py-3 text-[12px] font-medium text-faint max-md:hidden">
             <span>File</span>
             <span>Verdict</span>
             <span>Analyzed</span>
@@ -115,19 +122,21 @@ export function History() {
                 <li key={entry.jobId} className="group animate-rise relative border-b border-line last:border-0">
                   <Link
                     to={`/analysis/${entry.jobId}`}
-                    className="grid grid-cols-[1fr_auto_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
+                    className="grid grid-cols-[1fr_32px] items-center gap-3 px-4 py-3 transition hover:bg-raised md:grid-cols-[1fr_150px_120px_40px] md:gap-4 md:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-11 shrink-0 rounded-full" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{entry.filename}</p>
-                        <p className="truncate text-[13px] whitespace-nowrap text-faint">
-                          {formatBytes(entry.sizeBytes)}
-                          <span className="md:hidden"> · {formatWhen(entry.uploadedAt)}</span>
-                        </p>
+                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-lg" />
+                      <div className="min-w-0 flex-1">
+                        <FileName name={entry.filename} className="text-sm font-medium" />
+                        <p className="truncate text-[13px] whitespace-nowrap text-faint max-md:hidden">{formatBytes(entry.sizeBytes)}</p>
+                        {/* On phones the verdict sits under the name, so the name gets the row's full width. */}
+                        <div className="mt-1 flex min-w-0 items-center gap-2 md:hidden">
+                          {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
+                          <span className="truncate text-[13px] text-faint">{formatWhen(entry.uploadedAt)}</span>
+                        </div>
                       </div>
                     </div>
-                    <div>{s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}</div>
+                    <div className="max-md:hidden">{s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}</div>
                     <span className="text-[13px] text-faint max-md:hidden">{formatWhen(entry.uploadedAt)}</span>
                     <span />
                   </Link>

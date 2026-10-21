@@ -1,6 +1,8 @@
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  // Pick the unit after rounding, so 1,048,575 bytes reads "1.0 MB", not "1024.0 KB".
+  const kb = (bytes / 1024).toFixed(1)
+  if (Number(kb) < 1024) return `${kb} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 

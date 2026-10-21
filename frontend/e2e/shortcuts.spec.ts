@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockApi, skipWelcome } from './mock-api'
+import { mockApi, seedHistory, skipWelcome } from './mock-api'
 
 test.beforeEach(async ({ page }) => {
   await mockApi(page)
@@ -21,6 +21,7 @@ test('? lists the shortcuts, Escape closes the list, N starts an analysis', asyn
 })
 
 test('typing in a text field is never taken as a shortcut', async ({ page }) => {
+  await seedHistory(page) // History shows its search box only once there is something to search
   await page.goto('/history')
   await page.getByRole('searchbox', { name: 'Search by filename' }).fill('n?')
   await expect(page).toHaveURL(/\/history$/)
