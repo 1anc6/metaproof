@@ -1,4 +1,4 @@
-import { ArrowUpRight, Copy, Droplets, EyeOff, Filter, Fingerprint, Layers, Plus, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, EyeOff, Filter, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatWhen } from '../lib/format'
@@ -6,16 +6,18 @@ import { useHistory } from '../lib/history'
 import { useSummaries } from '../lib/hooks'
 import { setPref, usePrefs } from '../lib/prefs'
 import { DEMO_REPORT_PATH } from '../lib/demo'
-import { Chip, EvidenceMap, FileName, OrbitGlyph, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
+import { Chip, FileName, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
 
 const LAYERS = [
-  { icon: Fingerprint, name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
-  { icon: Layers, name: 'File structure', detail: 'JPEG quality, segments and colour profile' },
-  { icon: ShieldCheck, name: 'Content Credentials', detail: 'Signed C2PA provenance' },
-  { icon: Droplets, name: 'Invisible watermark', detail: 'Marks hidden by Stable Diffusion tools' },
-  { icon: Sparkles, name: 'AI detector', detail: 'CLIP features, tested on unseen generators' },
-  { icon: Copy, name: 'Seen-before search', detail: 'Finds resized or recompressed copies' },
+  { name: 'Metadata', detail: 'EXIF, XMP and generator traces' },
+  { name: 'File structure', detail: 'JPEG quality, segments and colour profile' },
+  { name: 'Content Credentials', detail: 'Signed C2PA provenance' },
+  { name: 'Invisible watermark', detail: 'Marks hidden by Stable Diffusion tools' },
+  { name: 'AI detector', detail: 'CLIP features, tested on unseen generators' },
+  { name: 'Seen-before search', detail: 'Finds resized or recompressed copies' },
 ]
+
+const DEMO_SHA = DEMO_REPORT_PATH.split('/').pop()!
 
 export function Overview() {
   const history = useHistory()
@@ -39,45 +41,26 @@ export function Overview() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Hero */}
-      <section className="animate-rise grid items-center gap-8 xl:grid-cols-[minmax(0,1fr)_400px] xl:gap-10">
+      {/* Hero: what this is, one action, and a real report beside it instead of decoration. */}
+      <section className="animate-rise grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-end lg:gap-12">
         <div className="max-w-xl">
-          <p className="eyebrow">Image forensics, explained</p>
-          {/* Sized to break into two even lines: on a phone, and beside the card on desktop. */}
-          <h1 className="mt-3 text-[40px] leading-[1.02] font-medium tracking-[-0.04em] sm:mt-4 sm:text-[72px] sm:leading-[0.98] sm:tracking-[-0.045em] xl:text-[60px]">
-            See what's behind the image.
+          <h1 className="text-[36px] leading-[1.04] font-medium tracking-[-0.035em] sm:text-[48px]">
+            See what's behind the image
           </h1>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted sm:hidden">
-            Checks metadata, credentials and pixels, and tells you what the evidence says.
+          <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-muted">
+            MetaProof reads an image's metadata, Content Credentials and pixels, then tells you what the
+            evidence shows, and when it isn't enough to say anything.
           </p>
-          <p className="mt-6 max-w-md text-[17px] leading-relaxed text-muted max-sm:hidden">
-            MetaProof checks metadata, Content Credentials and the pixels themselves, then tells you
-            what the evidence says — and when it isn't enough to say anything.
-          </p>
-          {/* Two equal buttons side by side on a phone; natural widths from the small breakpoint. */}
-          <div className="mt-7 grid grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-            <Link to="/new" className="btn-primary h-12 px-4 sm:px-6">
+          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link to="/new" className="btn-primary h-12 px-6">
               <Plus className="size-4" strokeWidth={2.5} /> New analysis
             </Link>
-            <Link to={DEMO_REPORT_PATH} className="btn-ghost h-12 px-4 sm:px-5">
-              <span className="sm:hidden">Example report</span>
-              <span className="max-sm:hidden">See an example report</span>
-              <ArrowUpRight className="size-4 shrink-0 text-faint" />
+            <Link to="/method" className="inline-flex items-center gap-1.5 text-[15px] font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
+              How it works
             </Link>
           </div>
         </div>
-        <EvidenceMap to={DEMO_REPORT_PATH} title="Example findings" className="max-sm:hidden" />
-        {/* On phones a compact version, so the whole hero fits above the tab bar. */}
-        <Link to={DEMO_REPORT_PATH} className="mesh mesh-gold flex items-center gap-4 rounded-xl p-4 sm:hidden">
-          <OrbitGlyph className="h-11 w-[88px] shrink-0 text-white" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[17px] font-medium tracking-[-0.01em]">Example findings</span>
-            <span className="block text-[13px] text-white/80">Open a real report</span>
-          </span>
-          <span className="frost grid size-10 shrink-0 place-items-center rounded-full">
-            <ArrowUpRight className="size-4" strokeWidth={1.75} />
-          </span>
-        </Link>
+        <ExampleReport />
       </section>
 
       {/* Stats from this browser's analyses; four zeros tell a first-time visitor nothing. Two by
@@ -95,10 +78,10 @@ export function Overview() {
         {/* Recent analyses */}
         <section className="panel animate-rise rounded-xl p-2">
           <div className="flex flex-wrap items-end justify-between gap-4 px-4 pt-4 pb-3 sm:px-5">
-            <PanelTitle eyebrow="Recent signals" title="Latest analyses" />
+            <PanelTitle title="Recent analyses" />
             {history.length > 0 && (
-              <Link to="/history" className="well size-11" aria-label="View all analyses">
-                <ArrowUpRight className="size-4" />
+              <Link to="/history" className="inline-flex items-center gap-1 text-[14px] font-medium text-muted hover:text-ink">
+                View all <ArrowRight className="size-3.5" />
               </Link>
             )}
           </div>
@@ -124,7 +107,7 @@ export function Overview() {
                       to={`/analysis/${entry.jobId}`}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-hover"
                     >
-                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-full" />
+                      <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-12 shrink-0 rounded-md" />
                       <div className="min-w-0 flex-1">
                         <FileName name={entry.filename} className="text-[15px] font-semibold" />
                         {/* On phones the verdict sits under the name, so the name gets the row's full width. */}
@@ -146,25 +129,20 @@ export function Overview() {
           )}
         </section>
 
-        {/* Evidence layers */}
+        {/* The six checks, as a plain list: the names carry it, no icons needed. */}
         <section className="panel animate-rise rounded-xl p-6">
-          <PanelTitle eyebrow="Evidence layers" title="Six independent checks" />
+          <PanelTitle title="Six checks on every image" />
           {/* Returning visitors on phones came for their files; the checks fold down to the link. */}
-          <ul className={`stagger mt-5 flex flex-col gap-2 ${history.length > 0 ? 'max-sm:hidden' : ''}`}>
-            {LAYERS.map(({ icon: Icon, name, detail }) => (
-              <li key={name} className="animate-rise flex items-center gap-3">
-                <span className="well size-10">
-                  <Icon className="size-4" strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-semibold">{name}</p>
-                  <p className="truncate text-[13px] text-faint">{detail}</p>
-                </div>
-              </li>
+          <dl className={`mt-4 flex flex-col divide-y divide-line ${history.length > 0 ? 'max-sm:hidden' : ''}`}>
+            {LAYERS.map(({ name, detail }) => (
+              <div key={name} className="py-3 first:pt-0">
+                <dt className="text-[15px] font-semibold">{name}</dt>
+                <dd className="mt-0.5 text-[14px] text-muted">{detail}</dd>
+              </div>
             ))}
-          </ul>
-          <Link to="/method" className="btn-ghost mt-6 w-full max-sm:mt-4">
-            Read the method <ArrowUpRight className="size-4 text-faint" />
+          </dl>
+          <Link to="/method" className="mt-4 inline-flex items-center gap-1 text-[14px] font-medium text-muted hover:text-ink">
+            Read the method <ArrowRight className="size-3.5" />
           </Link>
         </section>
       </div>
@@ -195,15 +173,36 @@ function Stat({ to, label, value, note, tone }: { to: string; label: string; val
 
 function EmptyRecent() {
   return (
-    <div className="flex flex-col items-center px-6 pt-6 pb-10 text-center">
-      <OrbitGlyph className="h-14 w-28 text-faint" />
-      <p className="mt-4 text-[17px] font-semibold">No analyses yet</p>
-      <p className="mt-1 max-w-xs text-[15px] text-faint">
+    <div className="px-5 pt-1 pb-6">
+      <p className="text-[15px] font-semibold">No analyses yet</p>
+      <p className="mt-1 max-w-sm text-[15px] text-muted">
         Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
       </p>
-      <Link to="/new" className="btn-ghost mt-6">
+      <Link to="/new" className="btn-ghost mt-5">
         <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
       </Link>
     </div>
+  )
+}
+
+/**
+ * A real report in miniature: the stored demo image and what its report found. The copy mirrors
+ * that report (lib/demo.ts), so keep the two in step if the demo changes.
+ */
+function ExampleReport() {
+  return (
+    <Link to={DEMO_REPORT_PATH} className="panel group flex gap-4 rounded-xl p-3 sm:gap-5 sm:p-4">
+      <Thumb sha={DEMO_SHA} className="aspect-square w-28 shrink-0 rounded-lg sm:w-36" />
+      <div className="flex min-w-0 flex-col py-1">
+        <p className="text-[13px] font-medium text-faint">Example report</p>
+        <p className="mt-1 text-[22px] leading-tight font-semibold tracking-[-0.02em] text-ai">Likely AI-generated</p>
+        <p className="mt-2 text-[14px] leading-relaxed text-muted">
+          The pixel detector rates it 99% AI. No camera metadata, no Content Credentials.
+        </p>
+        <span className="mt-auto inline-flex items-center gap-1 pt-2 text-[14px] font-medium text-ink">
+          Open the report <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </div>
+    </Link>
   )
 }

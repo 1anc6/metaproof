@@ -299,12 +299,12 @@ export function PageHeader({
 }
 
 /** Section heading inside a panel: a small capitals label over a short title. */
-export function PanelTitle({ eyebrow, title, action }: { eyebrow: string; title: ReactNode; action?: ReactNode }) {
+export function PanelTitle({ eyebrow, title, action }: { eyebrow?: string; title: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-end justify-between gap-4">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h2 className="mt-1 text-[22px] font-medium tracking-[-0.02em]">{title}</h2>
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+        <h2 className={`text-[20px] font-semibold tracking-[-0.02em] ${eyebrow ? 'mt-1' : ''}`}>{title}</h2>
       </div>
       {action}
     </div>

@@ -75,10 +75,6 @@ export function Welcome() {
       aria-modal="true"
       aria-labelledby="welcome-title"
       className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-canvas px-5 sm:px-[max(1.25rem,calc((100vw-28rem)/2))] pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] lg:hidden"
-      style={{
-        backgroundImage:
-          'radial-gradient(28rem 24rem at 100% -4rem, var(--glow-1), transparent 70%), radial-gradient(24rem 22rem at -10% 40%, var(--glow-2), transparent 70%), radial-gradient(26rem 20rem at 60% 110%, var(--glow-3), transparent 70%)',
-      }}
     >
       <div className="flex items-center justify-between">
         <Logo />
