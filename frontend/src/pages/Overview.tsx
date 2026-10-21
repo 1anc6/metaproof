@@ -8,7 +8,8 @@ import { useSummaries } from '../lib/hooks'
 import { setPref, usePrefs } from '../lib/prefs'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { toneOf, VERDICTS } from '../lib/verdicts'
-import { ArcGauge, Chip, FileName, Figure, LeaderRow, PanelTitle, RadialChecks, Thumb, VerdictBadge } from '../components/ui'
+import { ArcGauge, Chip, FileName, Figure, LeaderRow, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
+import { CheckWheel, Lens } from '../components/CheckWheel'
 import { CHECKS, DEMO_SHA } from '../lib/checks'
 
 
@@ -36,21 +37,20 @@ export function Overview() {
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
-      <section className="animate-rise grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-8">
-        <div className="flex min-w-0 flex-col gap-6">
-          <div>
-            <h1 className="max-w-xl text-[40px] leading-[1.02] font-normal tracking-[-0.035em] sm:text-[56px]">
-              See what's behind the image
-            </h1>
-            <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-muted">
-              MetaProof reads an image's metadata, Content Credentials and pixels, then tells you what the
-              evidence shows, and when it isn't enough to say anything.
-            </p>
-          </div>
-          <ChecksPanel />
-        </div>
+      {/* The title runs across the top; below it the wheel and the cards share one row, top and
+          bottom aligned. */}
+      <header className="animate-rise grid gap-x-10 gap-y-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-end">
+        <h1 className="text-[40px] leading-[1.02] font-normal tracking-[-0.035em] sm:text-[56px]">See what's behind the image</h1>
+        <p className="max-w-lg text-[16px] leading-relaxed text-muted lg:pb-1.5">
+          MetaProof reads an image's metadata, Content Credentials and pixels, then tells you what the evidence
+          shows, and when it isn't enough to say anything.
+        </p>
+      </header>
 
-        <div className="flex min-w-0 flex-col gap-4">
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8">
+        <ChecksPanel className="animate-rise" />
+
+        <div className="animate-rise flex min-w-0 flex-col gap-4 [&>*:last-child]:flex-1">
           {latest ? (
             <ResultCard
               to={`/analysis/${latest.jobId}`}
@@ -170,7 +170,7 @@ export function ChecksPanel({ className = '' }: { className?: string }) {
   const [active, setActive] = useState('c2pa')
   const check = CHECKS.find((c) => c.key === active)!
   return (
-    <section className={`relative isolate overflow-hidden rounded-xl bg-[#2a2620] p-5 text-white sm:p-7 ${className}`} aria-label="The six checks">
+    <section className={`relative isolate flex flex-col overflow-hidden rounded-xl bg-[#2a2620] p-5 text-white sm:p-7 ${className}`} aria-label="The six checks">
       <Thumb sha={DEMO_SHA} eager className="!absolute inset-0 -z-10 scale-125 !bg-transparent opacity-80 blur-2xl brightness-[0.55]" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-transparent to-black/40" aria-hidden />
       <div className="flex items-center justify-between">
@@ -179,23 +179,11 @@ export function ChecksPanel({ className = '' }: { className?: string }) {
           <span className="size-2 rounded-full bg-accent" aria-hidden /> Live
         </span>
       </div>
-      <RadialChecks
-        items={CHECKS}
-        active={active}
-        onSelect={setActive}
-        className="mx-auto mt-2 max-w-[420px]"
-        center={
-          <span className="grid size-full place-items-center rounded-full bg-[#1d1b17] p-[14%] shadow-[0_10px_30px_-10px_rgb(0_0_0/0.8)]">
-            <span className="grid size-full place-items-center rounded-full bg-[#e6ec8f]">
-              <span className="size-[9%] rounded-full bg-[#1d1b17]" />
-            </span>
-          </span>
-        }
-      />
-      <div className="glass mt-4 rounded-lg p-4 sm:p-5" aria-live="polite">
-        <h3 className="text-[15px] tracking-[0.02em] uppercase">{check.label}</h3>
-        <p className="mt-2 text-[15px] leading-relaxed text-white/85">{check.detail}</p>
-        <div className="mt-3 flex items-center gap-3 text-[14px]">
+      <CheckWheel items={CHECKS} active={active} onSelect={setActive} className="mx-auto mt-1 max-w-[440px]" center={<Lens />} />
+      <div className="glass mt-auto rounded-lg p-4 sm:p-5" aria-live="polite">
+        <h3 key={check.key} className="animate-rise text-[15px] tracking-[0.02em] uppercase">{check.label}</h3>
+        <p key={`${check.key}-d`} className="animate-rise mt-2 text-[15px] leading-relaxed text-white/85 [animation-delay:60ms]">{check.detail}</p>
+        <div key={`${check.key}-w`} className="animate-rise mt-3 flex items-center gap-3 text-[14px] [animation-delay:120ms]">
           <span className="text-white/70">Weight in the verdict</span>
           <span className="leader opacity-60 invert" aria-hidden />
           <span>{check.weight}</span>
@@ -269,7 +257,7 @@ function UploadCard() {
           <Plus className="size-5" strokeWidth={1.75} />
         </span>
       </div>
-      <dl>
+      <dl className="mt-auto">
         <LeaderRow label="Formats" value="JPEG · PNG · WebP · TIFF · HEIC" />
         <LeaderRow label="Size" value="Up to 25 MB" />
         <LeaderRow label="File" value="Deleted after" />

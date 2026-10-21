@@ -1,12 +1,12 @@
 import { Copy, Droplets, Fingerprint, Layers, ShieldCheck, Sparkles } from 'lucide-react'
-import type { RadialItem } from '../components/ui'
+import type { WheelItem } from '../components/CheckWheel'
 import { DEMO_REPORT_PATH } from './demo'
 
 /** The stored example report's image, for the blurred photo panels. */
 export const DEMO_SHA = DEMO_REPORT_PATH.split('/').pop()!
 
 /** The six checks, with what each one does and how much weight its findings carry. */
-export const CHECKS: (RadialItem & { detail: string; weight: string })[] = [
+export const CHECKS: (WheelItem & { detail: string; weight: string })[] = [
   { key: 'metadata', label: 'Metadata', icon: Fingerprint, detail: 'EXIF, XMP and the traces generators leave in a file.', weight: 'Weak to strong' },
   { key: 'structure', label: 'Structure', icon: Layers, detail: 'JPEG quality, segments and colour profile: how the file was written.', weight: 'Explains only' },
   { key: 'c2pa', label: 'Credentials', icon: ShieldCheck, detail: 'Signed C2PA provenance, checked with the official SDK.', weight: 'Can decide' },

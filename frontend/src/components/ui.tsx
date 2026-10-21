@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { ImageOff, Monitor, Moon, Sun, type LucideIcon } from 'lucide-react'
 import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
 import { setPref, usePrefs } from '../lib/prefs'
@@ -134,6 +134,40 @@ export function LeaderRow({ icon: Icon, label, value }: { icon?: LucideIcon; lab
   )
 }
 
+const stillMotion = () =>
+  typeof window === 'undefined' ||
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+  document.visibilityState !== 'visible'
+
+/** A number that counts up from zero when it appears. Shows the final value at once for reduced
+ *  motion, or when the page isn't visible (animation frames would never arrive). */
+export function CountUp({ to, decimals = 0, ms = 900 }: { to: number; decimals?: number; ms?: number }) {
+  const [shown, setShown] = useState(0)
+  const still = stillMotion()
+  useEffect(() => {
+    if (still) return
+    let frame = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / ms)
+      setShown(to * (1 - Math.pow(1 - t, 3)))
+      if (t < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [to, ms, still])
+  return <>{(still ? to : shown).toFixed(decimals)}</>
+}
+
+/** A figure's value, counting up when it is a plain number like 99 or 2.0. */
+function animated(value: ReactNode) {
+  if (typeof value === 'number') return <CountUp to={value} decimals={Number.isInteger(value) ? 0 : 1} />
+  if (typeof value === 'string' && /^\d+(\.\d+)?$/.test(value)) {
+    return <CountUp to={Number(value)} decimals={value.split('.')[1]?.length ?? 0} />
+  }
+  return value
+}
+
 /** "Accuracy / 98 %": a label over a large light figure and its unit. */
 export function Figure({
   label,
@@ -153,7 +187,7 @@ export function Figure({
     <div className={`min-w-0 ${className}`}>
       <p className="text-[15px] text-muted">{label}</p>
       <p className="mt-1 flex items-baseline gap-1">
-        <span className={`num leading-none ${text}`}>{value}</span>
+        <span className={`num leading-none ${text}`}>{animated(value)}</span>
         {unit && <span className="text-[14px] text-faint">{unit}</span>}
       </p>
     </div>
@@ -197,12 +231,16 @@ export function ArcGauge({
     <svg viewBox="0 0 320 150" className={`w-full ${className}`} aria-hidden>
       <path d={arc(0, 1, r + 14)} fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.2" strokeDasharray="1 5" strokeLinecap="round" />
       <path d={arc(0, 1)} fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1.5" strokeDasharray="4 5" />
-      {t > 0.005 && <path d={arc(0, t)} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />}
+      {t > 0.005 && (
+        <path d={arc(0, t)} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" pathLength={1} strokeDasharray="1" className="animate-draw" />
+      )}
       <circle cx={at(0)[0]} cy={at(0)[1]} r="3.5" fill="currentColor" fillOpacity="0.45" />
       <circle cx={at(1)[0]} cy={at(1)[1]} r="3.5" fill="currentColor" fillOpacity="0.45" />
-      <line x1={mx} y1={my - 16} x2={mx} y2={my - 6} stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx={mx} cy={my} r="6" fill="var(--color-accent)" stroke="currentColor" strokeWidth="2" />
-      <text x={mx} y={my + 24} textAnchor="middle" fontSize="13" fill="currentColor">{valueLabel}</text>
+      <g className="animate-rise [animation-delay:900ms]">
+        <line x1={mx} y1={my - 16} x2={mx} y2={my - 6} stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <circle cx={mx} cy={my} r="6" fill="var(--color-accent)" stroke="currentColor" strokeWidth="2" />
+        <text x={mx} y={my + 24} textAnchor="middle" fontSize="13" fill="currentColor">{valueLabel}</text>
+      </g>
       {startLabel && <text x={s0x} y={s0y + 26} textAnchor="middle" fontSize="12" fill="currentColor" fillOpacity="0.55">{startLabel}</text>}
       {endLabel && <text x={s1x} y={s1y + 26} textAnchor="middle" fontSize="12" fill="currentColor" fillOpacity="0.55">{endLabel}</text>}
     </svg>
@@ -240,7 +278,10 @@ export function RangeRuler({
             <span key={i} className={`w-px ${i % 10 === 0 ? 'h-5 bg-ink/60' : 'h-2.5 bg-ink/25'}`} />
           ))}
         </div>
-        <span className="absolute bottom-0 h-9 w-[3px] -translate-x-1/2 rounded-full bg-ink" style={{ left: `${v}%` }}>
+        <span
+          className="animate-slide-to absolute bottom-0 h-9 w-[3px] -translate-x-1/2 rounded-full bg-ink"
+          style={{ left: `${v}%`, '--to': `${v}%` } as CSSProperties}
+        >
           <span className="absolute -top-1.5 left-1/2 size-3 -translate-x-1/2 rounded-full border-2 border-ink bg-accent" />
         </span>
       </div>
@@ -251,108 +292,6 @@ export function RangeRuler({
           </span>
         ))}
       </div>
-    </div>
-  )
-}
-
-export interface RadialItem {
-  key: string
-  label: string
-  icon: LucideIcon
-}
-
-/**
- * The reference's radial menu: the items as ring segments around a centre disc. Each segment is a
- * button; the chosen one lifts out and brightens. Drawn for a dark photo backdrop.
- */
-export function RadialChecks({
-  items,
-  active,
-  onSelect,
-  center,
-  className = '',
-}: {
-  items: RadialItem[]
-  active: string
-  onSelect: (key: string) => void
-  center?: ReactNode
-  className?: string
-}) {
-  const n = items.length
-  const R = 168
-  const r = 88
-  const gap = 3 // degrees between segments
-  const c = 180
-  const pt = (deg: number, rad: number) => {
-    const a = ((deg - 90) * Math.PI) / 180
-    return [c + rad * Math.cos(a), c + rad * Math.sin(a)] as const
-  }
-  const sector = (a0: number, a1: number, lift: number) => {
-    const mid = (((a0 + a1) / 2 - 90) * Math.PI) / 180
-    const dx = Math.cos(mid) * lift
-    const dy = Math.sin(mid) * lift
-    const [x0, y0] = pt(a0, R)
-    const [x1, y1] = pt(a1, R)
-    const [x2, y2] = pt(a1, r)
-    const [x3, y3] = pt(a0, r)
-    const f = (v: number) => v.toFixed(1)
-    return {
-      d: `M${f(x0)} ${f(y0)} A${R} ${R} 0 0 1 ${f(x1)} ${f(y1)} L${f(x2)} ${f(y2)} A${r} ${r} 0 0 0 ${f(x3)} ${f(y3)} Z`,
-      transform: `translate(${f(dx)} ${f(dy)})`,
-    }
-  }
-  return (
-    <div className={`relative aspect-square w-full ${className}`}>
-      <svg viewBox="0 0 360 360" className="absolute inset-0 size-full overflow-visible">
-        {items.map((item, i) => {
-          const step = 360 / n
-          const a0 = i * step + gap / 2 - step / 2
-          const a1 = a0 + step - gap
-          const on = item.key === active
-          const s = sector(a0, a1, on ? 10 : 0)
-          return (
-            <path
-              key={item.key}
-              d={s.d}
-              transform={s.transform}
-              role="button"
-              tabIndex={0}
-              aria-label={item.label}
-              aria-pressed={on}
-              onClick={() => onSelect(item.key)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSelect(item.key))}
-              className="cursor-pointer outline-none transition-[fill,transform] duration-300 focus-visible:stroke-white"
-              fill={on ? 'rgb(255 255 255 / 0.34)' : 'rgb(255 255 255 / 0.12)'}
-              stroke="rgb(255 255 255 / 0.22)"
-              strokeWidth="1"
-              style={{ backdropFilter: 'blur(12px)' }}
-            />
-          )
-        })}
-      </svg>
-      {/* labels and icons sit over the segment centres; the paths take the clicks */}
-      {items.map((item, i) => {
-        const step = 360 / n
-        const mid = i * step
-        const lift = item.key === active ? 10 : 0
-        const [x, y] = pt(mid, (R + r) / 2 + lift)
-        const Icon = item.icon
-        return (
-          <span
-            key={item.key}
-            className={`pointer-events-none absolute flex w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 text-center text-[12px] leading-tight text-white transition-opacity sm:text-[13px] ${
-              item.key === active ? 'opacity-100' : 'opacity-80'
-            }`}
-            style={{ left: `${(x / 360) * 100}%`, top: `${(y / 360) * 100}%` }}
-          >
-            <Icon className="size-5" strokeWidth={1.25} />
-            {item.label}
-          </span>
-        )
-      })}
-      {center && (
-        <div className="absolute top-1/2 left-1/2 grid aspect-square w-[40%] -translate-x-1/2 -translate-y-1/2 place-items-center">{center}</div>
-      )}
     </div>
   )
 }
@@ -378,7 +317,7 @@ export function DeviceCircle({
         <div className="relative size-full rounded-full border border-line-strong">
           {/* two dotted clusters, like the reference's perforated face */}
           <div
-            className="absolute inset-[8%] rounded-full opacity-70"
+            className="animate-spin-slow absolute inset-[8%] rounded-full opacity-70"
             style={{
               backgroundImage: 'radial-gradient(var(--color-faint) 1.2px, transparent 1.6px)',
               backgroundSize: '12px 12px',
@@ -391,7 +330,13 @@ export function DeviceCircle({
         </div>
       </div>
       {chips.slice(0, SLOTS.length).map((c, i) => (
-        <SpecChip key={c.label} label={c.label} value={c.value} className={`absolute ${SLOTS[i]}`} />
+        <SpecChip
+          key={c.label}
+          label={c.label}
+          value={c.value}
+          className={`animate-float absolute ${SLOTS[i]}`}
+          style={{ animationDelay: `${i * -0.9}s` }}
+        />
       ))}
     </div>
   )

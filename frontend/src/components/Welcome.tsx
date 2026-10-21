@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { useHistory } from '../lib/history'
-import { Mark, RadialChecks, Thumb } from './ui'
+import { Mark, Thumb } from './ui'
+import { CheckWheel, Lens } from './CheckWheel'
 import { CHECKS, DEMO_SHA } from '../lib/checks'
 
 const KEY = 'metaproof.welcome.v1'
@@ -106,19 +107,7 @@ export function Welcome() {
 
       {/* The six checks around the lens; it gives way on short phones so both buttons stay above the fold. */}
       <div className="flex flex-1 items-center py-4 [@media(max-height:720px)]:hidden">
-        <RadialChecks
-          items={CHECKS}
-          active={active}
-          onSelect={setActive}
-          className="mx-auto max-w-[340px]"
-          center={
-            <span className="grid size-full place-items-center rounded-full bg-[#1d1b17] p-[14%]">
-              <span className="grid size-full place-items-center rounded-full bg-[#e6ec8f]">
-                <span className="size-[9%] rounded-full bg-[#1d1b17]" />
-              </span>
-            </span>
-          }
-        />
+        <CheckWheel items={CHECKS} active={active} onSelect={setActive} className="mx-auto max-w-[340px]" center={<Lens />} />
       </div>
 
       <div className="flex flex-col gap-3 [@media(max-height:720px)]:mt-auto">
