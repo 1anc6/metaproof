@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Toaster } from 'sonner'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { useThemeSync } from '../lib/theme'
-import { Logo, Sparkle, ThemeToggle } from './ui'
+import { Logo, ThemeToggle } from './ui'
 
 const NAV = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
@@ -59,14 +59,14 @@ export function Shell() {
       <main
         id="main"
         tabIndex={-1}
-        className="mx-auto w-full max-w-[1180px] px-4 pt-1 pb-32 outline-none sm:px-8 lg:px-12 lg:pt-6 lg:pb-24"
+        className="mx-auto w-full max-w-[1120px] px-4 pt-1 pb-[calc(96px+env(safe-area-inset-bottom))] outline-none sm:px-8 lg:px-12 lg:pt-6 lg:pb-24"
       >
         <Outlet />
       </main>
       <Dock />
       {shortcuts && <Shortcuts onClose={() => setShortcuts(false)} />}
       {/* Bottom centre on every screen, clear of the dock. */}
-      <Toaster theme={theme} position="bottom-center" offset={{ bottom: 120 }} mobileOffset={{ bottom: 116 }} />
+      <Toaster theme={theme} position="bottom-center" offset={{ bottom: 88 }} mobileOffset={{ bottom: 88 }} />
     </div>
   )
 }
@@ -100,7 +100,7 @@ function TopBar({ theme }: { theme: 'light' | 'dark' }) {
   const tabs = NAV.filter((n) => n.to !== '/new')
   return (
     <header className="no-print relative z-30 px-4 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-12">
-      <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-3 lg:h-[76px]">
+      <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-3 lg:h-[76px]">
         <NavLink to="/" className="rounded-full">
           <Logo />
         </NavLink>
@@ -125,7 +125,7 @@ function TopBar({ theme }: { theme: 'light' | 'dark' }) {
             <ServerBadge compact />
           </span>
           <NavLink to="/new" title="New analysis (N)" className="btn-primary hidden h-11 px-5 text-[14px] lg:inline-flex">
-            <Sparkle className="size-4" /> New analysis
+            <Plus className="size-4" strokeWidth={2} /> New analysis
           </NavLink>
         </div>
       </div>
@@ -133,20 +133,23 @@ function TopBar({ theme }: { theme: 'light' | 'dark' }) {
   )
 }
 
+/** After a tap, let go of focus so the keyboard focus ring doesn't linger (some Android browsers
+ *  keep it); a keyboard activation has `detail` 0 and keeps it. */
+const releaseAfterTap = (e: React.MouseEvent<HTMLElement>) => {
+  if (e.detail > 0) e.currentTarget.blur()
+}
+
 /**
- * The reference's dock: tabs either side of a glowing orb for the main action. Spacing after the
- * tab bar rules: 4px between icon and label so they read as one, 12px paddings for an easy tap,
- * and a little more padding on top than below to balance the space the home indicator leaves.
+ * The navigation on phones and tablets: a bar on the bottom edge, not a card floating over the page.
+ * Near-opaque with a thin line on top, clear of the home indicator. 4px between each icon and its
+ * label; the main action is a plain filled circle in the middle.
  */
 function Dock() {
   const items = NAV.filter((n) => n.to !== '/new')
   const half = items.length / 2
   return (
-    <nav
-      className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),16px)] lg:hidden"
-      aria-label="Main"
-    >
-      <div className="dock pointer-events-auto flex w-full max-w-[360px] items-center justify-between rounded-[32px] px-1.5 pt-2 pb-1.5">
+    <nav className="dock no-print fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Main">
+      <div className="mx-auto flex h-16 max-w-[480px] items-center px-2">
         {items.slice(0, half).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}
@@ -154,15 +157,11 @@ function Dock() {
           to="/new"
           aria-label="New analysis"
           title="New analysis (N)"
-          className="relative mx-1.5 grid shrink-0 place-items-center rounded-full outline-none [&:focus-visible>.orb]:outline-2 [&:focus-visible>.orb]:outline-offset-4 [&:focus-visible>.orb]:outline-ink"
+          onClick={releaseAfterTap}
+          className="flex flex-1 basis-0 justify-center outline-none [&:focus-visible>.orb]:outline-2 [&:focus-visible>.orb]:outline-offset-2 [&:focus-visible>.orb]:outline-ink"
         >
-          {/* a slow swell of light behind the orb */}
-          <span
-            className="animate-halo pointer-events-none absolute -inset-2 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.35),transparent_68%)]"
-            aria-hidden
-          />
-          <span className="orb size-[50px] active:scale-95">
-            <Sparkle className="size-5" />
+          <span className="orb size-11 active:scale-95">
+            <Plus className="size-5" strokeWidth={2} />
           </span>
         </NavLink>
         {items.slice(half).map((item) => (
@@ -178,18 +177,17 @@ function TabLink({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
     <NavLink
       to={to}
       end={end}
+      onClick={releaseAfterTap}
       // The focus ring goes round the tab, not the whole hit area.
-      className="flex min-w-0 flex-1 basis-0 justify-center outline-none [&:focus-visible>span]:outline-2 [&:focus-visible>span]:outline-offset-2 [&:focus-visible>span]:outline-ink"
+      className="flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 py-1 outline-none [&:focus-visible>span:first-child]:outline-2 [&:focus-visible>span:first-child]:outline-ink"
     >
       {({ isActive }) => (
-        <span
-          className={`flex w-full flex-col items-center gap-1 rounded-[20px] px-1 py-1.5 transition ${
-            isActive ? 'selected' : 'text-faint hover:text-ink'
-          }`}
-        >
-          <Icon className="size-[18px]" strokeWidth={isActive ? 1.75 : 1.5} aria-hidden />
-          <span className="text-[10.5px] leading-none whitespace-nowrap">{label}</span>
-        </span>
+        <>
+          <span className={`grid h-7 w-12 place-items-center rounded-full transition ${isActive ? 'bg-raised text-ink' : 'text-faint'}`}>
+            <Icon className="size-5" strokeWidth={isActive ? 1.9 : 1.5} aria-hidden />
+          </span>
+          <span className={`text-[11px] leading-none whitespace-nowrap ${isActive ? 'font-medium text-ink' : 'text-faint'}`}>{label}</span>
+        </>
       )}
     </NavLink>
   )
@@ -216,7 +214,7 @@ function Shortcuts({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         onClick={(e) => e.stopPropagation()}
-        className="panel panel-raised animate-pop w-full max-w-sm rounded-[28px] p-4 sm:p-6"
+        className="panel panel-raised animate-pop w-full max-w-sm rounded-xl p-4 sm:p-6"
       >
         <div className="flex items-center justify-between">
           <h2 id="shortcuts-title" className="display text-[28px] leading-none">

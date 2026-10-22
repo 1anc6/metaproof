@@ -226,7 +226,7 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className={`panel animate-rise rounded-xl p-4 sm:p-6 ${className}`}>
+    <section className={`panel animate-rise rounded-xl p-4 sm:p-5 ${className}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="eyebrow">{title}</h2>
         {action}

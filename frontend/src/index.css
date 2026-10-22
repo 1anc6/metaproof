@@ -6,33 +6,33 @@
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
-  /* Graphite: a grey gradient body, smoked-glass panels, glossy pills lit from above, white text,
-     and one glowing white orb for the main action. Colour appears only on verdicts. Dark is the
-     reference; light is the same materials in silver. */
-  --color-canvas: #d2d2d2;
-  --color-raised: rgb(0 0 0 / 0.06); /* tracks, wells */
-  --color-hover: rgb(255 255 255 / 0.5);
-  --color-line: rgb(0 0 0 / 0.08);
-  --color-line-strong: rgb(0 0 0 / 0.18);
-  --color-ink: #141414;
-  --color-muted: #3a3a3a;
-  --color-faint: #575757; /* 4.6:1 on the darkest silver */
-  --color-primary: #1b1b1b;
+  /* An investigation tool, set like a publication: soft off-white or charcoal, flat surfaces
+     separated by thin lines, near-black ink, one serif for verdicts and titles. Colour appears only
+     on analysis states: muted green (authentic), amber (AI), rust (edited), grey (inconclusive). */
+  --color-canvas: #f4f3f0;
+  --color-raised: rgb(20 20 18 / 0.045); /* tracks, wells, quiet fills */
+  --color-hover: rgb(20 20 18 / 0.05);
+  --color-line: rgb(20 20 18 / 0.09);
+  --color-line-strong: rgb(20 20 18 / 0.18);
+  --color-ink: #161614;
+  --color-muted: #45443f;
+  --color-faint: #67665f; /* 5:1 on the canvas */
+  --color-primary: #161614;
   --color-on-primary: #ffffff;
-  --color-accent: #141414; /* status dots and marks */
-  --color-accent-soft: rgb(0 0 0 / 0.1);
-  --color-highlight: #ffffff;
+  --color-accent: #161614; /* status dots and marks */
+  --color-accent-soft: rgb(20 20 18 / 0.1);
+  --color-highlight: rgb(20 20 18 / 0.07);
 
-  /* Verdict colours, dark enough to read as text on silver. */
-  --color-authentic: #23674c;
-  --color-edited: #9a4515;
-  --color-ai: #a52f3d;
-  --color-neutral: #575757;
+  /* Analysis states, dark enough to read as text on white. */
+  --color-authentic: #2f6b4f;
+  --color-edited: #9a4a35;
+  --color-ai: #8f630d;
+  --color-neutral: #67665f;
 
-  --radius-sm: 0.625rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.5rem;
-  --radius-xl: 1.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -110,64 +110,60 @@
   }
 }
 
-/* Surface recipes that differ by theme. Light (silver) is the default; dark (graphite) below. */
+/* Surface recipes that differ by theme. Light is the default; dark below. */
 :root {
-  --body-bg: linear-gradient(180deg, #f2f2f2 0%, #dedede 40%, #c4c4c4 100%);
-  --panel-bg: rgb(255 255 255 / 0.5);
-  --panel-hover: rgb(255 255 255 / 0.68);
-  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 0 0 1px rgb(255 255 255 / 0.45);
-  --panel-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 22px 40px -26px rgb(0 0 0 / 0.35);
-  --soft-shadow: 0 1px 1px rgb(0 0 0 / 0.05), 0 8px 18px -10px rgb(0 0 0 / 0.35);
-  --bar-bg: rgb(235 235 235 / 0.72);
-  /* glossy pill: lit from above */
-  --soft-bg: linear-gradient(180deg, #ffffff 0%, #e6e6e6 100%);
-  --soft-hover: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
-  --soft-edge: inset 0 1px 0 rgb(255 255 255 / 1), inset 0 0 0 1px rgb(0 0 0 / 0.06);
-  --selected-bg: #ffffff;
-  --selected-ink: #141414;
-  --track-bg: rgb(0 0 0 / 0.07);
-  --frame-glow: rgb(255 255 255 / 0.75);
-  --frame-base: rgb(255 255 255 / 0.42);
-  --dock-bg: rgb(230 230 230 / 0.94); /* near-opaque: some phone browsers draw no backdrop blur */
+  --body-bg: none;
+  --panel-bg: #ffffff;
+  --panel-hover: #fbfbfa;
+  --panel-edge: inset 0 0 0 1px rgb(20 20 18 / 0.08);
+  --panel-shadow: 0 1px 2px rgb(20 20 18 / 0.04);
+  --soft-shadow: 0 1px 2px rgb(20 20 18 / 0.05);
+  --bar-bg: rgb(244 243 240 / 0.96);
+  --soft-bg: #ffffff;
+  --soft-hover: #f7f7f5;
+  --soft-edge: inset 0 0 0 1px rgb(20 20 18 / 0.11);
+  --selected-bg: #161614;
+  --selected-ink: #ffffff;
+  --track-bg: rgb(20 20 18 / 0.05);
+  --frame-base: #ffffff;
+  --dock-bg: rgb(250 250 248 / 0.97);
 }
 :root[data-theme='dark'],
 .theme-dark {
   color-scheme: dark;
-  --color-canvas: #4a4a4a;
-  --color-raised: rgb(0 0 0 / 0.22);
-  --color-line: rgb(255 255 255 / 0.1);
-  --color-line-strong: rgb(255 255 255 / 0.22);
-  --color-hover: rgb(255 255 255 / 0.08);
-  --color-ink: #ffffff;
-  --color-muted: #e4e4e4;
-  --color-faint: #bdbdbd;
-  --color-authentic: #8fe0b6;
-  --color-edited: #f5b07c;
-  --color-ai: #f6a19c;
-  --color-neutral: #c4c4c4;
-  --color-primary: #f4f4f4;
-  --color-on-primary: #161616;
-  --color-accent: #ffffff;
-  --color-accent-soft: rgb(255 255 255 / 0.2);
-  --color-highlight: rgb(255 255 255 / 0.22);
+  --color-canvas: #141413;
+  --color-raised: rgb(255 255 255 / 0.05);
+  --color-line: rgb(255 255 255 / 0.09);
+  --color-line-strong: rgb(255 255 255 / 0.18);
+  --color-hover: rgb(255 255 255 / 0.06);
+  --color-ink: #f2f1ed;
+  --color-muted: #cfcdc7;
+  --color-faint: #9c9a93;
+  --color-authentic: #8fcca9;
+  --color-edited: #e39a82;
+  --color-ai: #e2b65c;
+  --color-neutral: #a3a19a;
+  --color-primary: #f2f1ed;
+  --color-on-primary: #141413;
+  --color-accent: #f2f1ed;
+  --color-accent-soft: rgb(255 255 255 / 0.16);
+  --color-highlight: rgb(255 255 255 / 0.12);
 
-  /* the reference's body: lighter at the top, graphite at the bottom */
-  --body-bg: linear-gradient(180deg, #767676 0%, #5e5e5e 32%, #444444 66%, #2e2e2e 100%);
-  --panel-bg: rgb(30 30 30 / 0.55);
-  --panel-hover: rgb(40 40 40 / 0.66);
-  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.07);
-  --panel-shadow: 0 24px 44px -26px rgb(0 0 0 / 0.65);
-  --soft-shadow: 0 8px 16px -8px rgb(0 0 0 / 0.55);
-  --bar-bg: rgb(80 80 80 / 0.6);
-  --soft-bg: linear-gradient(180deg, #5a5a5a 0%, #3b3b3b 100%);
-  --soft-hover: linear-gradient(180deg, #666666 0%, #444444 100%);
-  --soft-edge: inset 0 1px 0 rgb(255 255 255 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.08);
-  --selected-bg: #1d1d1d;
-  --selected-ink: #ffffff;
-  --track-bg: rgb(0 0 0 / 0.28);
-  --frame-glow: rgb(255 255 255 / 0.13);
-  --frame-base: rgb(36 36 36 / 0.58);
-  --dock-bg: rgb(42 42 42 / 0.94);
+  --body-bg: none;
+  --panel-bg: #1c1c1a;
+  --panel-hover: #21211f;
+  --panel-edge: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  --panel-shadow: none;
+  --soft-shadow: none;
+  --bar-bg: rgb(20 20 19 / 0.96);
+  --soft-bg: #232321;
+  --soft-hover: #2a2a28;
+  --soft-edge: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  --selected-bg: #f2f1ed;
+  --selected-ink: #141413;
+  --track-bg: rgb(255 255 255 / 0.06);
+  --frame-base: #1c1c1a;
+  --dock-bg: rgb(24 24 23 / 0.97);
 }
 
 @layer base {
@@ -196,13 +192,11 @@
 }
 
 @layer components {
-  /* Smoked glass, raised off the body. */
+  /* A flat surface, set off by a thin line. */
   .panel {
     position: relative;
     background: var(--panel-bg);
     box-shadow: var(--panel-edge), var(--panel-shadow);
-    backdrop-filter: blur(18px) saturate(120%);
-    -webkit-backdrop-filter: blur(18px) saturate(120%);
   }
   :is(a, button).panel:hover,
   .panel-raised {
@@ -210,149 +204,119 @@
   }
   .panel-bar {
     background: var(--bar-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
 
-  /* The featured card: glass with a soft light falling on its top edge. A verdict tone tints it. */
+  /* The featured card: the same surface; a verdict tone tints its outline. */
   .cream {
-    --glow: var(--frame-glow);
+    --tone: transparent;
     position: relative;
-    background: radial-gradient(90% 70% at 50% 0%, var(--glow) 0%, transparent 70%), var(--frame-base);
-    box-shadow: var(--panel-edge), var(--panel-shadow);
-    backdrop-filter: blur(18px) saturate(120%);
-    -webkit-backdrop-filter: blur(18px) saturate(120%);
+    background: var(--frame-base);
+    box-shadow: var(--panel-edge), inset 0 0 0 1px var(--tone), var(--panel-shadow);
   }
-  .tone-ai { --glow: color-mix(in srgb, var(--frame-glow) 70%, rgb(240 120 110 / 0.5)); }
-  .tone-edited { --glow: color-mix(in srgb, var(--frame-glow) 70%, rgb(240 170 100 / 0.5)); }
-  .tone-authentic { --glow: color-mix(in srgb, var(--frame-glow) 70%, rgb(120 220 160 / 0.5)); }
+  .tone-ai { --tone: color-mix(in srgb, var(--color-ai) 35%, transparent); }
+  .tone-edited { --tone: color-mix(in srgb, var(--color-edited) 35%, transparent); }
+  .tone-authentic { --tone: color-mix(in srgb, var(--color-authentic) 35%, transparent); }
 
-  /* Smoked glass over a photograph. White text sits on it in both themes. */
+  /* A label over a photograph: dark and blurred so white text reads on any picture. */
   .glass {
     position: relative;
     color: #fff;
-    background: rgb(28 28 28 / 0.5);
-    backdrop-filter: blur(22px) saturate(120%);
-    -webkit-backdrop-filter: blur(22px) saturate(120%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 20px 40px -24px rgb(0 0 0 / 0.6);
+    background: rgb(0 0 0 / 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
-  /* The reference's tool chips ("Typography", "Color"): a glossy pill lit from above. */
+  /* A pill control or label. */
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] whitespace-nowrap text-ink;
     background: var(--soft-bg);
-    box-shadow: var(--soft-edge), var(--soft-shadow);
+    box-shadow: var(--soft-edge);
   }
   .status {
     @apply inline-flex items-center gap-1.5 text-[14px] text-muted;
   }
 
-  /* The main action: in graphite a white sphere-pill with a halo, like the reference's send button. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium text-on-primary;
-    background: radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--color-primary) 80%, #fff) 0%, var(--color-primary) 55%, color-mix(in srgb, var(--color-primary) 82%, #777) 100%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 0 0 1px rgb(0 0 0 / 0.08), 0 12px 24px -14px rgb(0 0 0 / 0.6);
-  }
-  :root[data-theme='dark'] .btn-primary,
-  .theme-dark .btn-primary {
-    box-shadow: inset 0 -2px 6px rgb(0 0 0 / 0.18), 0 0 0 1px rgb(255 255 255 / 0.5), 0 0 22px -4px rgb(255 255 255 / 0.45);
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[15px] font-medium text-on-primary;
   }
   .btn-primary:hover {
-    filter: brightness(1.06);
+    opacity: 0.9;
   }
-  /* Secondary: an outlined glass pill, like the reference's "Save". */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[15px] text-ink;
-    background: rgb(255 255 255 / 0.06);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-ink) 45%, transparent);
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[15px] text-ink;
+    box-shadow: inset 0 0 0 1px var(--color-line-strong);
   }
   .btn-ghost:hover {
-    background: rgb(255 255 255 / 0.14);
+    background: var(--color-hover);
   }
   .btn-primary,
   .btn-ghost {
-    transition-property: color, background-color, filter, transform;
+    transition-property: color, background-color, opacity, transform;
     transition-duration: 160ms;
   }
   .btn-primary:active,
   .btn-ghost:active {
     transform: scale(0.97);
   }
+  .btn-primary:disabled,
+  .btn-ghost:disabled {
+    opacity: 0.45;
+    transform: none;
+  }
+  /* A small section label. */
   .eyebrow {
-    @apply text-[15px] font-normal tracking-[0.02em] text-ink uppercase;
+    @apply text-[12px] font-medium tracking-[0.07em] text-faint uppercase;
   }
   .num {
-    @apply font-display font-light tracking-[-0.04em] tabular-nums;
+    @apply font-sans font-light tracking-[-0.03em] tabular-nums;
   }
-  /* Display type: the reference's serif headline. */
+  /* Display type: verdicts and page titles, in the serif. */
   .display {
-    @apply font-serif font-normal tracking-[-0.01em];
+    @apply font-serif font-normal tracking-[-0.005em];
   }
-  /* "me at horizon": an italic word on a pale highlight block. */
+  /* One italic word on a pale block, used once: the canvas headline. */
   .mark-word {
     @apply font-serif italic;
-    padding: 0 0.12em;
-    /* hugs the letters rather than the whole line box */
+    padding: 0 0.1em;
     background: linear-gradient(transparent 14%, var(--color-highlight) 14%, var(--color-highlight) 94%, transparent 94%);
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
   }
-  /* Round glossy control. */
+  /* Round control. */
   .well {
     @apply grid shrink-0 place-items-center rounded-full text-ink transition;
     background: var(--soft-bg);
-    box-shadow: var(--soft-edge), var(--soft-shadow);
+    box-shadow: var(--soft-edge);
   }
   :is(a, button).well:hover {
     background: var(--soft-hover);
   }
-  /* Round glass control with a bright rim, like the reference's bell. */
   .well-glass {
     @apply grid shrink-0 place-items-center rounded-full text-ink transition;
-    background: rgb(255 255 255 / 0.16);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-ink) 40%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.3);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 0 0 1px var(--color-line-strong);
   }
   .well-glass:hover {
-    background: rgb(255 255 255 / 0.26);
+    background: var(--color-hover);
   }
-  /* A segmented control's track, and its chosen segment pressed into it. */
+  /* A segmented control's track, and its chosen segment. */
   .track {
     background: var(--track-bg);
-    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.18), 0 1px 0 rgb(255 255 255 / 0.06);
   }
   .selected {
     color: var(--selected-ink);
     background: var(--selected-bg);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 4px 10px -4px rgb(0 0 0 / 0.5);
   }
-  /* The glowing orb at the centre of the dock: a dark lens in a bright halo. */
+  /* The main action in the navigation: a plain filled circle. */
   .orb {
-    @apply grid shrink-0 place-items-center rounded-full text-white transition;
-    background: radial-gradient(circle at 50% 38%, #4a4a4a 0%, #262626 52%, #101010 100%);
-    box-shadow:
-      0 0 0 3px rgb(255 255 255 / 0.92),
-      0 0 0 6px rgb(255 255 255 / 0.18),
-      0 0 26px 6px rgb(255 255 255 / 0.4),
-      inset 0 2px 6px rgb(255 255 255 / 0.18);
+    @apply grid shrink-0 place-items-center rounded-full bg-primary text-on-primary transition;
   }
   .orb:hover {
-    box-shadow:
-      0 0 0 3px #fff,
-      0 0 0 7px rgb(255 255 255 / 0.24),
-      0 0 34px 10px rgb(255 255 255 / 0.5),
-      inset 0 2px 6px rgb(255 255 255 / 0.22);
+    opacity: 0.9;
   }
-  .orb svg {
-    filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.85));
-  }
-  /* The floating bar along the bottom. */
+  /* The navigation bar along the bottom of phones. */
   .dock {
     background: var(--dock-bg);
-    box-shadow: var(--panel-edge), 0 24px 44px -20px rgb(0 0 0 / 0.55);
-    backdrop-filter: blur(24px) saturate(120%);
-    -webkit-backdrop-filter: blur(24px) saturate(120%);
+    box-shadow: inset 0 1px 0 var(--color-line);
   }
   .tag {
     @apply inline-flex items-center gap-1.5 rounded-full bg-raised px-2.5 py-0.5 text-[12px] text-muted;
@@ -361,13 +325,13 @@
   .leader {
     @apply min-w-6 flex-1 self-center;
     height: 3px;
-    background-image: radial-gradient(circle, color-mix(in srgb, var(--color-faint) 75%, transparent) 1.1px, transparent 1.5px);
-    background-size: 9px 3px;
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--color-faint) 60%, transparent) 1px, transparent 1.4px);
+    background-size: 8px 3px;
     background-repeat: repeat-x;
     background-position: 0 50%;
   }
   .skeleton {
-    background: linear-gradient(90deg, rgb(128 128 128 / 0.12), rgb(128 128 128 / 0.26), rgb(128 128 128 / 0.12));
+    background: linear-gradient(90deg, rgb(128 128 128 / 0.1), rgb(128 128 128 / 0.2), rgb(128 128 128 / 0.1));
     background-size: 200% 100%;
     @apply animate-shimmer rounded-full;
   }

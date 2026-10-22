@@ -6,49 +6,31 @@ test.beforeEach(async ({ page }) => {
   await skipWelcome(page)
 })
 
-const picker = (page: import('@playwright/test').Page) => page.getByRole('main').getByRole('combobox', { name: 'Check' })
+const lens = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /Arrow keys choose another check/ })
 
-test('the check dial tours on its own, follows its chips, keys and picker, and explains the chosen check', async ({ page }) => {
+test('the check dial follows its chips and arrow keys, and explains the chosen check', async ({ page }) => {
   await page.goto('/')
-  const panel = page.getByRole('main')
-  await expect(panel.getByRole('heading', { name: 'Credentials' })).toBeVisible()
-
-  // left alone, it moves on to the next check
-  await expect(picker(page)).toHaveValue('watermark', { timeout: 6000 })
+  const main = page.getByRole('main')
+  await expect(main.getByRole('heading', { name: 'Credentials' })).toBeVisible()
 
   // the chips on the arc's ends step back and forth, and the explanation follows
-  await panel.getByRole('button', { name: 'Next check: AI detector' }).click()
-  await expect(picker(page)).toHaveValue('detector')
-  await expect(panel.getByRole('heading', { name: 'AI detector' })).toBeVisible()
-  await panel.getByRole('button', { name: 'Previous check: Watermark' }).click()
-  await expect(picker(page)).toHaveValue('watermark')
+  await main.getByRole('button', { name: 'Next check: Watermark' }).click()
+  await expect(main.getByRole('heading', { name: 'Watermark' })).toBeVisible()
+  await expect(lens(page)).toHaveAccessibleName(/^Watermark\./)
+  await main.getByRole('button', { name: 'Previous check: Credentials' }).click()
+  await expect(main.getByRole('heading', { name: 'Credentials' })).toBeVisible()
 
   // arrow keys on the lens
-  await panel.getByRole('button', { name: /^Watermark\. Arrow keys/ }).focus()
+  await lens(page).focus()
   await page.keyboard.press('ArrowLeft')
-  await expect(picker(page)).toHaveValue('c2pa')
-
-  // the picker jumps straight to a check
-  await picker(page).selectOption('metadata')
-  await expect(panel.getByRole('heading', { name: 'Metadata' })).toBeVisible()
-
-  // after a touch it stays put for a while instead of moving on
-  await page.waitForTimeout(4500)
-  await expect(picker(page)).toHaveValue('metadata')
+  await expect(main.getByRole('heading', { name: 'Structure' })).toBeVisible()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await expect(main.getByRole('heading', { name: 'Watermark' })).toBeVisible()
 })
 
-test('the tour can be paused', async ({ page }) => {
+test('the dial never moves on by itself', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Pause the tour' }).click()
-  await expect(page.getByRole('button', { name: 'Play the tour' })).toHaveAttribute('aria-pressed', 'false')
   await page.waitForTimeout(4500)
-  await expect(picker(page)).toHaveValue('c2pa')
-})
-
-test('holds still for reduced motion', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/')
-  await expect(page.getByRole('button', { name: 'Play the tour' })).toBeVisible()
-  await page.waitForTimeout(4500)
-  await expect(picker(page)).toHaveValue('c2pa')
+  await expect(lens(page)).toHaveAccessibleName(/^Credentials\./)
 })

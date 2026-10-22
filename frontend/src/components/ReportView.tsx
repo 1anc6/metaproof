@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
 import { formatBytes, formatType, formatWhen, shortHash } from '../lib/format'
 import { leaning, SIGNALS, STRENGTH_LABEL, toneOf, VERDICTS } from '../lib/verdicts'
-import { DeviceCircle, FileName, Figure, LeaderRow, Meter, PanelTitle, RangeRuler, SignalDot, Thumb, VerdictBadge } from './ui'
+import { FileName, Meter, PanelTitle, RangeRuler, SignalDot, Thumb, VerdictBadge } from './ui'
+import { VerdictGlyph, VerdictSpectrum } from './Verdict'
 import { ErrorLevel } from './ErrorLevel'
 
 export function ReportView({ job, filename }: { job: Job; filename?: string }) {
@@ -19,71 +20,84 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
       ? leansRealSummary(job)
       : `Some evidence points to an ${lean.label} image, but not enough to decide. Treat it as unverified.`
     : v.summary
+  const completed = job.analyzers.filter((a) => a.ok).length
+  const evidence = job.analyzers.reduce((n, a) => n + a.findings.filter((f) => f.signal !== 'neutral').length, 0)
 
   return (
-    <div className="stagger flex flex-col gap-6">
-      {/* The reference's device screen: the image in a ringed circle with its file facts as spec
-          chips, beside a cream card holding the verdict, its figures and one row per check. */}
-      <section className="grid gap-4 lg:grid-cols-2 lg:items-center lg:gap-6">
-        <DeviceCircle
-          className="animate-rise"
-          chips={[
-            { label: 'Type', value: formatType(job.media.mime_type) },
-            { label: 'Pixels', value: `${job.media.width}×${job.media.height}` },
-            { label: 'Size', value: formatBytes(job.media.size_bytes) },
-            { label: 'SHA', value: shortHash(sha).slice(0, 8) },
-            { label: 'Analyzed', value: job.finished_at ? formatWhen(job.finished_at) : '—' },
-          ]}
-        >
-          <Thumb sha={sha} eager className="aspect-square w-full rounded-full shadow-[0_18px_40px_-18px_rgb(0_0_0/0.5)]" />
-        </DeviceCircle>
-
-        <div className={`cream ${toneOf(verdict.label)} animate-rise rounded-xl p-4 sm:p-7`}>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <p className="eyebrow">Verdict</p>
-            {filename && <FileName name={filename} className="max-w-[60%] text-[13px] text-faint" />}
+    <div className="stagger flex flex-col gap-4">
+      {/* The image beside its verdict: one outcome, its place on the scale, one sentence, three facts. */}
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start">
+        <figure className="panel animate-rise rounded-xl p-2">
+          <div className="relative h-[clamp(160px,44vw,340px)] overflow-hidden rounded-lg bg-[#161614]">
+            <Thumb sha={sha} className="!absolute inset-0 scale-125 !bg-transparent opacity-50 blur-2xl" />
+            <img
+              src={api.thumbnailUrl(sha)}
+              alt={filename ? `The analyzed image, ${filename}` : 'The analyzed image'}
+              className="absolute inset-0 size-full object-contain"
+            />
           </div>
-          <h1 className={`print-dark display mt-2 text-[44px] leading-[0.95] sm:text-[56px] ${v.text}`}>
-            {/* Keep "AI-generated" whole; a break at the hyphen reads as a typo. */}
-            {v.title.split(' ').map((word, i) => (
-              <Fragment key={i}>
-                {i > 0 && ' '}
-                <span className="whitespace-nowrap">{word}</span>
-              </Fragment>
-            ))}
-          </h1>
-          {lean && <p className="mt-1 text-[16px] text-ink">Leaning {lean.label}</p>}
+          <figcaption className="flex flex-wrap gap-x-2 gap-y-0.5 px-2 pt-2.5 pb-1 text-[12px] text-faint">
+            {filename && <FileName name={filename} className="max-w-full font-medium text-ink" />}
+            <span>{formatType(job.media.mime_type)}</span>
+            <span aria-hidden>·</span>
+            <span>
+              {job.media.width}×{job.media.height}
+            </span>
+            <span aria-hidden>·</span>
+            <span>{formatBytes(job.media.size_bytes)}</span>
+            <span aria-hidden>·</span>
+            <span>{job.finished_at ? `Analyzed ${formatWhen(job.finished_at).toLowerCase()}` : 'Not finished'}</span>
+            <span aria-hidden>·</span>
+            <span>SHA {shortHash(sha).slice(0, 8)}</span>
+          </figcaption>
+        </figure>
 
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            {reading ? <Figure label="Detector" value={reading.pct} unit="% AI" /> : <Figure label="Detector" value="–" />}
-            <Figure label="Evidence" value={Math.max(verdict.scores.authentic, verdict.scores.edited, verdict.scores.ai).toFixed(1)} unit="weight" />
-            <Figure label="Findings" value={job.analyzers.reduce((n, a) => n + a.findings.length, 0)} unit="found" />
+        <section className={`cream ${toneOf(verdict.label)} animate-rise rounded-xl p-4 sm:p-5`} aria-labelledby="verdict-title">
+          <div className="flex items-center gap-3">
+            <VerdictGlyph label={verdict.label} className="size-11" />
+            <div className="min-w-0">
+              <p className="eyebrow">Verdict</p>
+              <h1 id="verdict-title" className="print-dark display text-[34px] leading-[1.05] sm:text-[40px]" style={{ color: v.color }}>
+                {/* Keep "AI-generated" whole; a break at the hyphen reads as a typo. */}
+                {v.title.split(' ').map((word, i) => (
+                  <Fragment key={i}>
+                    {i > 0 && ' '}
+                    <span className="whitespace-nowrap">{word}</span>
+                  </Fragment>
+                ))}
+              </h1>
+            </div>
           </div>
+          {lean && <p className="mt-2 text-[15px] text-ink">Leaning {lean.label}</p>}
 
-          <dl className="mt-4">
-            {job.analyzers.map((a) => (
-              <LeaderRow key={a.analyzer} icon={ANALYZER_META[a.analyzer]?.icon} label={SHORT_NAME[a.analyzer] ?? a.analyzer} value={checkSummary(a)} />
-            ))}
+          <VerdictSpectrum label={verdict.label} lean={lean} className="mt-4" />
+          <p className="mt-4 text-[15px] leading-relaxed text-ink">{summary}</p>
+
+          <dl className="mt-4 grid grid-cols-3 gap-2">
+            <Indicator label="Checks completed" value={`${completed}/${job.analyzers.length}`} />
+            <Indicator label="Evidence found" value={evidence === 0 ? 'None' : String(evidence)} />
+            <Indicator label="Detector score" value={reading ? String(reading.pct) : '—'} unit={reading ? '/ 100' : undefined} />
           </dl>
-        </div>
+          {reading && (
+            <p className="mt-2 text-[12px] leading-relaxed text-faint">
+              The detector score is how closely the pixels resemble the AI images the model learned from. It often misses
+              newer generators, so it is one signal among the checks, not the chance that this image is AI-generated.
+            </p>
+          )}
+
+          <EvidenceChips job={job} verdict={verdict} />
+          <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
+        </section>
       </section>
 
-      <section className="panel animate-rise rounded-xl p-4 sm:p-6">
-        <p className="max-w-2xl text-[17px] leading-relaxed text-ink">{summary}</p>
-        <EvidenceChips job={job} verdict={verdict} />
-        <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
-      </section>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start">
         {/* Key findings */}
-        <section className="panel animate-rise rounded-xl p-4 sm:p-6">
+        <section className="panel animate-rise rounded-xl p-4 sm:p-5">
           <PanelTitle title="Key findings" />
           {verdict.top_reasons.length === 0 ? (
-            <p className="mt-4 text-sm text-faint">
-              No single finding stood out. Every check is listed under analyzer details below.
-            </p>
+            <p className="mt-3 text-sm text-faint">No single finding stood out. Every check is listed under analysis details below.</p>
           ) : (
-            <ul className="stagger mt-4 flex flex-col divide-y divide-line">
+            <ul className="stagger mt-2 flex flex-col divide-y divide-line">
               {verdict.top_reasons.map((f) => (
                 <FindingRow key={f.code} finding={f} />
               ))}
@@ -92,17 +106,17 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
         </section>
 
         <div className="flex flex-col gap-4">
-        {/* Evidence balance */}
-        <section className="panel animate-rise rounded-xl p-4 sm:p-6">
-          <PanelTitle title="Balance of signals" />
-          <EvidenceBars verdict={verdict} />
-          <p className="mt-4 text-[13px] leading-relaxed text-faint">
-            {decisive(verdict)
-              ? 'Decided by conclusive evidence, which outweighs everything else on its own.'
-              : 'Weights add up the findings for each outcome. A verdict needs enough weight and a clear lead; otherwise MetaProof says inconclusive.'}
-          </p>
-        </section>
-        <DetectorRange job={job} />
+          {/* Evidence balance */}
+          <section className="panel animate-rise rounded-xl p-4 sm:p-5">
+            <PanelTitle title="Balance of signals" />
+            <EvidenceBars verdict={verdict} />
+            <p className="mt-3 text-[13px] leading-relaxed text-faint">
+              {decisive(verdict)
+                ? 'Decided by conclusive evidence, which outweighs everything else on its own.'
+                : 'Weights add up the findings for each outcome. A verdict needs enough weight and a clear lead; otherwise MetaProof says inconclusive.'}
+            </p>
+          </section>
+          <DetectorRange job={job} />
         </div>
       </div>
 
@@ -112,19 +126,57 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
 
       <ErrorLevel job={job} />
 
-      {/* Analyzer details */}
-      <section className="flex flex-col gap-3">
-        <h2 className="display px-1 pt-2 text-[34px] leading-none">Analyzer details</h2>
-        {job.analyzers.map((a) => (
-          <AnalyzerPanel key={a.analyzer} result={a} />
-        ))}
-      </section>
+      <AnalysisDetails analyzers={job.analyzers} />
 
       <p className="px-1 text-[13px] leading-relaxed text-faint">
         MetaProof reports evidence, not absolute truth. Missing metadata or credentials are never
         counted against a file. Engine {verdict.engine_version} · pipeline {job.pipeline_version}.
       </p>
     </div>
+  )
+}
+
+/** One of the verdict's three facts: a small label over its value. */
+function Indicator({ label, value, unit }: { label: string; value: string; unit?: string }) {
+  return (
+    <div className="min-w-0 rounded-lg bg-raised px-3 py-2">
+      <dt className="text-[12px] leading-tight text-faint">{label}</dt>
+      <dd className="mt-0.5 flex items-baseline gap-1">
+        <span className="text-[18px] font-medium tabular-nums">{value}</span>
+        {unit && <span className="text-[12px] text-faint">{unit}</span>}
+      </dd>
+    </div>
+  )
+}
+
+/** Every check in full, folded away until asked for, so the verdict leads. */
+function AnalysisDetails({ analyzers }: { analyzers: AnalyzerResult[] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className="flex flex-col gap-3">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls="analysis-details"
+        className="panel flex items-center gap-3 rounded-xl px-4 py-3.5 text-left transition hover:bg-[var(--panel-hover)]"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-medium">Analysis details</span>
+          <span className="block truncate text-[13px] text-faint" aria-hidden>
+            {analyzers.map((a) => SHORT_NAME[a.analyzer] ?? a.analyzer).join(' · ')}
+          </span>
+        </span>
+        <ChevronDown className={`size-4 shrink-0 text-faint transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {open && (
+        <div id="analysis-details" className="animate-rise flex flex-col gap-2">
+          {analyzers.map((a) => (
+            <AnalyzerPanel key={a.analyzer} result={a} />
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -200,7 +252,7 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
   ]
   const max = Math.max(3, ...rows.map((r) => scores[r.key]))
   return (
-    <ul className="mt-4 flex flex-col gap-4">
+    <ul className="mt-3 flex flex-col gap-3">
       {rows.map(({ key, label }) => {
         const value = scores[key]
         const color = SIGNALS[key].color
@@ -208,7 +260,7 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
           <li key={key}>
             <div className="flex items-baseline justify-between text-[15px]">
               <span className="font-medium text-muted">{label}</span>
-              <span className="num text-[22px] leading-none text-ink">
+              <span className="num text-[18px] leading-none text-ink">
                 {key === settled ? 'conclusive' : value.toFixed(1)}
               </span>
             </div>
@@ -220,14 +272,6 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
       })}
     </ul>
   )
-}
-
-/** One check's outcome in a few words, for its leader row: its first non-neutral finding. */
-function checkSummary(a: AnalyzerResult): string {
-  if (!a.ok) return 'Error'
-  const f = a.findings.find((x) => x.signal !== 'neutral') ?? a.findings[0]
-  if (!f) return 'Nothing found'
-  return SIGNALS[f.signal].label
 }
 
 const SHORT_NAME: Record<string, string> = {
@@ -245,11 +289,11 @@ function DetectorRange({ job }: { job: Job }) {
   if (!raw || !reading) return null
   const b = detectorBands(raw)
   return (
-    <section className="panel animate-rise rounded-xl p-4 sm:p-6">
-      <PanelTitle title="AI likelihood" />
+    <section className="panel animate-rise rounded-xl p-4 sm:p-5">
+      <PanelTitle title="Detector score" />
       <p className="mt-3 flex items-baseline gap-1">
-        <span className="num text-[48px] leading-none">{reading.pct}</span>
-        <span className="text-[14px] text-faint">% · {reading.band.label.toLowerCase()}</span>
+        <span className="num text-[36px] leading-none">{reading.pct}</span>
+        <span className="text-[14px] text-faint">/ 100 · {reading.band.label.toLowerCase()}</span>
       </p>
       <RangeRuler
         className="mt-5"
@@ -261,7 +305,10 @@ function DetectorRange({ job }: { job: Job }) {
           { at: 100, label: '100' },
         ]}
       />
-      <p className="mt-3 text-[13px] leading-relaxed text-faint">The shaded band is where the score counts as AI evidence.</p>
+      <p className="mt-3 text-[13px] leading-relaxed text-faint">
+        The shaded band is where the score counts as AI evidence. A score is how much the pixels resemble AI
+        images, not a probability; on its own it never decides the verdict.
+      </p>
     </section>
   )
 }
@@ -750,7 +797,7 @@ function SeenBefore({ sha }: { sha: string }) {
   }, [sha])
   if (!items || items.length === 0) return null
   return (
-    <section className="panel animate-rise rounded-xl p-4 sm:p-6">
+    <section className="panel animate-rise rounded-xl p-4 sm:p-5">
       <PanelTitle
         title={items.length === 1 ? 'A near-identical image was analyzed before' : `${items.length} near-identical images were analyzed before`}
       />
@@ -784,10 +831,10 @@ const SEARCH_TOOLS = [
 /** Inconclusive is the most common verdict, so it should leave the reader with something to do. */
 function NextSteps() {
   return (
-    <section className="panel animate-rise rounded-xl p-4 sm:p-6">
+    <section className="panel animate-rise rounded-xl p-4 sm:p-5">
       <div className="flex items-center gap-3">
         <Compass className="size-5" strokeWidth={1.5} />
-        <h2 className="display text-[30px] leading-none">What you can do next</h2>
+        <h2 className="text-[17px] font-medium">What you can do next</h2>
       </div>
       <ol className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-muted">
         <li>

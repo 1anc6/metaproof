@@ -46,6 +46,7 @@ test('a report that leans real explains why in plain words', async ({ page }) =>
   await expect(page.getByText(/camera data and the structure of an untouched camera file, and no signs of AI/)).toBeVisible()
   await expect(page.getByText(/probably real but unverified/)).toBeVisible()
 
+  await page.getByRole('button', { name: 'Analysis details' }).click()
   await page.getByRole('button', { name: /Metadata/ }).click()
   await expect(page.getByText('Maker data')).toBeVisible()
   await expect(page.getByText('Matches the picture (0.99)')).toBeVisible()
@@ -103,6 +104,7 @@ test('a Gemini-style report: the AI-generated original, decisive bars, an overru
   await expect(page.getByText(/A low score does not mean a photo is real/).first()).toBeVisible()
   await expect(page.getByText('conclusive', { exact: true })).toBeVisible()
   await expect(page.getByText(/Decided by conclusive evidence/)).toBeVisible()
+  await page.getByRole('button', { name: 'Analysis details' }).click()
   await page.getByRole('button', { name: /Content Credentials/ }).click()
   await expect(page.getByText('Earlier history: the original it was made from')).toBeVisible()
   await expect(page.getByText('· trainedAlgorithmicMedia')).toBeVisible()

@@ -1,5 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { api, type JobStatus, type VerdictLabel } from '../lib/api'
 import { CHECKS } from '../lib/checks'
 import { usePrefs } from '../lib/prefs'
@@ -13,11 +12,8 @@ export interface CanvasPhoto {
   status: JobStatus
 }
 
-const AUTOPLAY_MS = 3600
-const IDLE_MS = 7000 // after a person touches the dial, wait this long before it moves on its own again
 const STEP = 360 / CHECKS.length
 
-const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** The ring angle closest to `current` that brings check `i` to the top, so it turns the short way. */
 function nearest(current: number, i: number) {
@@ -28,9 +24,8 @@ function nearest(current: number, i: number) {
 /**
  * The reference's tool dial, holding MetaProof's six checks: a dark glossy lens under an arc, the
  * chosen check in a chip above it and its neighbours on the arc's ends, over a black-and-white photo
- * card whose serif headline follows the chosen check. Below, a toolbar picks a check, shows its
- * weight, and steps or pauses the tour. It moves on by itself until someone touches it, and holds
- * still for reduced motion. With a `photo`, the card shows that analyzed image whole (never cropped
+ * card whose serif headline follows the chosen check. The chips, the lens and the arrow keys choose
+ * a check; it never moves on by itself. With a `photo`, the card shows that analyzed image whole (never cropped
  * or stretched) over a blurred copy of itself, with its name and verdict; without one, or if its
  * thumbnail won't load, a drawn horizon.
  */
@@ -54,15 +49,7 @@ export function CheckDial({
   const prev = CHECKS[(index - 1 + n) % n]
   const next = CHECKS[(index + 1) % n]
 
-  const [playing, setPlaying] = useState(() => !reducedMotion())
-  const lastTouch = useRef(-Infinity)
-  const touch = () => {
-    lastTouch.current = performance.now()
-  }
-  const choose = (key: string) => {
-    touch()
-    onSelect(key)
-  }
+  const choose = onSelect
 
   // The tick ring turns so the chosen check sits under the knob, the short way round.
   const [ring, setRing] = useState(() => -index * STEP)
@@ -71,15 +58,6 @@ export function CheckDial({
     setShown(index)
     setRing(nearest(ring, index))
   }
-
-  useEffect(() => {
-    if (!playing) return
-    const t = setInterval(() => {
-      if (document.hidden || performance.now() - lastTouch.current < IDLE_MS) return
-      onSelect(CHECKS[(index + 1) % n].key)
-    }, AUTOPLAY_MS)
-    return () => clearInterval(t)
-  }, [playing, index, n, onSelect])
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -141,7 +119,7 @@ export function CheckDial({
           type="button"
           onClick={() => choose(prev.key)}
           aria-label={`Previous check: ${prev.label}`}
-          className="chip absolute top-[88.2%] right-[75%] h-9 -translate-y-1/2 px-3 transition hover:brightness-110 max-[400px]:[&>span]:sr-only"
+          className="chip absolute top-[88.2%] right-[75%] h-9 -translate-y-1/2 px-3 transition hover:bg-[var(--soft-hover)] max-[400px]:[&>span]:sr-only"
         >
           <PrevIcon className="size-4" strokeWidth={1.5} aria-hidden />
           <span>{prev.label}</span>
@@ -150,28 +128,27 @@ export function CheckDial({
           type="button"
           onClick={() => choose(next.key)}
           aria-label={`Next check: ${next.label}`}
-          className="chip absolute top-[88.2%] left-[75%] h-9 -translate-y-1/2 px-3 transition hover:brightness-110 max-[400px]:[&>span]:sr-only"
+          className="chip absolute top-[88.2%] left-[75%] h-9 -translate-y-1/2 px-3 transition hover:bg-[var(--soft-hover)] max-[400px]:[&>span]:sr-only"
         >
           <NextIcon className="size-4" strokeWidth={1.5} aria-hidden />
           <span>{next.label}</span>
         </button>
 
-        {/* the lens: a dark glossy disc that turns to show the chosen check */}
+        {/* the lens: a dark disc showing the chosen check */}
         <button
           type="button"
           onClick={() => choose(next.key)}
           onKeyDown={onKeyDown}
           aria-label={`${check.label}. Arrow keys choose another check.`}
-          className="absolute top-[88.2%] left-1/2 grid aspect-square w-[23%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[radial-gradient(circle_at_50%_32%,#4a4a4a_0%,#232323_55%,#121212_100%)] text-white shadow-[0_0_0_1px_rgb(255_255_255/0.14),0_16px_30px_-10px_rgb(0_0_0/0.7),inset_0_2px_3px_rgb(255_255_255/0.22),inset_0_-6px_12px_rgb(0_0_0/0.5)] transition active:scale-95"
+          className="absolute top-[88.2%] left-1/2 grid aspect-square w-[22%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#1b1b19] text-white shadow-[0_0_0_4px_var(--color-canvas),0_0_0_5px_var(--color-line-strong)] transition active:scale-95"
         >
-          <span className="absolute inset-[9%] rounded-full shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]" aria-hidden />
           <Icon key={check.key} className="animate-pop size-[34%]" strokeWidth={1.25} aria-hidden />
         </button>
       </div>
 
       {/* The canvas: the latest analyzed image, or a black-and-white horizon, under the check's
           headline in the reference's serif. */}
-      <div className="relative -mt-[5%] aspect-[4/3] w-full overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] rounded-[22px] bg-[#1a1a1a] text-white shadow-[0_24px_44px_-24px_rgb(0_0_0/0.7),inset_0_0_0_1px_rgb(255_255_255/0.1)]">
+      <div className="relative -mt-[5%] aspect-[3/2] w-full overflow-hidden rounded-xl bg-[#1a1a1a] text-white">
         {pic ? (
           <>
             <img src={api.thumbnailUrl(pic.sha)} alt="" aria-hidden className="absolute inset-0 size-full scale-125 object-cover opacity-60 blur-2xl" />
@@ -206,8 +183,8 @@ export function CheckDial({
             <Mark className="size-5" />
           )}
         </div>
-        <div className="relative flex flex-col items-center px-6 pt-[19%] text-center">
-          <p key={check.key} className="animate-rise display text-[clamp(28px,7.6vw,38px)] leading-[0.95]">
+        <div className="relative flex flex-col items-center px-6 pt-[15%] text-center">
+          <p key={check.key} className="animate-rise display text-[clamp(26px,7vw,34px)] leading-[1]">
             {check.headline[0]}
             <br />
             {check.headline[1].split(' ').slice(0, -1).join(' ')}{' '}
@@ -216,50 +193,6 @@ export function CheckDial({
         </div>
       </div>
 
-      {/* The toolbar: pick a check · its weight · step and pause. */}
-      <div className="mt-3 flex items-center gap-2">
-        <div className="chip h-11 min-w-0 flex-1 gap-0 px-1.5 text-[14px]">
-          <label className="relative flex h-full min-w-0 flex-1 items-center">
-            <span className="sr-only">Check</span>
-            <select
-              value={check.key}
-              onChange={(e) => choose(e.target.value)}
-              className="h-full w-full min-w-0 cursor-pointer appearance-none truncate rounded-full bg-transparent pr-6 pl-2.5 outline-none focus-visible:outline-2 focus-visible:outline-ink [&>option]:text-black"
-            >
-              {CHECKS.map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-1.5 size-4 text-faint" aria-hidden />
-          </label>
-          <span className="mx-1.5 h-5 w-px bg-line-strong" aria-hidden />
-          <span className="truncate px-1.5 text-faint max-sm:hidden lg:max-xl:hidden">{check.weight}</span>
-          <span className="mx-1.5 h-5 w-px bg-line-strong max-sm:hidden lg:max-xl:hidden" aria-hidden />
-          <span className="flex shrink-0 items-center gap-1.5 pr-2.5">
-            <span className={`size-2.5 rounded-full bg-accent ${playing ? 'animate-pulse' : 'opacity-50'}`} aria-hidden />
-            {playing ? 'Touring' : 'Paused'}
-          </span>
-        </div>
-        <div className="track flex h-11 shrink-0 items-center gap-0.5 rounded-full p-1" role="group" aria-label="Tour of the checks">
-          <button type="button" onClick={() => choose(prev.key)} aria-label="Previous check" className="grid size-9 place-items-center rounded-full text-faint transition hover:text-ink">
-            <ChevronLeft className="size-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setPlaying((p) => !p)}
-            aria-label={playing ? 'Pause the tour' : 'Play the tour'}
-            aria-pressed={playing}
-            className={`grid size-9 place-items-center rounded-full transition ${playing ? 'selected' : 'text-faint hover:text-ink'}`}
-          >
-            {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
-          </button>
-          <button type="button" onClick={() => choose(next.key)} aria-label="Next check" className="grid size-9 place-items-center rounded-full text-faint transition hover:text-ink">
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

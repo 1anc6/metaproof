@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
 import { ReportView } from '../components/ReportView'
-import { DeviceCircle, ErrorPanel, FileName, Figure } from '../components/ui'
+import { ErrorPanel, FileName, Figure } from '../components/ui'
 import { ThinkingOrb, ThinkingPill } from '../components/ThinkingOrb'
 import { ReportSkeleton } from './Report'
 import { previewFor } from '../lib/preview'
@@ -97,59 +97,42 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
 
   return (
     <div className="mx-auto max-w-5xl pt-2 sm:pt-4">
-      <header className="animate-rise mb-6 sm:mb-8">
-        <h1 className="display text-[46px] leading-[0.98] sm:text-[64px]">Reading the evidence</h1>
-        <p className="mt-3 text-[16px] text-muted">Six checks run on the file, then the evidence is weighed.</p>
+      <header className="animate-rise mb-5 sm:mb-6">
+        <h1 className="display text-[38px] leading-none sm:text-[48px]">Reading the evidence</h1>
+        <p className="mt-2 text-[15px] text-muted">Six checks run on the file, then the evidence is weighed.</p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-center lg:gap-6">
-        {/* The upload in the device circle, with a ring that fills as the checks finish. */}
-        <DeviceCircle
-          className="max-lg:order-2"
-          chips={[
-            { label: 'Hash', value: 'SHA-256' },
-            { label: 'Checks', value: '6' },
-            { label: 'Done', value: `${pct}%` },
-            { label: 'File', value: 'deleted after' },
-          ]}
-        >
-          <div className="relative aspect-square w-full">
-            <svg viewBox="0 0 100 100" className="absolute -inset-[9%] size-[118%] -rotate-90" aria-hidden>
-              <circle cx="50" cy="50" r="47" fill="none" stroke="var(--color-line-strong)" strokeWidth="1.2" />
-              <circle
-                cx="50"
-                cy="50"
-                r="47"
-                fill="none"
-                stroke="var(--color-ink)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeDasharray={`${(pct / 100) * 295.3} 295.3`}
-                className="transition-[stroke-dasharray] duration-700 ease-(--ease-out)"
-              />
-            </svg>
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+        {/* The upload, whole, with a thin bar that fills as the checks finish. */}
+        <figure className="panel rounded-xl p-2 max-lg:order-2">
+          <div className="relative grid h-[clamp(180px,50vw,320px)] place-items-center overflow-hidden rounded-lg bg-[#161614]">
             {preview ? (
-              <img src={preview} alt="" className="size-full rounded-full object-cover shadow-[0_18px_40px_-18px_rgb(0_0_0/0.5)]" />
+              <>
+                <img src={preview} alt="" aria-hidden className="absolute inset-0 size-full scale-125 object-cover opacity-50 blur-2xl" />
+                <img src={preview} alt="The image being analyzed" className="absolute inset-0 size-full object-contain" />
+              </>
             ) : (
-              <span className="grid size-full place-items-center rounded-full bg-raised">
-                <ThinkingOrb size={36} className="text-ink" />
-              </span>
+              <ThinkingOrb size={36} className="text-white" />
             )}
           </div>
-        </DeviceCircle>
+          <div className="mx-1 mt-2 h-1 overflow-hidden rounded-full bg-line" aria-hidden>
+            <div className="h-full rounded-full bg-ink transition-[width] duration-700 ease-(--ease-out)" style={{ width: `${Math.max(3, pct)}%` }} />
+          </div>
+          <figcaption className="px-1 pt-2 pb-1 text-[12px] text-faint">Fingerprinted with SHA-256 · six checks · the file is deleted after</figcaption>
+        </figure>
 
-        <section className="cream flex flex-col rounded-xl p-4 sm:p-7" aria-label="Progress">
+        <section className="cream flex flex-col rounded-xl p-4 sm:p-5" aria-label="Progress">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <p className="eyebrow">{waiting ? 'In queue' : 'Analyzing'}</p>
             <span className="status">
-              <span className="animate-blink size-2 rounded-full bg-accent" aria-hidden /> Active
+              <span className="animate-blink size-2 rounded-full bg-ink" aria-hidden /> Active
             </span>
           </div>
           {filename && <FileName name={filename} className="mt-1 text-[14px] text-faint" />}
 
           <div className="mt-4 grid grid-cols-2 gap-4" aria-live="polite">
-            <Figure label="Progress" value={pct} unit="%" />
-            <Figure label="Steps done" value={done} unit={`/ ${STEPS.length}`} />
+            <Figure label="Progress" value={pct} unit="%" size="sm" />
+            <Figure label="Steps done" value={done} unit={`/ ${STEPS.length}`} size="sm" />
           </div>
 
           {/* Says what is happening now; the rows below only swap their values. */}
@@ -163,7 +146,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
               <div key={step.key} className="flex items-center gap-3 py-2 text-[15px]">
                 <span
                   className={`grid size-6 shrink-0 place-items-center rounded-full ${
-                    step.state === 'done' ? 'bg-ink text-on-primary' : step.state === 'active' ? 'bg-accent text-ink' : 'bg-raised text-faint'
+                    step.state === 'done' ? 'bg-ink text-on-primary' : step.state === 'active' ? 'bg-raised text-ink ring-1 ring-ink' : 'bg-raised text-faint'
                   }`}
                   aria-hidden
                 >

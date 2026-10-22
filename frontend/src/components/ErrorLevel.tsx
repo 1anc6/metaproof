@@ -51,7 +51,7 @@ export function ErrorLevel({ job }: { job: Job }) {
   }
 
   return (
-    <section className="panel animate-rise no-print rounded-xl p-4 sm:p-6">
+    <section className="panel animate-rise no-print rounded-xl p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <ScanEye className="mt-0.5 size-5 shrink-0" strokeWidth={1.5} />
         <div>

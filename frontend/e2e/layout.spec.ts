@@ -53,11 +53,11 @@ test('desktop: the navigation sits in the top bar, and nothing floats over the p
   }
 })
 
-test('phones: the workspace opens with the canvas, its toolbar and the composer above the fold', async ({ page }) => {
+test('phones: the workspace opens with the canvas and the upload button above the fold', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
-  await expect(page.getByRole('combobox', { name: 'Check' })).toBeInViewport()
-  await expect(page.getByRole('button', { name: 'Attach an image' })).toBeInViewport()
+  await expect(page.getByRole('button', { name: /Arrow keys choose another check/ })).toBeInViewport()
+  await expect(page.getByRole('button', { name: 'Choose image' })).toBeInViewport()
 })
 
 test('no horizontal scrolling on a small phone', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
-import { ArcGauge, Figure, PageHeader } from '../components/ui'
+import { PageHeader } from '../components/ui'
 
 const LAYERS = [
   {
@@ -49,7 +49,7 @@ export function Method() {
         subtitle="Six independent checks, a verdict that shows its working, and never a claim of absolute truth."
       />
 
-      <nav aria-label="On this page" className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+      <nav aria-label="On this page" className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
         {[
           ['#checks', 'The six checks'],
           ['#verdict', 'The verdict'],
@@ -64,7 +64,7 @@ export function Method() {
 
       <section id="checks" className="flex scroll-mt-24 flex-col gap-3">
         {LAYERS.map(({ name, status, text }) => (
-          <article key={name} className="panel animate-rise rounded-xl p-4 sm:p-6">
+          <article key={name} className="panel animate-rise rounded-xl p-4 sm:p-5">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="eyebrow">{name}</h2>
@@ -78,7 +78,7 @@ export function Method() {
         ))}
       </section>
 
-      <section id="verdict" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-4 sm:p-6">
+      <section id="verdict" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-4 sm:p-5">
         <h2 className="eyebrow">How the verdict is decided</h2>
         <ol className="mt-4 flex flex-col gap-3">
           {RULES.map((rule, i) => (
@@ -105,27 +105,36 @@ export function Method() {
 
 function DetectorResults() {
   return (
-    <section id="accuracy" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-4 sm:p-6">
+    <section id="accuracy" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-4 sm:p-5">
       <h2 className="eyebrow">How well the detector works</h2>
-      {/* AUC on the reference's arc gauge, from chance (0.5) to perfect (1.0), held out from training. */}
-      <div className="cream mt-4 grid gap-4 rounded-lg p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center">
-        <div className="text-ink">
-          <ArcGauge value={(SUMMARY.auc - 0.5) / 0.5} valueLabel={`AUC ${SUMMARY.auc.toFixed(2)}`} startLabel="0.5" endLabel="1.0" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Figure label="Recompressed" value={SUMMARY.aucRecompressed.toFixed(2)} unit="AUC" size="sm" />
-          <Figure label="Calibration" value={Math.round(SUMMARY.calibrationError * 100)} unit="% error" size="sm" />
-        </div>
-      </div>
-      <p className="mt-4 text-[15px] leading-relaxed text-muted">
+      {/* Held-out benchmark figures, measured on generators the model never saw in training. */}
+      <dl className="mt-3 grid grid-cols-3 gap-2">
+        {[
+          ['AUC, as uploaded', SUMMARY.auc.toFixed(2)],
+          ['AUC, recompressed', SUMMARY.aucRecompressed.toFixed(2)],
+          ['Calibration error', `${Math.round(SUMMARY.calibrationError * 100)}%`],
+        ].map(([label, value]) => (
+          <div key={label} className="min-w-0 rounded-lg bg-raised px-3 py-2">
+            <dt className="text-[12px] leading-tight text-faint">{label}</dt>
+            <dd className="mt-1 text-[20px] font-medium tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-[14px] leading-relaxed text-muted">
+        AUC is how reliably the detector ranks an AI image above a real one: 0.5 is a coin toss, 1.0 is
+        never wrong. Calibration error is how far its scores stray from what actually happened on the
+        test set. Both describe the detector across thousands of images; they do not say how sure any
+        single verdict is.
+      </p>
+      <p className="mt-3 text-[15px] leading-relaxed text-muted">
         Tested on {SUMMARY.testImages.toLocaleString()} images from nine generators that were{' '}
         <span className="text-ink">never shown to the model during training</span>. AUC{' '}
         {SUMMARY.auc} as uploaded and {SUMMARY.aucRecompressed} after social-media-style
         recompression; calibration error {Math.round(SUMMARY.calibrationError * 100)}%.
       </p>
 
-      <div className="mt-6">
-        <div className="flex items-center justify-between text-[12px] text-faint">
+      <div className="mt-5">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[12px] text-faint">
           <span>AI images detected, per unseen generator</span>
           <span className="flex items-center gap-3">
             <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-accent" /> as uploaded</span>
@@ -150,7 +159,7 @@ function DetectorResults() {
         </ul>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-5">
         <p className="text-[12px] text-faint">Newest generators (2026), as uploaded: still mostly missed</p>
         <ul className="mt-3 flex flex-col gap-2.5">
           {NEWEST.map((g) => (
@@ -170,7 +179,7 @@ function DetectorResults() {
         </p>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-5">
         <p className="text-[12px] text-faint">How the score is used (as uploaded / recompressed)</p>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[480px] text-left text-[13px]">

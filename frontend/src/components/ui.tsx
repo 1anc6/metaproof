@@ -18,21 +18,11 @@ export function Mark({ className = 'size-6' }: { className?: string }) {
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <span className="flex items-center gap-3 text-ink">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle_at_50%_30%,#4d4d4d,#141414_70%)] text-white shadow-[0_0_0_2px_rgb(255_255_255/0.75),0_6px_14px_-4px_rgb(0_0_0/0.6),inset_0_1px_2px_rgb(255_255_255/0.3)]">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
         <Mark className="size-5" />
       </span>
       {!compact && <span className="text-[16px] tracking-[-0.01em]">MetaProof</span>}
     </span>
-  )
-}
-
-/** The reference's four-point sparkle, for the glowing orb. */
-export function Sparkle({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <path d="M12 2.5c.5 4.6 2.4 7 7 9.5-4.6 2.5-6.5 4.9-7 9.5-.5-4.6-2.4-7-7-9.5 4.6-2.5 6.5-4.9 7-9.5Z" fill="currentColor" />
-      <path d="M19.2 2.6c.2 1.5.8 2.2 2.2 2.9-1.4.7-2 1.4-2.2 2.9-.2-1.5-.8-2.2-2.2-2.9 1.4-.7 2-1.4 2.2-2.9Z" fill="currentColor" opacity="0.8" />
-    </svg>
   )
 }
 
@@ -121,17 +111,6 @@ export function FileName({ name, className = '' }: { name: string; className?: s
   )
 }
 
-/** "• Diam 35 mm": a raised pill with a dot, a label and a fainter value. */
-export function SpecChip({ label, value, className = '', style }: { label: string; value?: ReactNode; className?: string; style?: CSSProperties }) {
-  return (
-    <span className={`chip ${className}`} style={style}>
-      <span className="size-1.5 shrink-0 rounded-full bg-ink" aria-hidden />
-      {label}
-      {value !== undefined && <span className="text-[12px] text-faint">{value}</span>}
-    </span>
-  )
-}
-
 /** "Signal ········ Strong": a label, a dotted leader and the value. Use inside a <dl>. */
 export function LeaderRow({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; value: ReactNode }) {
   return (
@@ -205,59 +184,6 @@ export function Figure({
 }
 
 /**
- * The reference's arc gauge: a dotted arc for the whole range, a solid arc up to the value, and a
- * marked point with its label. `value` runs from 0 to 1.
- */
-export function ArcGauge({
-  value,
-  valueLabel,
-  startLabel,
-  endLabel,
-  className = '',
-}: {
-  value: number
-  valueLabel: string
-  startLabel?: string
-  endLabel?: string
-  className?: string
-}) {
-  const t = Math.max(0, Math.min(1, value))
-  const cx = 160
-  const cy = 170
-  const r = 130
-  const at = (f: number, rad = r) => {
-    const a = ((160 - 140 * f) * Math.PI) / 180
-    return [cx + rad * Math.cos(a), cy - rad * Math.sin(a)] as const
-  }
-  const arc = (f0: number, f1: number, rad = r) => {
-    const [x0, y0] = at(f0, rad)
-    const [x1, y1] = at(f1, rad)
-    return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${rad} ${rad} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`
-  }
-  const [mx, my] = at(t)
-  const [s0x, s0y] = at(0, r + 22)
-  const [s1x, s1y] = at(1, r + 22)
-  return (
-    <svg viewBox="0 0 320 150" className={`w-full ${className}`} aria-hidden>
-      <path d={arc(0, 1, r + 14)} fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.2" strokeDasharray="1 5" strokeLinecap="round" />
-      <path d={arc(0, 1)} fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1.5" strokeDasharray="4 5" />
-      {t > 0.005 && (
-        <path d={arc(0, t)} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" pathLength={1} strokeDasharray="1" className="animate-draw" />
-      )}
-      <circle cx={at(0)[0]} cy={at(0)[1]} r="3.5" fill="currentColor" fillOpacity="0.45" />
-      <circle cx={at(1)[0]} cy={at(1)[1]} r="3.5" fill="currentColor" fillOpacity="0.45" />
-      <g className="animate-rise [animation-delay:900ms]">
-        <line x1={mx} y1={my - 16} x2={mx} y2={my - 6} stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <circle cx={mx} cy={my} r="6" fill="var(--color-accent)" stroke="currentColor" strokeWidth="2" />
-        <text x={mx} y={my + 24} textAnchor="middle" fontSize="13" fill="currentColor">{valueLabel}</text>
-      </g>
-      {startLabel && <text x={s0x} y={s0y + 26} textAnchor="middle" fontSize="12" fill="currentColor" fillOpacity="0.55">{startLabel}</text>}
-      {endLabel && <text x={s1x} y={s1y + 26} textAnchor="middle" fontSize="12" fill="currentColor" fillOpacity="0.55">{endLabel}</text>}
-    </svg>
-  )
-}
-
-/**
  * The reference's range ruler: fine ticks, taller marks with labels, shaded bands, and a lemon
  * marker at the value. Positions run from 0 to 100.
  */
@@ -302,52 +228,6 @@ export function RangeRuler({
           </span>
         ))}
       </div>
-    </div>
-  )
-}
-
-/**
- * The reference's device view: a ringed circle with a dotted texture, its subject in the middle,
- * and spec chips floating around it.
- */
-export function DeviceCircle({
-  children,
-  chips,
-  className = '',
-}: {
-  children: ReactNode
-  chips: { label: string; value?: ReactNode }[]
-  className?: string
-}) {
-  // six places around the circle, top-left first, clockwise
-  const SLOTS = ['left-[2%] top-[14%]', 'right-[0%] top-[6%]', 'right-[-2%] top-[52%]', 'right-[6%] bottom-[2%]', 'left-[0%] bottom-[10%]', 'left-[-2%] top-[48%]']
-  return (
-    <div className={`relative mx-auto aspect-square w-full max-w-[460px] ${className}`}>
-      <div className="absolute inset-[12%] rounded-full border border-line-strong p-[3%]">
-        <div className="relative size-full rounded-full border border-line-strong">
-          {/* two dotted clusters, like the reference's perforated face */}
-          <div
-            className="animate-spin-slow absolute inset-[8%] rounded-full opacity-70"
-            style={{
-              backgroundImage: 'radial-gradient(var(--color-faint) 1.2px, transparent 1.6px)',
-              backgroundSize: '12px 12px',
-              maskImage: 'radial-gradient(40% 40% at 28% 30%, #000 40%, transparent 72%), radial-gradient(38% 38% at 72% 72%, #000 40%, transparent 72%)',
-              WebkitMaskImage: 'radial-gradient(40% 40% at 28% 30%, #000 40%, transparent 72%), radial-gradient(38% 38% at 72% 72%, #000 40%, transparent 72%)',
-            }}
-            aria-hidden
-          />
-          <div className="absolute inset-[22%] grid place-items-center">{children}</div>
-        </div>
-      </div>
-      {chips.slice(0, SLOTS.length).map((c, i) => (
-        <SpecChip
-          key={c.label}
-          label={c.label}
-          value={c.value}
-          className={`animate-float absolute ${SLOTS[i]}`}
-          style={{ animationDelay: `${i * -0.9}s` }}
-        />
-      ))}
     </div>
   )
 }
@@ -426,7 +306,7 @@ export function ErrorPanel({
   children?: ReactNode
 }) {
   return (
-    <div className="cream rounded-[28px] p-8 text-center sm:p-10">
+    <div className="cream rounded-xl p-8 text-center sm:p-10">
       <p className="eyebrow text-faint">{label}</p>
       <h1 className="display mt-3 text-[42px] leading-none">{title}</h1>
       <p className="mx-auto mt-3 max-w-md text-[15px] text-muted">{message}</p>
