@@ -64,7 +64,7 @@ export function Method() {
 
       <section id="checks" className="flex scroll-mt-24 flex-col gap-3">
         {LAYERS.map(({ name, status, text }) => (
-          <article key={name} className="panel animate-rise rounded-xl p-5 sm:p-6">
+          <article key={name} className="panel animate-rise rounded-xl p-4 sm:p-6">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="eyebrow">{name}</h2>
@@ -78,7 +78,7 @@ export function Method() {
         ))}
       </section>
 
-      <section id="verdict" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
+      <section id="verdict" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-4 sm:p-6">
         <h2 className="eyebrow">How the verdict is decided</h2>
         <ol className="mt-4 flex flex-col gap-3">
           {RULES.map((rule, i) => (
@@ -105,10 +105,10 @@ export function Method() {
 
 function DetectorResults() {
   return (
-    <section id="accuracy" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-6">
+    <section id="accuracy" className="panel animate-rise mt-6 scroll-mt-24 rounded-xl p-4 sm:p-6">
       <h2 className="eyebrow">How well the detector works</h2>
       {/* AUC on the reference's arc gauge, from chance (0.5) to perfect (1.0), held out from training. */}
-      <div className="cream mt-5 grid gap-4 rounded-lg p-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center">
+      <div className="cream mt-4 grid gap-4 rounded-lg p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center">
         <div className="text-ink">
           <ArcGauge value={(SUMMARY.auc - 0.5) / 0.5} valueLabel={`AUC ${SUMMARY.auc.toFixed(2)}`} startLabel="0.5" endLabel="1.0" />
         </div>
@@ -117,7 +117,7 @@ function DetectorResults() {
           <Figure label="Calibration" value={Math.round(SUMMARY.calibrationError * 100)} unit="% error" size="sm" />
         </div>
       </div>
-      <p className="mt-5 text-[15px] leading-relaxed text-muted">
+      <p className="mt-4 text-[15px] leading-relaxed text-muted">
         Tested on {SUMMARY.testImages.toLocaleString()} images from nine generators that were{' '}
         <span className="text-ink">never shown to the model during training</span>. AUC{' '}
         {SUMMARY.auc} as uploaded and {SUMMARY.aucRecompressed} after social-media-style
@@ -150,7 +150,7 @@ function DetectorResults() {
         </ul>
       </div>
 
-      <div className="mt-7">
+      <div className="mt-6">
         <p className="text-[12px] text-faint">Newest generators (2026), as uploaded: still mostly missed</p>
         <ul className="mt-3 flex flex-col gap-2.5">
           {NEWEST.map((g) => (
@@ -170,7 +170,7 @@ function DetectorResults() {
         </p>
       </div>
 
-      <div className="mt-7">
+      <div className="mt-6">
         <p className="text-[12px] text-faint">How the score is used (as uploaded / recompressed)</p>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[480px] text-left text-[13px]">
@@ -196,7 +196,7 @@ function DetectorResults() {
         </div>
       </div>
 
-      <p className="mt-5 text-[13px] leading-relaxed text-faint">
+      <p className="mt-4 text-[13px] leading-relaxed text-faint">
         Wrongly calling a real photo AI-generated is the costlier mistake, so only very high scores
         decide on their own. About one in ten real photos scores above 50% (one in five after
         recompression), which is why the detector is one signal among several and MetaProof answers

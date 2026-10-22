@@ -37,7 +37,7 @@ export function Report() {
 export function ReportSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy>
-      <div className="panel flex flex-col gap-6 rounded-xl p-6 sm:flex-row sm:p-8">
+      <div className="panel flex flex-col gap-6 rounded-xl p-4 sm:flex-row sm:p-8">
         <div className="skeleton aspect-square w-full max-w-[200px] rounded-xl" />
         <div className="flex flex-1 flex-col gap-3 pt-2">
           <div className="skeleton h-3 w-20" />

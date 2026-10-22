@@ -3,9 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { useHistory } from '../lib/history'
-import { Mark, Thumb } from './ui'
-import { CheckWheel, Lens } from './CheckWheel'
-import { CHECKS, DEMO_SHA } from '../lib/checks'
+import { Logo } from './ui'
+import { CheckDial } from './CheckDial'
 
 const KEY = 'metaproof.welcome.v1'
 let seenThisSession = false // fallback when storage is blocked (private mode)
@@ -29,7 +28,7 @@ function markSeen() {
 }
 
 /**
- * Full-screen intro for first-time visitors on phones, after the mobile reference. No sign-up:
+ * Full-screen intro for first-time visitors on phones, on the graphite reference. No sign-up:
  * it only explains the app and points at the two ways in. People arriving on a shared report
  * link, returning users and desktop visitors never see it.
  */
@@ -77,18 +76,11 @@ export function Welcome() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-title"
-      className="fixed inset-0 z-50 isolate flex flex-col overflow-y-auto bg-[#2a2620] px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] text-white sm:px-[max(1.25rem,calc((100vw-28rem)/2))] lg:hidden"
+      className="theme-dark fixed inset-0 z-50 isolate flex flex-col overflow-y-auto bg-[linear-gradient(180deg,#767676_0%,#5e5e5e_32%,#444_66%,#2e2e2e_100%)] px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] text-white sm:px-[max(1.25rem,calc((100vw-28rem)/2))] lg:hidden"
     >
-      {/* The example image, blurred into a warm dark backdrop, like the reference's photo screen. */}
-      <Thumb sha={DEMO_SHA} eager className="!fixed inset-0 -z-10 scale-125 !bg-transparent opacity-80 blur-2xl brightness-[0.5]" />
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2.5">
-          <span className="grid size-10 place-items-center rounded-full bg-white text-[#1d1b17]">
-            <Mark className="size-5" />
-          </span>
-          <span className="text-[16px] font-bold tracking-[0.01em] uppercase">MetaProof</span>
-        </span>
-        <button type="button" onClick={() => close()} className="glass h-10 rounded-full px-4 text-sm">
+        <Logo />
+        <button type="button" onClick={() => close()} className="btn-ghost h-11 px-5 text-[15px]">
           Skip
         </button>
       </div>
@@ -96,18 +88,18 @@ export function Welcome() {
       <div className="stagger mt-8 [&>*]:animate-rise [@media(max-height:720px)]:mt-5">
         <h1
           id="welcome-title"
-          className="text-[44px] leading-[0.98] font-normal tracking-[-0.04em] [@media(max-height:720px)]:text-[36px]"
+          className="display text-[52px] leading-[0.92] [@media(max-height:720px)]:text-[42px]"
         >
-          See what's behind the image
+          See what's behind the <span className="mark-word">image</span>
         </h1>
         <p className="mt-3 flex items-center gap-1.5 text-[14px] text-white/80">
           <Lock className="size-3.5" strokeWidth={1.75} /> No account needed
         </p>
       </div>
 
-      {/* The six checks around the lens; it gives way on short phones so both buttons stay above the fold. */}
-      <div className="flex flex-1 items-center py-4 [@media(max-height:720px)]:hidden">
-        <CheckWheel items={CHECKS} active={active} onSelect={setActive} className="mx-auto max-w-[340px]" center={<Lens />} />
+      {/* The six checks on the dial; it gives way on short phones so both buttons stay above the fold. */}
+      <div className="flex flex-1 items-center py-5 [@media(max-height:720px)]:hidden">
+        <CheckDial active={active} onSelect={setActive} className="max-w-[360px]" />
       </div>
 
       <div className="flex flex-col gap-3 [@media(max-height:720px)]:mt-auto">
@@ -115,11 +107,11 @@ export function Welcome() {
           ref={primary}
           type="button"
           onClick={() => close('/new')}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-white text-[16px] font-medium text-[#1d1b17]"
+          className="btn-primary h-14 w-full text-[16px]"
         >
           Analyze an image <ArrowRight className="size-4" strokeWidth={2} />
         </button>
-        <button type="button" onClick={() => close(DEMO_REPORT_PATH)} className="glass h-14 w-full rounded-full text-[16px]">
+        <button type="button" onClick={() => close(DEMO_REPORT_PATH)} className="btn-ghost h-14 w-full text-[16px]">
           See an example report
         </button>
         <p className="mt-1 text-center text-[12px] leading-relaxed text-white/70">

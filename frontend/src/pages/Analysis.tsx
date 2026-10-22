@@ -98,11 +98,11 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
   return (
     <div className="mx-auto max-w-5xl pt-2 sm:pt-4">
       <header className="animate-rise mb-6 sm:mb-8">
-        <h1 className="text-[34px] leading-[1.05] font-normal tracking-[-0.03em] sm:text-[44px]">Reading the evidence</h1>
+        <h1 className="display text-[46px] leading-[0.98] sm:text-[64px]">Reading the evidence</h1>
         <p className="mt-3 text-[16px] text-muted">Six checks run on the file, then the evidence is weighed.</p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-center lg:gap-6">
         {/* The upload in the device circle, with a ring that fills as the checks finish. */}
         <DeviceCircle
           className="max-lg:order-2"
@@ -138,7 +138,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
           </div>
         </DeviceCircle>
 
-        <section className="cream flex flex-col rounded-xl p-5 sm:p-7" aria-label="Progress">
+        <section className="cream flex flex-col rounded-xl p-4 sm:p-7" aria-label="Progress">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <p className="eyebrow">{waiting ? 'In queue' : 'Analyzing'}</p>
             <span className="status">
@@ -147,14 +147,14 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
           </div>
           {filename && <FileName name={filename} className="mt-1 text-[14px] text-faint" />}
 
-          <div className="mt-6 grid grid-cols-2 gap-4" aria-live="polite">
+          <div className="mt-4 grid grid-cols-2 gap-4" aria-live="polite">
             <Figure label="Progress" value={pct} unit="%" />
             <Figure label="Steps done" value={done} unit={`/ ${STEPS.length}`} />
           </div>
 
           {/* Says what is happening now; the rows below only swap their values. */}
           <ThinkingPill
-            className="mt-5 w-full justify-start"
+            className="mt-4 w-full justify-start"
             variant={job && !waiting ? 'dots' : 'lines'}
             label={!job ? 'Connecting…' : waiting ? 'Waiting in the queue…' : `${STEPS[active].label}…`}
           />

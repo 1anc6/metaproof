@@ -9,20 +9,30 @@ export function Mark({ className = 'size-6' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
       <path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="12" r="3.2" fill="var(--color-accent)" />
+      <circle cx="12" cy="12" r="3.2" fill="currentColor" />
     </svg>
   )
 }
 
-/** The mark on a dark disc beside the name, like an instrument maker's badge. */
+/** The mark on a glossy dark disc with a bright rim beside the name, like the reference's badge. */
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <span className="flex items-center gap-2.5 text-ink">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
+    <span className="flex items-center gap-3 text-ink">
+      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle_at_50%_30%,#4d4d4d,#141414_70%)] text-white shadow-[0_0_0_2px_rgb(255_255_255/0.75),0_6px_14px_-4px_rgb(0_0_0/0.6),inset_0_1px_2px_rgb(255_255_255/0.3)]">
         <Mark className="size-5" />
       </span>
-      {!compact && <span className="text-[16px] font-bold tracking-[0.01em] uppercase">MetaProof</span>}
+      {!compact && <span className="text-[17px] tracking-[-0.01em]">MetaProof</span>}
     </span>
+  )
+}
+
+/** The reference's four-point sparkle, for the glowing orb. */
+export function Sparkle({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path d="M12 2.5c.5 4.6 2.4 7 7 9.5-4.6 2.5-6.5 4.9-7 9.5-.5-4.6-2.4-7-7-9.5 4.6-2.5 6.5-4.9 7-9.5Z" fill="currentColor" />
+      <path d="M19.2 2.6c.2 1.5.8 2.2 2.2 2.9-1.4.7-2 1.4-2.2 2.9-.2-1.5-.8-2.2-2.2-2.9 1.4-.7 2-1.4 2.2-2.9Z" fill="currentColor" opacity="0.8" />
+    </svg>
   )
 }
 
@@ -377,11 +387,11 @@ export function PageHeader({
   action?: ReactNode
 }) {
   return (
-    <header className="animate-rise mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+    <header className="animate-rise mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-[34px] leading-[1.05] font-normal tracking-[-0.03em] sm:text-[44px]">
+        <h1 className="display text-[46px] leading-[0.98] sm:text-[64px]">
           {title}
-          {dim && <span className="text-faint"> {dim}</span>}
+          {dim && <span className="text-faint italic"> {dim}</span>}
         </h1>
         {subtitle && <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted">{subtitle}</p>}
       </div>
@@ -416,11 +426,11 @@ export function ErrorPanel({
   children?: ReactNode
 }) {
   return (
-    <div className="cream rounded-xl p-8 text-center sm:p-10">
+    <div className="cream rounded-[28px] p-8 text-center sm:p-10">
       <p className="eyebrow text-faint">{label}</p>
-      <h1 className="mt-3 text-3xl font-normal tracking-[-0.02em]">{title}</h1>
+      <h1 className="display mt-3 text-[42px] leading-none">{title}</h1>
       <p className="mx-auto mt-3 max-w-md text-[15px] text-muted">{message}</p>
-      {children && <div className="mt-7 flex justify-center gap-3">{children}</div>}
+      {children && <div className="mt-6 flex justify-center gap-3">{children}</div>}
     </div>
   )
 }
@@ -452,10 +462,10 @@ export function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-line-strong'} ${className}`}
+      className={`track relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? '!bg-primary' : ''} ${className}`}
     >
       <span
-        className={`absolute top-[3px] left-[3px] size-[22px] rounded-full bg-white shadow-[0_2px_6px_rgb(40_40_20/0.3)] transition-transform duration-300 ease-[var(--ease-out)] ${
+        className={`absolute top-[3px] left-[3px] size-[22px] rounded-full bg-[linear-gradient(180deg,#ffffff,#d6d6d6)] shadow-[0_2px_6px_rgb(0_0_0/0.35)] transition-transform duration-300 ease-[var(--ease-out)] ${
           checked ? 'translate-x-5' : ''
         }`}
       />
@@ -485,7 +495,7 @@ export function ThemeSwitch({
   const { theme } = usePrefs()
   return (
     <div
-      className={`gap-0.5 rounded-full bg-raised p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`}
+      className={`track gap-0.5 rounded-full p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`}
       role="radiogroup"
       aria-label="Colour theme"
     >
@@ -498,8 +508,8 @@ export function ThemeSwitch({
           aria-label={labels ? undefined : label}
           title={label}
           onClick={() => setPref('theme', value)}
-          className={`flex h-8 items-center justify-center gap-1.5 rounded-full text-[13px] transition ${
-            stretch ? 'flex-1' : labels ? 'px-3.5' : 'w-8'
+          className={`flex h-9 items-center justify-center gap-1.5 rounded-full text-[13px] transition ${
+            stretch ? 'flex-1' : labels ? 'px-4' : 'w-9'
           } ${theme === value ? 'selected' : 'text-faint hover:text-ink'}`}
         >
           <Icon className="size-4" strokeWidth={1.5} />
@@ -515,7 +525,7 @@ export function ThemeToggle({ resolved }: { resolved: 'light' | 'dark' }) {
   const next = resolved === 'dark' ? 'light' : 'dark'
   const Icon = resolved === 'dark' ? Sun : Moon
   return (
-    <button type="button" onClick={() => setPref('theme', next)} className="well size-11" aria-label={`Switch to ${next} theme`}>
+    <button type="button" onClick={() => setPref('theme', next)} className="well-glass size-11" aria-label={`Switch to ${next} theme`}>
       <Icon className="size-[18px]" strokeWidth={1.5} />
     </button>
   )
@@ -540,7 +550,7 @@ export function Chip({
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14px] transition ${
-        checked ? 'bg-primary text-on-primary' : 'well text-muted hover:text-ink'
+        checked ? 'selected' : 'well text-muted hover:text-ink'
       }`}
     >
       {Icon && <Icon className="size-4" strokeWidth={1.5} />}

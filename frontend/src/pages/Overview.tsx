@@ -1,4 +1,4 @@
-import { ArrowUpRight, EyeOff, Filter, Plus } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, EyeOff, Filter, Plus, Upload } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
@@ -9,8 +9,8 @@ import { setPref, usePrefs } from '../lib/prefs'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { toneOf, VERDICTS } from '../lib/verdicts'
 import { ArcGauge, Chip, FileName, Figure, LeaderRow, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
-import { CheckWheel, Lens } from '../components/CheckWheel'
-import { CHECKS, DEMO_SHA } from '../lib/checks'
+import { CheckDial } from '../components/CheckDial'
+import { CHECKS } from '../lib/checks'
 
 
 export function Overview() {
@@ -36,21 +36,12 @@ export function Overview() {
   const counted = Math.min(history.length, 50) // verdicts are fetched for the 50 most recent
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
-      {/* The title runs across the top; below it the wheel and the cards share one row, top and
-          bottom aligned. */}
-      <header className="animate-rise grid gap-x-10 gap-y-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-end">
-        <h1 className="text-[40px] leading-[1.02] font-normal tracking-[-0.035em] sm:text-[56px]">See what's behind the image</h1>
-        <p className="max-w-lg text-[16px] leading-relaxed text-muted lg:pb-1.5">
-          MetaProof reads an image's metadata, Content Credentials and pixels, then tells you what the evidence
-          shows, and when it isn't enough to say anything.
-        </p>
-      </header>
+    <div className="flex flex-col gap-10 lg:gap-14">
+      <Hero />
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8">
-        <ChecksPanel className="animate-rise" />
-
-        <div className="animate-rise flex min-w-0 flex-col gap-4 [&>*:last-child]:flex-1">
+      {/* The two cards side by side, on the hero's column edges. */}
+      <section className="grid gap-4 md:grid-cols-2" aria-label="Your reports">
+        <div className="animate-rise flex min-w-0 flex-col [&>*]:flex-1">
           {latest ? (
             <ResultCard
               to={`/analysis/${latest.jobId}`}
@@ -83,9 +74,10 @@ export function Overview() {
               ]}
             />
           )}
-
+        </div>
+        <div className="animate-rise flex min-w-0 flex-col [&>*]:flex-1">
           {history.length > 0 ? (
-            <section className="panel rounded-xl p-5 sm:p-6" aria-label="Your analyses">
+            <section className="panel rounded-[26px] p-4 sm:p-6" aria-label="Your analyses">
               <PanelTitle
                 title="Your analyses"
                 action={
@@ -111,7 +103,7 @@ export function Overview() {
 
       <section className="animate-rise">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="text-[26px] font-normal tracking-[-0.02em]">Recent analyses</h2>
+          <h2 className="display text-[36px] leading-none">Recent analyses</h2>
           {history.length > 0 && (
             <Link to="/history" className="btn-ghost h-10 px-4 text-[14px]">
               See all
@@ -125,12 +117,12 @@ export function Overview() {
           </div>
         )}
         {history.length === 0 ? (
-          <div className="panel mt-4 rounded-xl px-6 py-8">
+          <div className="panel mt-4 rounded-[26px] px-4 py-6 sm:px-6 sm:py-8">
             <p className="text-[17px]">No analyses yet</p>
             <p className="mt-1 max-w-sm text-[15px] text-muted">
               Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
             </p>
-            <Link to="/new" className="btn-primary mt-5">
+            <Link to="/new" className="btn-primary mt-4">
               <Plus className="size-4" strokeWidth={2} /> Analyze an image
             </Link>
           </div>
@@ -144,8 +136,8 @@ export function Overview() {
               const s = data[entry.jobId]
               return (
                 <li key={entry.jobId} className="min-w-0">
-                  <Link to={`/analysis/${entry.jobId}`} className="panel flex h-full flex-col rounded-xl p-3">
-                    <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="aspect-[4/3] w-full rounded-lg" />
+                  <Link to={`/analysis/${entry.jobId}`} className="panel flex h-full flex-col rounded-[24px] p-2.5">
+                    <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="aspect-[4/3] w-full rounded-[16px]" />
                     <FileName name={entry.filename} className="mt-3 px-1 text-[14px]" />
                     <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-1 pb-1">
                       {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
@@ -163,29 +155,53 @@ export function Overview() {
 }
 
 /**
- * The reference's monitoring home: a dark photo panel (the example image, blurred), the six checks
- * as a radial menu around a lemon lens, and a glass card that explains the chosen check.
+ * The first screen. On a desktop the words take the left column (the title, the sentence under it,
+ * the two ways in, and the chosen check explained) and the dial takes the right as the picture; the
+ * explanation's foot lines up with the dial's toolbar. On a phone they stack: words, dial, explanation.
  */
-export function ChecksPanel({ className = '' }: { className?: string }) {
+function Hero() {
   const [active, setActive] = useState('c2pa')
   const check = CHECKS.find((c) => c.key === active)!
+  const Icon = check.icon
   return (
-    <section className={`relative isolate flex flex-col overflow-hidden rounded-xl bg-[#2a2620] p-5 text-white sm:p-7 ${className}`} aria-label="The six checks">
-      <Thumb sha={DEMO_SHA} eager className="!absolute inset-0 -z-10 scale-125 !bg-transparent opacity-80 blur-2xl brightness-[0.55]" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-transparent to-black/40" aria-hidden />
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] tracking-[0.02em] uppercase">Six checks</h2>
-        <span className="status text-white/80">
-          <span className="size-2 rounded-full bg-accent" aria-hidden /> Live
-        </span>
+    <section
+      aria-labelledby="overview-title"
+      className="grid gap-x-12 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:[grid-template-areas:'words_dial'_'check_dial'] xl:grid-cols-[minmax(0,1fr)_minmax(0,460px)] xl:gap-x-16"
+    >
+      <div className="animate-rise min-w-0 lg:[grid-area:words]">
+        <h1 id="overview-title" className="display max-w-[7em] text-[52px] leading-[0.95] sm:text-[76px] lg:text-[66px] xl:text-[76px]">
+          See what's behind the <span className="mark-word">image</span>
+        </h1>
+        <p className="mt-6 max-w-[46ch] text-[18px] leading-relaxed text-ink">
+          MetaProof reads an image's metadata, Content Credentials and pixels, then tells you what the evidence
+          shows, and when it isn't enough to say anything.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link to="/new" className="btn-primary h-12 px-6 text-[16px] max-sm:w-full">
+            Analyze an image <ArrowRight className="size-4" strokeWidth={2} />
+          </Link>
+          <Link to={DEMO_REPORT_PATH} className="btn-ghost h-12 px-6 text-[16px] max-sm:w-full">
+            See an example report
+          </Link>
+        </div>
       </div>
-      <CheckWheel items={CHECKS} active={active} onSelect={setActive} className="mx-auto mt-1 max-w-[440px]" center={<Lens />} />
-      <div className="glass mt-auto rounded-lg p-4 sm:p-5" aria-live="polite">
-        <h3 key={check.key} className="animate-rise text-[15px] tracking-[0.02em] uppercase">{check.label}</h3>
-        <p key={`${check.key}-d`} className="animate-rise mt-2 text-[15px] leading-relaxed text-white/85 [animation-delay:60ms]">{check.detail}</p>
+
+      <div className="animate-rise min-w-0 lg:[grid-area:dial]">
+        <h2 className="sr-only">The six checks</h2>
+        <CheckDial active={active} onSelect={setActive} className="lg:max-w-none" />
+      </div>
+
+      <div className="panel animate-rise mx-auto w-full max-w-[460px] self-end rounded-[26px] p-4 sm:p-5 lg:mx-0 lg:max-w-[520px] lg:[grid-area:check]" aria-live="polite">
+        <div className="flex items-center gap-3">
+          <span className="well size-10">
+            <Icon className="size-[18px]" strokeWidth={1.5} aria-hidden />
+          </span>
+          <h3 key={check.key} className="animate-rise text-[17px]">{check.label}</h3>
+        </div>
+        <p key={`${check.key}-d`} className="animate-rise mt-3 text-[15px] leading-relaxed text-muted [animation-delay:60ms]">{check.detail}</p>
         <div key={`${check.key}-w`} className="animate-rise mt-3 flex items-center gap-3 text-[14px] [animation-delay:120ms]">
-          <span className="text-white/70">Weight in the verdict</span>
-          <span className="leader opacity-60 invert" aria-hidden />
+          <span className="text-faint">Weight in the verdict</span>
+          <span className="leader" aria-hidden />
           <span>{check.weight}</span>
         </div>
       </div>
@@ -209,7 +225,7 @@ function ResultCard({
 }) {
   const v = VERDICTS[verdict]
   return (
-    <Link to={to} className={`cream ${toneOf(verdict)} group flex flex-col rounded-xl p-5 sm:p-6`}>
+    <Link to={to} className={`cream ${toneOf(verdict)} group flex flex-col rounded-[26px] p-4 sm:p-6`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="eyebrow">{title}</p>
@@ -221,7 +237,7 @@ function ResultCard({
           <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.5} />
         </span>
       </div>
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      <div className="mt-4 grid grid-cols-2 gap-4">
         {figures.map(([label, value, unit]) => (
           <Figure key={label} label={label} value={value} unit={unit} />
         ))}
@@ -248,16 +264,21 @@ function StatLink({ to, label, value }: { to: string; label: string; value: numb
   )
 }
 
+/** A small copy of the upload page's drop zone: the dashed field with its glowing button, then the limits. */
 function UploadCard() {
   return (
-    <Link to="/new" className="panel group flex flex-col gap-6 rounded-xl p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <p className="eyebrow">Upload an image</p>
-        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-on-primary transition-transform group-hover:scale-105">
-          <Plus className="size-5" strokeWidth={1.75} />
+    <Link to="/new" className="panel group flex flex-col gap-4 rounded-[26px] p-4 sm:p-6">
+      <p className="eyebrow">Upload an image</p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-[20px] border-[1.5px] border-dashed border-line-strong px-4 py-6 text-center transition group-hover:bg-hover">
+        <span className="relative grid place-items-center" aria-hidden>
+          <span className="pointer-events-none absolute -inset-5 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-ink)_28%,transparent),transparent_68%)] transition-transform duration-500 group-hover:scale-110" />
+          <span className="relative grid size-14 place-items-center rounded-full bg-[radial-gradient(circle_at_40%_28%,#ffffff,#e2e2e2_55%,#a9a9a9)] text-[#161616] shadow-[0_0_0_1px_rgb(255_255_255/0.7),0_12px_24px_-10px_rgb(0_0_0/0.55)] transition duration-300 group-hover:scale-105">
+            <Upload className="size-6" strokeWidth={1.75} />
+          </span>
         </span>
+        <p className="text-[15px]">Drop or choose an image</p>
       </div>
-      <dl className="mt-auto">
+      <dl>
         <LeaderRow label="Formats" value="JPEG · PNG · WebP · TIFF · HEIC" />
         <LeaderRow label="Size" value="Up to 25 MB" />
         <LeaderRow label="File" value="Deleted after" />

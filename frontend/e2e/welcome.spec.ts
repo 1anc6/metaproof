@@ -48,7 +48,7 @@ test('never shows on shared report links, for returning users or on desktop', as
   const desktop = await browser.newPage({ viewport: { width: 1280, height: 800 } })
   await mockApi(desktop)
   await desktop.goto('/')
-  await expect(desktop.locator('aside')).toBeVisible()
+  await expect(desktop.getByRole('heading', { name: /See what's behind/ })).toBeVisible()
   await expect(welcome(desktop)).toBeHidden()
   await desktop.close()
 })

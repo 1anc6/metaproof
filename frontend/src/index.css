@@ -3,35 +3,36 @@
 @theme {
   --font-sans: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Urbanist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
-  /* A soft instrument: off-white with a faint dot grid, raised white controls, cream cards that
-     glow lemon in the middle, one lemon accent, and a dark pill for the main action. Verdict
-     colours appear only on verdicts. */
-  --color-canvas: #f1f1ee;
-  --color-raised: rgb(28 28 26 / 0.05); /* wells, tracks */
-  --color-hover: rgb(255 255 255 / 0.7);
-  --color-line: rgb(28 28 26 / 0.08);
-  --color-line-strong: rgb(28 28 26 / 0.18);
-  --color-ink: #1c1c1a;
-  --color-muted: #55554f;
-  --color-faint: #6c6c66; /* 4.6:1 on the canvas */
-  --color-primary: #1c1c1a;
-  --color-on-primary: #fafaf7;
-  --color-accent: #d9e021; /* lemon: dots and marks */
-  --color-accent-soft: rgb(228 236 60 / 0.3);
-  --color-highlight: #eef27a;
+  /* Graphite: a grey gradient body, smoked-glass panels, glossy pills lit from above, white text,
+     and one glowing white orb for the main action. Colour appears only on verdicts. Dark is the
+     reference; light is the same materials in silver. */
+  --color-canvas: #d2d2d2;
+  --color-raised: rgb(0 0 0 / 0.06); /* tracks, wells */
+  --color-hover: rgb(255 255 255 / 0.5);
+  --color-line: rgb(0 0 0 / 0.08);
+  --color-line-strong: rgb(0 0 0 / 0.18);
+  --color-ink: #141414;
+  --color-muted: #3a3a3a;
+  --color-faint: #575757; /* 4.6:1 on the darkest silver */
+  --color-primary: #1b1b1b;
+  --color-on-primary: #ffffff;
+  --color-accent: #141414; /* status dots and marks */
+  --color-accent-soft: rgb(0 0 0 / 0.1);
+  --color-highlight: #ffffff;
 
-  /* Verdict colours, dark enough to read as text on the light canvas. */
-  --color-authentic: #2e7a5b;
-  --color-edited: #b4561f;
-  --color-ai: #b23a48;
-  --color-neutral: #6c6c66;
+  /* Verdict colours, dark enough to read as text on silver. */
+  --color-authentic: #23674c;
+  --color-edited: #9a4515;
+  --color-ai: #a52f3d;
+  --color-neutral: #575757;
 
   --radius-sm: 0.625rem;
   --radius-md: 1rem;
   --radius-lg: 1.5rem;
-  --radius-xl: 2.25rem;
+  --radius-xl: 1.75rem;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -46,6 +47,7 @@
   --animate-blink: blink 1.1s steps(1) infinite;
   --animate-spin-slow: spin 60s linear infinite;
   --animate-breathe: breathe 4.8s ease-in-out infinite;
+  --animate-halo: halo 3.6s ease-in-out infinite;
   --animate-float: float 5s ease-in-out infinite;
   --animate-draw: draw 1.2s cubic-bezier(0.23, 1, 0.32, 1) 0.2s both;
   --animate-slide-to: slide-to 1.1s cubic-bezier(0.23, 1, 0.32, 1) 0.3s both;
@@ -73,10 +75,23 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  /* the lens: a slow swell of light */
   @keyframes breathe {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 36px -8px rgb(230 236 143 / 0.45); }
-    50% { transform: scale(1.04); box-shadow: 0 0 56px -4px rgb(230 236 143 / 0.75); }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+  /* the orb's halo swells and settles */
+  @keyframes halo {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  /* clouds crossing the photo card */
+  @keyframes drift {
+    from { transform: translateX(0); }
+    to { transform: translateX(-220px); }
+  }
+  @keyframes sunglow {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.18); }
   }
   /* spec chips drift a few pixels, each on its own delay */
   @keyframes float {
@@ -95,56 +110,64 @@
   }
 }
 
-/* Surface recipes that differ by theme. Light is the default; dark overrides below. */
+/* Surface recipes that differ by theme. Light (silver) is the default; dark (graphite) below. */
 :root {
-  --dots: rgb(28 28 26 / 0.07);
-  --panel-bg: #fafaf8;
-  --panel-hover: #ffffff;
-  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.9);
-  --panel-shadow: 0 1px 2px rgb(40 40 20 / 0.04), 0 14px 32px -18px rgb(40 40 20 / 0.2);
-  --soft-shadow: 0 1px 1px rgb(40 40 20 / 0.04), 0 8px 20px -10px rgb(40 40 20 / 0.22);
-  --bar-bg: rgb(241 241 238 / 0.9);
-  --soft-bg: #fbfbf9;
-  --soft-hover: #ffffff;
+  --body-bg: linear-gradient(180deg, #f2f2f2 0%, #dedede 40%, #c4c4c4 100%);
+  --panel-bg: rgb(255 255 255 / 0.5);
+  --panel-hover: rgb(255 255 255 / 0.68);
+  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 0 0 1px rgb(255 255 255 / 0.45);
+  --panel-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 22px 40px -26px rgb(0 0 0 / 0.35);
+  --soft-shadow: 0 1px 1px rgb(0 0 0 / 0.05), 0 8px 18px -10px rgb(0 0 0 / 0.35);
+  --bar-bg: rgb(235 235 235 / 0.72);
+  /* glossy pill: lit from above */
+  --soft-bg: linear-gradient(180deg, #ffffff 0%, #e6e6e6 100%);
+  --soft-hover: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
+  --soft-edge: inset 0 1px 0 rgb(255 255 255 / 1), inset 0 0 0 1px rgb(0 0 0 / 0.06);
   --selected-bg: #ffffff;
-  /* cream card: lemon light in the middle, fading to the paper at the edges */
-  --cream-core: #fbfbdf;
-  --cream-mid: #f7f7e7;
-  --cream-edge: #f3f3ee;
+  --selected-ink: #141414;
+  --track-bg: rgb(0 0 0 / 0.07);
+  --frame-glow: rgb(255 255 255 / 0.75);
+  --frame-base: rgb(255 255 255 / 0.42);
+  --dock-bg: rgb(225 225 225 / 0.7);
 }
-:root[data-theme='dark'] {
+:root[data-theme='dark'],
+.theme-dark {
   color-scheme: dark;
-  --color-canvas: #121210;
-  --color-raised: rgb(255 255 255 / 0.06);
-  --color-line: rgb(255 255 255 / 0.08);
-  --color-line-strong: rgb(255 255 255 / 0.18);
-  --color-hover: rgb(255 255 255 / 0.06);
-  --color-ink: #f4f3ee;
-  --color-muted: #c9c8bf;
-  --color-faint: #9d9c93;
-  --color-authentic: #7fd6aa;
-  --color-edited: #f0a066;
-  --color-ai: #ef8f8a;
-  --color-neutral: #aaa99f;
-  --color-primary: #f4f3ee;
-  --color-on-primary: #161614;
-  --color-accent: #e8f04a;
-  --color-accent-soft: rgb(232 240 74 / 0.18);
+  --color-canvas: #4a4a4a;
+  --color-raised: rgb(0 0 0 / 0.22);
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.22);
+  --color-hover: rgb(255 255 255 / 0.08);
+  --color-ink: #ffffff;
+  --color-muted: #e4e4e4;
+  --color-faint: #bdbdbd;
+  --color-authentic: #8fe0b6;
+  --color-edited: #f5b07c;
+  --color-ai: #f6a19c;
+  --color-neutral: #c4c4c4;
+  --color-primary: #f4f4f4;
+  --color-on-primary: #161616;
+  --color-accent: #ffffff;
+  --color-accent-soft: rgb(255 255 255 / 0.2);
+  --color-highlight: rgb(255 255 255 / 0.22);
 
-  --dots: rgb(255 255 255 / 0.05);
-  --panel-bg: #1c1c19;
-  --panel-hover: #22221e;
-  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
-  --panel-shadow: 0 16px 32px -20px rgb(0 0 0 / 0.7);
-  --soft-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.7);
-  --bar-bg: rgb(18 18 16 / 0.9);
-  --soft-bg: #22221e;
-  --soft-hover: #2a2a25;
-  --selected-bg: #2c2c27;
-  /* olive glass, like the reference's photo cards */
-  --cream-core: #43431f;
-  --cream-mid: #2f2f1f;
-  --cream-edge: #23231c;
+  /* the reference's body: lighter at the top, graphite at the bottom */
+  --body-bg: linear-gradient(180deg, #767676 0%, #5e5e5e 32%, #444444 66%, #2e2e2e 100%);
+  --panel-bg: rgb(30 30 30 / 0.55);
+  --panel-hover: rgb(40 40 40 / 0.66);
+  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.07);
+  --panel-shadow: 0 24px 44px -26px rgb(0 0 0 / 0.65);
+  --soft-shadow: 0 8px 16px -8px rgb(0 0 0 / 0.55);
+  --bar-bg: rgb(80 80 80 / 0.6);
+  --soft-bg: linear-gradient(180deg, #5a5a5a 0%, #3b3b3b 100%);
+  --soft-hover: linear-gradient(180deg, #666666 0%, #444444 100%);
+  --soft-edge: inset 0 1px 0 rgb(255 255 255 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  --selected-bg: #1d1d1d;
+  --selected-ink: #ffffff;
+  --track-bg: rgb(0 0 0 / 0.28);
+  --frame-glow: rgb(255 255 255 / 0.13);
+  --frame-base: rgb(36 36 36 / 0.58);
+  --dock-bg: rgb(52 52 52 / 0.62);
 }
 
 @layer base {
@@ -157,13 +180,11 @@
   h3 {
     text-wrap: balance;
   }
-  /* The faint dot grid of the reference's device screen. */
   body {
     @apply bg-canvas text-ink font-sans antialiased;
     min-height: 100dvh;
-    background-image: radial-gradient(var(--dots) 1px, transparent 1.3px);
-    background-size: 22px 22px;
-    transition: background-color 300ms var(--ease-out);
+    background-image: var(--body-bg);
+    background-attachment: fixed;
   }
   ::selection {
     background: var(--color-accent-soft);
@@ -175,11 +196,13 @@
 }
 
 @layer components {
-  /* A soft card, raised off the canvas. */
+  /* Smoked glass, raised off the body. */
   .panel {
     position: relative;
     background: var(--panel-bg);
     box-shadow: var(--panel-edge), var(--panel-shadow);
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
   }
   :is(a, button).panel:hover,
   .panel-raised {
@@ -190,91 +213,146 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
-  .pill-bar {
-    box-shadow: var(--panel-edge), 0 16px 32px -16px rgb(0 0 0 / 0.3);
-  }
 
-  /* The cream card: lemon light in its middle. A verdict tone shifts the light's hue. */
+  /* The featured card: glass with a soft light falling on its top edge. A verdict tone tints it. */
   .cream {
-    --glow: var(--cream-core);
+    --glow: var(--frame-glow);
     position: relative;
-    background:
-      radial-gradient(60% 55% at 50% 42%, var(--glow) 0%, var(--cream-mid) 55%, var(--cream-edge) 100%);
+    background: radial-gradient(90% 70% at 50% 0%, var(--glow) 0%, transparent 70%), var(--frame-base);
     box-shadow: var(--panel-edge), var(--panel-shadow);
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
   }
-  .tone-ai { --glow: color-mix(in srgb, var(--cream-core) 62%, #f6b8ad); }
-  .tone-edited { --glow: color-mix(in srgb, var(--cream-core) 60%, #f6cf9c); }
-  .tone-authentic { --glow: color-mix(in srgb, var(--cream-core) 60%, #bfe6c4); }
-  :root[data-theme='dark'] .tone-ai { --glow: color-mix(in srgb, var(--cream-core) 55%, #6e2b2b); }
-  :root[data-theme='dark'] .tone-edited { --glow: color-mix(in srgb, var(--cream-core) 55%, #6e4a1e); }
-  :root[data-theme='dark'] .tone-authentic { --glow: color-mix(in srgb, var(--cream-core) 55%, #1f5a3a); }
+  .tone-ai { --glow: color-mix(in srgb, var(--frame-glow) 70%, rgb(240 120 110 / 0.5)); }
+  .tone-edited { --glow: color-mix(in srgb, var(--frame-glow) 70%, rgb(240 170 100 / 0.5)); }
+  .tone-authentic { --glow: color-mix(in srgb, var(--frame-glow) 70%, rgb(120 220 160 / 0.5)); }
 
-  /* Frosted glass over a photograph, for the dark photo panels. White text sits on it. */
+  /* Smoked glass over a photograph. White text sits on it in both themes. */
   .glass {
     position: relative;
     color: #fff;
-    background: rgb(70 66 40 / 0.42);
-    backdrop-filter: blur(22px) saturate(140%);
-    -webkit-backdrop-filter: blur(22px) saturate(140%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 20px 40px -24px rgb(0 0 0 / 0.6);
+    background: rgb(28 28 28 / 0.5);
+    backdrop-filter: blur(22px) saturate(120%);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 20px 40px -24px rgb(0 0 0 / 0.6);
   }
 
-  /* "• Diam 35 mm": a raised pill with a dot, a label and a fainter value. */
+  /* The reference's tool chips ("Typography", "Color"): a glossy pill lit from above. */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap text-ink;
+    @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] whitespace-nowrap text-ink;
     background: var(--soft-bg);
-    box-shadow: var(--panel-edge), var(--soft-shadow);
+    box-shadow: var(--soft-edge), var(--soft-shadow);
   }
-  /* Status pill: "• Active". */
   .status {
     @apply inline-flex items-center gap-1.5 text-[14px] text-muted;
   }
 
+  /* The main action: in graphite a white sphere-pill with a halo, like the reference's send button. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-[15px] font-medium text-on-primary;
-    box-shadow: 0 12px 24px -14px rgb(0 0 0 / 0.55);
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium text-on-primary;
+    background: radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--color-primary) 80%, #fff) 0%, var(--color-primary) 55%, color-mix(in srgb, var(--color-primary) 82%, #777) 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 0 0 1px rgb(0 0 0 / 0.08), 0 12px 24px -14px rgb(0 0 0 / 0.6);
+  }
+  :root[data-theme='dark'] .btn-primary,
+  .theme-dark .btn-primary {
+    box-shadow: inset 0 -2px 6px rgb(0 0 0 / 0.18), 0 0 0 1px rgb(255 255 255 / 0.5), 0 0 22px -4px rgb(255 255 255 / 0.45);
   }
   .btn-primary:hover {
-    background: color-mix(in srgb, var(--color-primary) 88%, var(--color-canvas));
+    filter: brightness(1.06);
   }
+  /* Secondary: an outlined glass pill, like the reference's "Save". */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[15px] text-ink;
-    background: var(--soft-bg);
-    box-shadow: var(--panel-edge), var(--soft-shadow);
+    background: rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-ink) 45%, transparent);
   }
   .btn-ghost:hover {
-    background: var(--soft-hover);
+    background: rgb(255 255 255 / 0.14);
   }
   .btn-primary,
   .btn-ghost {
-    transition-property: color, background-color, transform;
+    transition-property: color, background-color, filter, transform;
     transition-duration: 160ms;
   }
   .btn-primary:active,
   .btn-ghost:active {
     transform: scale(0.97);
   }
-  /* A card title in the reference's voice: plain capitals at reading size. */
   .eyebrow {
     @apply text-[15px] font-normal tracking-[0.02em] text-ink uppercase;
   }
-  /* Figures: large, light, even-width digits. */
   .num {
     @apply font-display font-light tracking-[-0.04em] tabular-nums;
   }
-  /* Raised round control. */
+  /* Display type: the reference's serif headline. */
+  .display {
+    @apply font-serif font-normal tracking-[-0.01em];
+  }
+  /* "me at horizon": an italic word on a pale highlight block. */
+  .mark-word {
+    @apply font-serif italic;
+    padding: 0 0.12em;
+    /* hugs the letters rather than the whole line box */
+    background: linear-gradient(transparent 14%, var(--color-highlight) 14%, var(--color-highlight) 94%, transparent 94%);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  /* Round glossy control. */
   .well {
     @apply grid shrink-0 place-items-center rounded-full text-ink transition;
     background: var(--soft-bg);
-    box-shadow: var(--panel-edge), var(--soft-shadow);
+    box-shadow: var(--soft-edge), var(--soft-shadow);
   }
   :is(a, button).well:hover {
     background: var(--soft-hover);
   }
+  /* Round glass control with a bright rim, like the reference's bell. */
+  .well-glass {
+    @apply grid shrink-0 place-items-center rounded-full text-ink transition;
+    background: rgb(255 255 255 / 0.16);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-ink) 40%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .well-glass:hover {
+    background: rgb(255 255 255 / 0.26);
+  }
+  /* A segmented control's track, and its chosen segment pressed into it. */
+  .track {
+    background: var(--track-bg);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.18), 0 1px 0 rgb(255 255 255 / 0.06);
+  }
   .selected {
-    @apply text-ink;
+    color: var(--selected-ink);
     background: var(--selected-bg);
-    box-shadow: var(--panel-edge), var(--soft-shadow);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 4px 10px -4px rgb(0 0 0 / 0.5);
+  }
+  /* The glowing orb at the centre of the dock: a dark lens in a bright halo. */
+  .orb {
+    @apply grid shrink-0 place-items-center rounded-full text-white transition;
+    background: radial-gradient(circle at 50% 38%, #4a4a4a 0%, #262626 52%, #101010 100%);
+    box-shadow:
+      0 0 0 3px rgb(255 255 255 / 0.92),
+      0 0 0 6px rgb(255 255 255 / 0.18),
+      0 0 26px 6px rgb(255 255 255 / 0.4),
+      inset 0 2px 6px rgb(255 255 255 / 0.18);
+  }
+  .orb:hover {
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 7px rgb(255 255 255 / 0.24),
+      0 0 34px 10px rgb(255 255 255 / 0.5),
+      inset 0 2px 6px rgb(255 255 255 / 0.22);
+  }
+  .orb svg {
+    filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.85));
+  }
+  /* The floating bar along the bottom. */
+  .dock {
+    background: var(--dock-bg);
+    box-shadow: var(--panel-edge), 0 24px 44px -20px rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(24px) saturate(120%);
+    -webkit-backdrop-filter: blur(24px) saturate(120%);
   }
   .tag {
     @apply inline-flex items-center gap-1.5 rounded-full bg-raised px-2.5 py-0.5 text-[12px] text-muted;
@@ -289,7 +367,7 @@
     background-position: 0 50%;
   }
   .skeleton {
-    background: linear-gradient(90deg, rgb(28 28 26 / 0.04), rgb(28 28 26 / 0.09), rgb(28 28 26 / 0.04));
+    background: linear-gradient(90deg, rgb(128 128 128 / 0.12), rgb(128 128 128 / 0.26), rgb(128 128 128 / 0.12));
     background-size: 200% 100%;
     @apply animate-shimmer rounded-full;
   }
@@ -339,7 +417,8 @@
   }
   .panel,
   .cream,
-  .glass {
+  .glass,
+  .dock {
     background: #fff !important;
     color: #000 !important;
     box-shadow: none !important;

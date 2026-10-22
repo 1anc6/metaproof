@@ -51,7 +51,7 @@ export function ErrorLevel({ job }: { job: Job }) {
   }
 
   return (
-    <section className="panel animate-rise no-print rounded-xl p-5 sm:p-6">
+    <section className="panel animate-rise no-print rounded-xl p-4 sm:p-6">
       <div className="flex items-start gap-3">
         <ScanEye className="mt-0.5 size-5 shrink-0" strokeWidth={1.5} />
         <div>
@@ -72,7 +72,7 @@ export function ErrorLevel({ job }: { job: Job }) {
       </div>
 
       {state.kind === 'ready' ? (
-        <div className="mt-5">
+        <div className="mt-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="panel inline-flex rounded-md p-0.5" role="group" aria-label="Image shown">
               {(['ela', 'original'] as const).map((v) => (
@@ -114,7 +114,7 @@ export function ErrorLevel({ job }: { job: Job }) {
           )}
         </div>
       ) : (
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           {state.kind === 'working' ? (
             <ThinkingPill label="Computing error levels…" />
           ) : preview ? (
