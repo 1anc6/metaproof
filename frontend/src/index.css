@@ -128,7 +128,7 @@
   --track-bg: rgb(0 0 0 / 0.07);
   --frame-glow: rgb(255 255 255 / 0.75);
   --frame-base: rgb(255 255 255 / 0.42);
-  --dock-bg: rgb(225 225 225 / 0.7);
+  --dock-bg: rgb(230 230 230 / 0.94); /* near-opaque: some phone browsers draw no backdrop blur */
 }
 :root[data-theme='dark'],
 .theme-dark {
@@ -167,7 +167,7 @@
   --track-bg: rgb(0 0 0 / 0.28);
   --frame-glow: rgb(255 255 255 / 0.13);
   --frame-base: rgb(36 36 36 / 0.58);
-  --dock-bg: rgb(52 52 52 / 0.62);
+  --dock-bg: rgb(42 42 42 / 0.94);
 }
 
 @layer base {

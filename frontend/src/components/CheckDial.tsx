@@ -1,7 +1,17 @@
 import { ChevronDown, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { api, type JobStatus, type VerdictLabel } from '../lib/api'
 import { CHECKS } from '../lib/checks'
-import { Mark } from './ui'
+import { usePrefs } from '../lib/prefs'
+import { FileName, Mark, VerdictBadge } from './ui'
+
+/** An analyzed image for the canvas: its thumbnail, name and verdict. */
+export interface CanvasPhoto {
+  sha: string
+  name: string
+  label: VerdictLabel | null
+  status: JobStatus
+}
 
 const AUTOPLAY_MS = 3600
 const IDLE_MS = 7000 // after a person touches the dial, wait this long before it moves on its own again
@@ -20,17 +30,24 @@ function nearest(current: number, i: number) {
  * chosen check in a chip above it and its neighbours on the arc's ends, over a black-and-white photo
  * card whose serif headline follows the chosen check. Below, a toolbar picks a check, shows its
  * weight, and steps or pauses the tour. It moves on by itself until someone touches it, and holds
- * still for reduced motion.
+ * still for reduced motion. With a `photo`, the card shows that analyzed image whole (never cropped
+ * or stretched) over a blurred copy of itself, with its name and verdict; without one, or if its
+ * thumbnail won't load, a drawn horizon.
  */
 export function CheckDial({
   active,
   onSelect,
+  photo,
   className = '',
 }: {
   active: string
   onSelect: (key: string) => void
+  photo?: CanvasPhoto
   className?: string
 }) {
+  const { blurPreviews } = usePrefs()
+  const [failed, setFailed] = useState<string | null>(null) // the sha whose thumbnail would not load
+  const pic = photo && failed !== photo.sha ? photo : null
   const n = CHECKS.length
   const index = Math.max(0, CHECKS.findIndex((c) => c.key === active))
   const check = CHECKS[index]
@@ -152,15 +169,42 @@ export function CheckDial({
         </button>
       </div>
 
-      {/* The photo card: a black-and-white horizon, with the check's headline in the reference's serif. */}
-      <div className="relative -mt-[5%] aspect-[5/4] w-full overflow-hidden rounded-[22px] bg-[#1a1a1a] text-white shadow-[0_24px_44px_-24px_rgb(0_0_0/0.7),inset_0_0_0_1px_rgb(255_255_255/0.1)]">
-        <Horizon turn={index} />
-        <div className="absolute inset-x-0 top-[9%] flex items-start justify-between px-4">
-          <p className="text-[11px] leading-tight">
-            metaproof.app
-            <span className="block text-white/70">Six checks</span>
-          </p>
-          <Mark className="size-5" />
+      {/* The canvas: the latest analyzed image, or a black-and-white horizon, under the check's
+          headline in the reference's serif. */}
+      <div className="relative -mt-[5%] aspect-[4/3] w-full overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] rounded-[22px] bg-[#1a1a1a] text-white shadow-[0_24px_44px_-24px_rgb(0_0_0/0.7),inset_0_0_0_1px_rgb(255_255_255/0.1)]">
+        {pic ? (
+          <>
+            <img src={api.thumbnailUrl(pic.sha)} alt="" aria-hidden className="absolute inset-0 size-full scale-125 object-cover opacity-60 blur-2xl" />
+            <img
+              src={api.thumbnailUrl(pic.sha)}
+              alt={`Latest analyzed image: ${pic.name}`}
+              onError={() => setFailed(pic.sha)}
+              className={`absolute inset-0 size-full object-contain transition-[filter] duration-300 ${blurPreviews ? 'blur-xl' : ''}`}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-black/10" aria-hidden />
+          </>
+        ) : (
+          <Horizon turn={index} />
+        )}
+        <div className="absolute inset-x-0 top-[9%] flex items-start justify-between gap-3 px-4">
+          {pic ? (
+            <div className="min-w-0 text-[11px] leading-tight">
+              <FileName name={pic.name} />
+              <span className="block text-white/70">Latest analysis</span>
+            </div>
+          ) : (
+            <p className="text-[11px] leading-tight">
+              metaproof.app
+              <span className="block text-white/70">Six checks</span>
+            </p>
+          )}
+          {pic ? (
+            <span className="glass rounded-full px-2.5 py-1 [&>span]:!text-white">
+              <VerdictBadge label={pic.label} status={pic.status} />
+            </span>
+          ) : (
+            <Mark className="size-5" />
+          )}
         </div>
         <div className="relative flex flex-col items-center px-6 pt-[19%] text-center">
           <p key={check.key} className="animate-rise display text-[clamp(28px,7.6vw,38px)] leading-[0.95]">

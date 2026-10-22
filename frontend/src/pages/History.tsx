@@ -59,7 +59,7 @@ export function History() {
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         {/* How many rows the current search and filter leave, in dot-matrix, tagged with the filter. */}
         <p className="flex shrink-0 items-start gap-2" aria-live="polite">
-          <span className="num text-[56px] leading-none">{rows.length}</span>
+          <span className="num text-[34px] leading-none">{rows.length}</span>
           <span className="mt-1 text-[14px] text-faint">{filter === 'all' ? 'total' : FILTERS.find((f) => f.key === filter)!.label.toLowerCase()}</span>
           <span className="sr-only">analyses shown</span>
         </p>

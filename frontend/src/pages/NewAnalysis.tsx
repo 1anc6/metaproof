@@ -1,85 +1,25 @@
 import { ClipboardPaste, FileImage, Lock, MoonStar, Upload, WifiOff, X, Zap } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { api } from '../lib/api'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { formatBytes } from '../lib/format'
-import { addToHistory } from '../lib/history'
 import { useServerStatus } from '../lib/hooks'
 import { DEMO_REPORT_PATH } from '../lib/demo'
-import { rememberPreview } from '../lib/preview'
 import { takeSharedImage } from '../lib/share'
+import { ACCEPTED, MAX_MB, imageFromClipboard, useUpload } from '../lib/upload'
 import { PageHeader, LeaderRow } from '../components/ui'
 
 // Touch screens have no drag and drop, so the drop zone words itself as a picker there.
 const TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff', 'image/heic', 'image/heif']
-const MAX_MB = 25
-
-type State =
-  | { kind: 'idle' }
-  | { kind: 'uploading'; file: File; progress: number; preview: string; startedAt: number; secondsLeft: number | null }
-  | { kind: 'error'; message: string }
-
 export function NewAnalysis() {
-  const navigate = useNavigate()
   const input = useRef<HTMLInputElement>(null)
-  const upload = useRef<AbortController | null>(null)
   const [params, setParams] = useSearchParams()
-  const [state, setState] = useState<State>(() =>
+  const { state, start, cancel, fail } = useUpload(
     params.get('shared') && params.get('shared') !== '1'
       ? { kind: 'error', message: 'Nothing MetaProof can analyze was shared. Share a JPEG, PNG, WebP, TIFF or HEIC image.' }
       : { kind: 'idle' },
   )
   const [dragging, setDragging] = useState(false)
-
-  const start = useCallback(
-    async (file: File) => {
-      // Quick checks for a friendly message; the server re-checks everything.
-      if (file.type && !ACCEPTED.includes(file.type)) {
-        setState({ kind: 'error', message: 'Unsupported file type. Use a JPEG, PNG, WebP, TIFF or HEIC image.' })
-        return
-      }
-      if (file.size > MAX_MB * 1024 * 1024) {
-        setState({ kind: 'error', message: `That file is ${formatBytes(file.size)}. The limit is ${MAX_MB} MB.` })
-        return
-      }
-      // A local preview of the picked file; nothing extra leaves the browser.
-      const preview = URL.createObjectURL(file)
-      const controller = new AbortController()
-      upload.current = controller
-      setState({ kind: 'uploading', file, progress: 0, preview, startedAt: performance.now(), secondsLeft: null })
-      try {
-        const created = await api.upload(
-          file,
-          (progress) =>
-            setState((s) => {
-              if (s.kind !== 'uploading') return s
-              // Time left, from the pace so far; only once there is enough of it to go on.
-              const elapsed = (performance.now() - s.startedAt) / 1000
-              const secondsLeft = progress > 0.05 && progress < 1 ? Math.ceil((elapsed * (1 - progress)) / progress) : null
-              return { ...s, progress, secondsLeft }
-            }),
-          controller.signal,
-        )
-        rememberPreview(created.job_id, preview)
-        addToHistory({
-          jobId: created.job_id,
-          sha256: created.sha256,
-          filename: file.name || 'pasted-image',
-          sizeBytes: file.size,
-          uploadedAt: new Date().toISOString(),
-        })
-        navigate(`/analysis/${created.job_id}`)
-      } catch (e) {
-        URL.revokeObjectURL(preview)
-        setState((e as Error).name === 'AbortError' ? { kind: 'idle' } : { kind: 'error', message: (e as Error).message })
-      } finally {
-        if (upload.current === controller) upload.current = null
-      }
-    },
-    [navigate],
-  )
 
   // Opened from the phone's share menu: analyze the shared image straight away.
   const sharedHandled = useRef(false)
@@ -90,11 +30,9 @@ export function NewAnalysis() {
     setParams({}, { replace: true })
     if (shared !== '1') return // the initial state already explains it
     takeSharedImage().then((file) =>
-      file
-        ? start(file)
-        : setState({ kind: 'error', message: 'The shared image could not be found. Share it again, or choose it here.' }),
+      file ? start(file) : fail('The shared image could not be found. Share it again, or choose it here.'),
     )
-  }, [params, setParams, start])
+  }, [params, setParams, start, fail])
 
   // Paste an image from the clipboard anywhere on the page.
   useEffect(() => {
@@ -113,17 +51,11 @@ export function NewAnalysis() {
   // "Paste" reads an image straight from the clipboard, where the browser allows it.
   async function pasteFromClipboard() {
     try {
-      for (const item of await navigator.clipboard.read()) {
-        const type = item.types.find((t) => t.startsWith('image/'))
-        if (type) {
-          const blob = await item.getType(type)
-          start(new File([blob], `pasted.${type.split('/')[1]}`, { type }))
-          return
-        }
-      }
-      setState({ kind: 'error', message: 'There is no image on the clipboard. Copy one first, or choose a file.' })
+      const file = await imageFromClipboard()
+      if (file) start(file)
+      else fail('There is no image on the clipboard. Copy one first, or choose a file.')
     } catch {
-      setState({ kind: 'error', message: 'This browser did not allow reading the clipboard. Press Ctrl+V on this page instead.' })
+      fail('This browser did not allow reading the clipboard. Press Ctrl+V on this page instead.')
     }
   }
 
@@ -194,7 +126,7 @@ export function NewAnalysis() {
               preview={state.preview}
               progress={state.progress}
               secondsLeft={state.secondsLeft}
-              onCancel={() => upload.current?.abort()}
+              onCancel={cancel}
             />
           )}
 

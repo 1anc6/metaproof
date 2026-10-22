@@ -5,7 +5,6 @@ import { Toaster } from 'sonner'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { useThemeSync } from '../lib/theme'
 import { Logo, Sparkle, ThemeToggle } from './ui'
-import { Welcome } from './Welcome'
 
 const NAV = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
@@ -60,12 +59,11 @@ export function Shell() {
       <main
         id="main"
         tabIndex={-1}
-        className="mx-auto w-full max-w-[1180px] px-4 pt-2 pb-40 outline-none sm:px-8 lg:px-12 lg:pt-10 lg:pb-24"
+        className="mx-auto w-full max-w-[1180px] px-4 pt-1 pb-32 outline-none sm:px-8 lg:px-12 lg:pt-6 lg:pb-24"
       >
         <Outlet />
       </main>
       <Dock />
-      <Welcome />
       {shortcuts && <Shortcuts onClose={() => setShortcuts(false)} />}
       {/* Bottom centre on every screen, clear of the dock. */}
       <Toaster theme={theme} position="bottom-center" offset={{ bottom: 120 }} mobileOffset={{ bottom: 116 }} />
@@ -102,7 +100,7 @@ function TopBar({ theme }: { theme: 'light' | 'dark' }) {
   const tabs = NAV.filter((n) => n.to !== '/new')
   return (
     <header className="no-print relative z-30 px-4 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-12">
-      <div className="mx-auto flex h-[76px] max-w-[1180px] items-center justify-between gap-3">
+      <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-3 lg:h-[76px]">
         <NavLink to="/" className="rounded-full">
           <Logo />
         </NavLink>
@@ -123,7 +121,7 @@ function TopBar({ theme }: { theme: 'light' | 'dark' }) {
         </nav>
         <div className="flex items-center gap-2.5">
           <ThemeToggle resolved={theme} />
-          <span className="btn-ghost h-11 px-4 max-[379px]:w-11 max-[379px]:px-0 lg:max-xl:w-11 lg:max-xl:px-0">
+          <span className="btn-ghost h-10 px-3.5 max-[379px]:w-10 max-[379px]:px-0 lg:h-11 lg:px-4 lg:max-xl:w-11 lg:max-xl:px-0">
             <ServerBadge compact />
           </span>
           <NavLink to="/new" title="New analysis (N)" className="btn-primary hidden h-11 px-5 text-[14px] lg:inline-flex">
@@ -148,7 +146,7 @@ function Dock() {
       className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),16px)] lg:hidden"
       aria-label="Main"
     >
-      <div className="dock pointer-events-auto flex w-full max-w-[380px] items-center justify-between rounded-[36px] px-2 pt-3 pb-2.5">
+      <div className="dock pointer-events-auto flex w-full max-w-[360px] items-center justify-between rounded-[32px] px-1.5 pt-2 pb-1.5">
         {items.slice(0, half).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}
@@ -160,11 +158,11 @@ function Dock() {
         >
           {/* a slow swell of light behind the orb */}
           <span
-            className="animate-halo pointer-events-none absolute -inset-3 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.4),transparent_68%)]"
+            className="animate-halo pointer-events-none absolute -inset-2 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.35),transparent_68%)]"
             aria-hidden
           />
-          <span className="orb size-[58px] active:scale-95">
-            <Sparkle className="size-6" />
+          <span className="orb size-[50px] active:scale-95">
+            <Sparkle className="size-5" />
           </span>
         </NavLink>
         {items.slice(half).map((item) => (
@@ -185,12 +183,12 @@ function TabLink({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
     >
       {({ isActive }) => (
         <span
-          className={`flex w-full flex-col items-center gap-1 rounded-[22px] px-1 py-2 transition ${
+          className={`flex w-full flex-col items-center gap-1 rounded-[20px] px-1 py-1.5 transition ${
             isActive ? 'selected' : 'text-faint hover:text-ink'
           }`}
         >
-          <Icon className="size-5" strokeWidth={isActive ? 1.75 : 1.5} aria-hidden />
-          <span className="text-[11px] leading-none whitespace-nowrap">{label}</span>
+          <Icon className="size-[18px]" strokeWidth={isActive ? 1.75 : 1.5} aria-hidden />
+          <span className="text-[10.5px] leading-none whitespace-nowrap">{label}</span>
         </span>
       )}
     </NavLink>

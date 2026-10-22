@@ -18,10 +18,10 @@ export function Mark({ className = 'size-6' }: { className?: string }) {
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <span className="flex items-center gap-3 text-ink">
-      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle_at_50%_30%,#4d4d4d,#141414_70%)] text-white shadow-[0_0_0_2px_rgb(255_255_255/0.75),0_6px_14px_-4px_rgb(0_0_0/0.6),inset_0_1px_2px_rgb(255_255_255/0.3)]">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle_at_50%_30%,#4d4d4d,#141414_70%)] text-white shadow-[0_0_0_2px_rgb(255_255_255/0.75),0_6px_14px_-4px_rgb(0_0_0/0.6),inset_0_1px_2px_rgb(255_255_255/0.3)]">
         <Mark className="size-5" />
       </span>
-      {!compact && <span className="text-[17px] tracking-[-0.01em]">MetaProof</span>}
+      {!compact && <span className="text-[16px] tracking-[-0.01em]">MetaProof</span>}
     </span>
   )
 }
@@ -387,13 +387,13 @@ export function PageHeader({
   action?: ReactNode
 }) {
   return (
-    <header className="animate-rise mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <header className="animate-rise mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="display text-[46px] leading-[0.98] sm:text-[64px]">
+        <h1 className="display text-[38px] leading-none sm:text-[48px]">
           {title}
           {dim && <span className="text-faint italic"> {dim}</span>}
         </h1>
-        {subtitle && <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-muted">{subtitle}</p>}
+        {subtitle && <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">{subtitle}</p>}
       </div>
       {/* On phones the bottom bar's centre button covers the action, so it would only repeat it. */}
       {action && <div className="no-print shrink-0 max-sm:hidden">{action}</div>}
@@ -525,7 +525,7 @@ export function ThemeToggle({ resolved }: { resolved: 'light' | 'dark' }) {
   const next = resolved === 'dark' ? 'light' : 'dark'
   const Icon = resolved === 'dark' ? Sun : Moon
   return (
-    <button type="button" onClick={() => setPref('theme', next)} className="well-glass size-11" aria-label={`Switch to ${next} theme`}>
+    <button type="button" onClick={() => setPref('theme', next)} className="well-glass size-10 lg:size-11" aria-label={`Switch to ${next} theme`}>
       <Icon className="size-[18px]" strokeWidth={1.5} />
     </button>
   )
@@ -549,7 +549,7 @@ export function Chip({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14px] transition ${
+      className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] transition ${
         checked ? 'selected' : 'well text-muted hover:text-ink'
       }`}
     >

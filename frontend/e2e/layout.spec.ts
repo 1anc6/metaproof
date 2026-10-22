@@ -47,10 +47,17 @@ test('desktop: the navigation sits in the top bar, and nothing floats over the p
     await expect(nav.getByRole('link')).toHaveCount(4)
     expect((await nav.boundingBox())!.y).toBeLessThan(76)
     await expect(page.getByRole('banner').getByRole('link', { name: 'New analysis' })).toBeVisible()
-    // the first screen has its title and its primary action
-    await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
-    await expect(page.getByRole('main').getByRole('link', { name: /Analyze an image/ }).first()).toBeInViewport()
+    // the app opens on the workspace, not a landing page
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+    await expect(page.getByRole('button', { name: /Arrow keys choose another check/ })).toBeInViewport()
   }
+})
+
+test('phones: the workspace opens with the canvas, its toolbar and the composer above the fold', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await expect(page.getByRole('combobox', { name: 'Check' })).toBeInViewport()
+  await expect(page.getByRole('button', { name: 'Attach an image' })).toBeInViewport()
 })
 
 test('no horizontal scrolling on a small phone', async ({ page }) => {
