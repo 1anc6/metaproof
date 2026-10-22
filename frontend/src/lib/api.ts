@@ -171,15 +171,20 @@ export const api = {
   similar: (sha: string) => request<SimilarMedia[]>(`/api/media/${encodeURIComponent(sha)}/similar`),
   thumbnailUrl: (sha: string) => `${BASE}/api/media/${encodeURIComponent(sha)}/thumbnail`,
 
-  /** Safe to retry: the server de-duplicates by file hash and returns the existing job. */
-  upload: (file: File, onProgress?: (fraction: number) => void) =>
-    withWakeRetry(() => uploadOnce(file, onProgress)),
+  /** Safe to retry: the server de-duplicates by file hash and returns the existing job.
+   *  `signal` cancels it, rejecting with an AbortError that is never retried. */
+  upload: (file: File, onProgress?: (fraction: number) => void, signal?: AbortSignal) =>
+    withWakeRetry(() => uploadOnce(file, onProgress, signal)),
 }
 
 /** XHR instead of fetch so the UI can show upload progress. */
-function uploadOnce(file: File, onProgress?: (fraction: number) => void): Promise<JobCreated> {
+function uploadOnce(file: File, onProgress?: (fraction: number) => void, signal?: AbortSignal): Promise<JobCreated> {
   return new Promise((resolve, reject) => {
+    const aborted = () => reject(new DOMException('The upload was cancelled.', 'AbortError'))
+    if (signal?.aborted) return aborted() // cancelled while waiting to retry
     const xhr = new XMLHttpRequest()
+    signal?.addEventListener('abort', () => xhr.abort(), { once: true })
+    xhr.onabort = aborted
     xhr.open('POST', `${BASE}/api/analyses`)
     xhr.responseType = 'json'
     xhr.timeout = 5 * ATTEMPT_TIMEOUT_MS // a 25 MB file on a slow link

@@ -2,20 +2,23 @@ import { BookOpen, History, LayoutGrid, Plus, Settings, X } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { Toaster } from 'sonner'
-import { useHistory } from '../lib/history'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { useThemeSync } from '../lib/theme'
-import { GithubMark, Logo, ThemeSwitch, ThemeToggle } from './ui'
-import { Welcome } from './Welcome'
+import { Logo, ThemeToggle } from './ui'
 
 const NAV = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
   { to: '/new', label: 'New analysis', icon: Plus },
   { to: '/history', label: 'History', icon: History },
-  { to: '/method', label: 'How it works', icon: BookOpen },
+  { to: '/method', label: 'Method', icon: BookOpen },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
+/**
+ * The frame of every screen, after the graphite reference: a top bar with the badge, a round
+ * glass button and an outlined pill, and a floating dock along the bottom with a glowing orb for
+ * the main action. The same frame on phones and desktops.
+ */
 export function Shell() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -45,113 +48,26 @@ export function Shell() {
   }, [navigate])
 
   return (
-    <div className="min-h-dvh lg:pl-[264px]">
+    <div className="min-h-dvh">
       <a
         href="#main"
         className="btn-primary fixed top-3 left-3 z-[60] -translate-y-20 focus-visible:translate-y-0"
       >
         Skip to content
       </a>
-      <Sidebar onShortcuts={() => setShortcuts(true)} />
-      <MobileTopBar theme={theme} />
+      <TopBar theme={theme} />
       <main
         id="main"
         tabIndex={-1}
-        className="mx-auto w-full max-w-6xl px-4 pt-4 pb-36 outline-none sm:px-8 lg:max-w-[1240px] lg:px-12 lg:pt-14 lg:pb-16"
+        className="mx-auto w-full max-w-[1120px] px-4 pt-1 pb-[calc(96px+env(safe-area-inset-bottom))] outline-none sm:px-8 lg:px-12 lg:pt-6 lg:pb-24"
       >
         <Outlet />
       </main>
-      <MobileTabBar />
-      <Welcome />
+      <Dock />
       {shortcuts && <Shortcuts onClose={() => setShortcuts(false)} />}
-      {/* Bottom centre on every screen; on phones it clears the tab bar. */}
-      <Toaster theme={theme} position="bottom-center" offset={24} mobileOffset={{ bottom: 104 }} />
+      {/* Bottom centre on every screen, clear of the dock. */}
+      <Toaster theme={theme} position="bottom-center" offset={{ bottom: 88 }} mobileOffset={{ bottom: 88 }} />
     </div>
-  )
-}
-
-function Sidebar({ onShortcuts }: { onShortcuts: () => void }) {
-  const history = useHistory()
-  return (
-    <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col px-5 pt-7 pb-6 lg:flex">
-      <NavLink to="/" className="self-start pb-8">
-        <Logo />
-      </NavLink>
-
-      <NavLink to="/new" className="btn-primary mb-7 h-13 w-full">
-        <Plus className="size-4" strokeWidth={2} />
-        New analysis
-      </NavLink>
-
-      <nav className="flex flex-col gap-2" aria-label="Main">
-        {NAV.filter((n) => n.to !== '/new').map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              `flex h-12 items-center gap-3 rounded-full pr-2 pl-1.5 text-[15px] transition ${
-                isActive ? 'selected' : 'text-muted hover:bg-hover hover:text-ink'
-              }`
-            }
-          >
-            <span className="grid size-9 place-items-center rounded-full">
-              <Icon className="size-[18px]" strokeWidth={1.5} />
-            </span>
-            <span className="flex-1">{label}</span>
-            {to === '/history' && history.length > 0 && (
-              <span className="rounded-full bg-raised px-2.5 py-1 text-[12px] text-muted tabular-nums">{history.length}</span>
-            )}
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* Privacy, theme and status in one cream card, in the reference's label-and-leader rows. */}
-      <div className="cream mt-auto flex flex-col gap-3 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <p className="eyebrow">Privacy</p>
-          <span className="status text-[13px]">
-            <span className="size-2 rounded-full bg-accent" aria-hidden /> On
-          </span>
-        </div>
-        <dl className="-my-1">
-          <div className="flex items-center gap-2 py-1 text-[13px]">
-            <dt className="text-muted">Files</dt>
-            <span className="leader" aria-hidden />
-            <dd>Deleted</dd>
-          </div>
-          <div className="flex items-center gap-2 py-1 text-[13px]">
-            <dt className="text-muted">Findings kept</dt>
-            <span className="leader" aria-hidden />
-            <dd>90 days</dd>
-          </div>
-        </dl>
-        <ThemeSwitch stretch />
-        <div className="flex items-center justify-between gap-2 px-1">
-          <ServerBadge />
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onShortcuts}
-              aria-label="Keyboard shortcuts"
-              title="Keyboard shortcuts (?)"
-              className="grid size-8 place-items-center rounded-full text-[13px] text-faint transition hover:bg-hover hover:text-ink"
-            >
-              ?
-            </button>
-            <a
-              href="https://github.com/1anc6/metaproof"
-              target="_blank"
-              rel="noreferrer"
-              className="grid size-8 place-items-center rounded-full text-faint transition hover:bg-hover hover:text-ink"
-              aria-label="Source code on GitHub"
-            >
-              <GithubMark className="size-4" />
-            </a>
-          </div>
-        </div>
-      </div>
-    </aside>
   )
 }
 
@@ -162,55 +78,91 @@ const SERVER_LABEL: Record<ServerState, { text: string; dot: string }> = {
   offline: { text: 'API offline', dot: 'bg-ai' },
 }
 
-/** `compact` shows only the dot while the API is up, and words once something needs saying.
- *  Below 380px the words don't fit beside the wordmark, so compact keeps just the dot there. */
+/** `compact`: only the dot where the words don't fit: beside the wordmark below 380px, and
+ *  beside the desktop navigation until the bar is wide enough. */
 export function ServerBadge({ compact = false }: { compact?: boolean }) {
   const state = useServerStatus()
   const s = SERVER_LABEL[state]
-  const quiet = compact && state === 'online'
   return (
-    <span className="flex items-center gap-2 text-[13px] font-medium text-faint" title={s.text}>
+    <span className="flex items-center gap-2 text-[14px] text-ink" title={s.text}>
       <span className={`size-2 shrink-0 rounded-full ${s.dot}`} />
-      <span className={quiet ? 'sr-only' : compact ? 'whitespace-nowrap max-[379px]:sr-only' : 'whitespace-nowrap'}>{s.text}</span>
+      <span className={compact ? 'whitespace-nowrap max-[379px]:sr-only lg:max-xl:sr-only' : 'whitespace-nowrap'}>{s.text}</span>
     </span>
   )
 }
 
-function MobileTopBar({ theme }: { theme: 'light' | 'dark' }) {
+/**
+ * The reference's top bar: badge and name on the left; a round glass button and an outlined pill on
+ * the right. On a desktop the navigation joins it, as a segmented pill in the middle and a glowing
+ * New analysis button, so nothing floats over the page.
+ */
+function TopBar({ theme }: { theme: 'light' | 'dark' }) {
+  const tabs = NAV.filter((n) => n.to !== '/new')
   return (
-    <header className="no-print sticky top-0 z-30 bg-canvas/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:hidden">
-      <div className="flex h-16 items-center justify-between gap-3">
-        <NavLink to="/">
+    <header className="no-print relative z-30 px-4 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-12">
+      <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-3 lg:h-[76px]">
+        <NavLink to="/" className="rounded-full">
           <Logo />
         </NavLink>
-        <div className="flex items-center gap-3">
-          <ServerBadge compact />
+        <nav aria-label="Main" className="track hidden items-center gap-0.5 rounded-full p-1 lg:flex">
+          {tabs.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex h-10 items-center gap-2 rounded-full px-4 text-[14px] transition ${isActive ? 'selected' : 'text-faint hover:text-ink'}`
+              }
+            >
+              <Icon className="size-[18px]" strokeWidth={1.5} aria-hidden />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2.5">
           <ThemeToggle resolved={theme} />
+          <span className="btn-ghost h-10 px-3.5 max-[379px]:w-10 max-[379px]:px-0 lg:h-11 lg:px-4 lg:max-xl:w-11 lg:max-xl:px-0">
+            <ServerBadge compact />
+          </span>
+          <NavLink to="/new" title="New analysis (N)" className="btn-primary hidden h-11 px-5 text-[14px] lg:inline-flex">
+            <Plus className="size-4" strokeWidth={2} /> New analysis
+          </NavLink>
         </div>
       </div>
     </header>
   )
 }
 
-/** The reference's bottom row: raised round buttons either side of a dark pill for the main action. */
-function MobileTabBar() {
+/** After a tap, let go of focus so the keyboard focus ring doesn't linger (some Android browsers
+ *  keep it); a keyboard activation has `detail` 0 and keeps it. */
+const releaseAfterTap = (e: React.MouseEvent<HTMLElement>) => {
+  if (e.detail > 0) e.currentTarget.blur()
+}
+
+/**
+ * The navigation on phones and tablets: a bar on the bottom edge, not a card floating over the page.
+ * Near-opaque with a thin line on top, clear of the home indicator. 4px between each icon and its
+ * label; the main action is a plain filled circle in the middle.
+ */
+function Dock() {
   const items = NAV.filter((n) => n.to !== '/new')
   const half = items.length / 2
   return (
-    <nav
-      className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center bg-gradient-to-t from-canvas via-canvas/80 to-transparent px-4 pt-6 pb-[max(env(safe-area-inset-bottom),16px)] lg:hidden"
-      aria-label="Main"
-    >
-      <div className="pointer-events-auto flex w-full max-w-sm items-center justify-between gap-2">
+    <nav className="dock no-print fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Main">
+      <div className="mx-auto flex h-16 max-w-[480px] items-center px-2">
         {items.slice(0, half).map((item) => (
           <TabLink key={item.to} {...item} />
         ))}
         <NavLink
           to="/new"
           aria-label="New analysis"
-          className="grid h-14 w-24 shrink-0 place-items-center rounded-full bg-primary text-on-primary shadow-[0_14px_28px_-12px_rgb(0_0_0/0.55)] transition active:scale-95"
+          title="New analysis (N)"
+          onClick={releaseAfterTap}
+          className="flex flex-1 basis-0 justify-center outline-none [&:focus-visible>.orb]:outline-2 [&:focus-visible>.orb]:outline-offset-2 [&:focus-visible>.orb]:outline-ink"
         >
-          <Plus className="size-6" strokeWidth={1.75} />
+          <span className="orb size-11 active:scale-95">
+            <Plus className="size-5" strokeWidth={2} />
+          </span>
         </NavLink>
         {items.slice(half).map((item) => (
           <TabLink key={item.to} {...item} />
@@ -225,14 +177,17 @@ function TabLink({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
     <NavLink
       to={to}
       end={end}
-      aria-label={label}
-      // The focus ring goes round the button, not the whole tab-wide hit area.
-      className="flex min-w-0 flex-1 basis-0 justify-center outline-none [&:focus-visible>span]:outline-2 [&:focus-visible>span]:outline-offset-2 [&:focus-visible>span]:outline-ink"
+      onClick={releaseAfterTap}
+      // The focus ring goes round the tab, not the whole hit area.
+      className="flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 py-1 outline-none [&:focus-visible>span:first-child]:outline-2 [&:focus-visible>span:first-child]:outline-ink"
     >
       {({ isActive }) => (
-        <span className={`well size-13 ${isActive ? 'text-ink' : 'text-faint'}`}>
-          <Icon className="size-5" strokeWidth={isActive ? 2 : 1.5} />
-        </span>
+        <>
+          <span className={`grid h-7 w-12 place-items-center rounded-full transition ${isActive ? 'bg-raised text-ink' : 'text-faint'}`}>
+            <Icon className="size-5" strokeWidth={isActive ? 1.9 : 1.5} aria-hidden />
+          </span>
+          <span className={`text-[11px] leading-none whitespace-nowrap ${isActive ? 'font-medium text-ink' : 'text-faint'}`}>{label}</span>
+        </>
       )}
     </NavLink>
   )
@@ -244,7 +199,7 @@ const SHORTCUTS = [
   ['Esc', 'Close this list'],
 ] as const
 
-/** The keyboard shortcuts, as a small dialog. Opened with ? or the sidebar hint. */
+/** The keyboard shortcuts, as a small dialog. Opened with ?. */
 function Shortcuts({ onClose }: { onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null)
   useEffect(() => {
@@ -259,13 +214,13 @@ function Shortcuts({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         onClick={(e) => e.stopPropagation()}
-        className="panel panel-raised animate-pop w-full max-w-sm rounded-xl p-6"
+        className="panel panel-raised animate-pop w-full max-w-sm rounded-xl p-4 sm:p-6"
       >
         <div className="flex items-center justify-between">
-          <h2 id="shortcuts-title" className="text-[17px] font-semibold tracking-[-0.02em]">
+          <h2 id="shortcuts-title" className="display text-[28px] leading-none">
             Keyboard shortcuts
           </h2>
-          <button ref={close} type="button" onClick={onClose} className="well size-9" aria-label="Close">
+          <button ref={close} type="button" onClick={onClose} className="well size-10" aria-label="Close">
             <X className="size-4" />
           </button>
         </div>
@@ -274,7 +229,7 @@ function Shortcuts({ onClose }: { onClose: () => void }) {
             <div key={key} className="flex items-center justify-between border-t border-line py-3 first:border-t-0">
               <dt className="text-[15px] text-muted">{what}</dt>
               <dd>
-                <kbd className="rounded-md bg-raised px-2 py-1 text-[13px] font-semibold">{key}</kbd>
+                <kbd className="chip px-3 py-1 font-semibold">{key}</kbd>
               </dd>
             </div>
           ))}

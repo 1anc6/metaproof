@@ -56,10 +56,10 @@ export function History() {
 
       {/* Search and filters only once there is something to search. */}
       {history.length > 0 && (
-      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         {/* How many rows the current search and filter leave, in dot-matrix, tagged with the filter. */}
         <p className="flex shrink-0 items-start gap-2" aria-live="polite">
-          <span className="num text-[56px] leading-none">{rows.length}</span>
+          <span className="num text-[34px] leading-none">{rows.length}</span>
           <span className="mt-1 text-[14px] text-faint">{filter === 'all' ? 'total' : FILTERS.find((f) => f.key === filter)!.label.toLowerCase()}</span>
           <span className="sr-only">analyses shown</span>
         </p>
@@ -97,15 +97,15 @@ export function History() {
       {error && <p className="mb-4 text-sm text-ai">{error}</p>}
 
       {history.length === 0 ? (
-        <div className="panel rounded-xl px-6 py-8">
+        <div className="panel rounded-xl px-4 py-6 sm:px-6 sm:py-8">
           <p className="text-[17px] font-semibold">Nothing here yet</p>
           <p className="mt-1 max-w-sm text-[15px] text-muted">Analyses you run on this device will appear here.</p>
-          <Link to="/new" className="btn-primary mt-5">
+          <Link to="/new" className="btn-primary mt-4">
             <Plus className="size-4" strokeWidth={2.5} /> Analyze an image
           </Link>
         </div>
       ) : rows.length === 0 ? (
-        <div className="panel rounded-xl px-6 py-8 text-[15px] text-muted">No analyses match this search and filter.</div>
+        <div className="panel rounded-xl px-4 py-6 sm:px-6 sm:py-8 text-[15px] text-muted">No analyses match this search and filter.</div>
       ) : (
         <div className="panel overflow-hidden rounded-xl">
           {/* header row, desktop only */}

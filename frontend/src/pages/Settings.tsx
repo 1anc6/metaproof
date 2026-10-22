@@ -32,7 +32,7 @@ export function Settings() {
           <p className="text-sm text-muted">
             Light, dark, or follow this device's setting. Saved in this browser.
           </p>
-          <ThemeSwitch labels className="mt-5" />
+          <ThemeSwitch labels className="mt-4" />
         </Card>
 
         <Card title="This device">
@@ -45,7 +45,7 @@ export function Settings() {
               ? 'No analyses saved in this browser.'
               : `${history.length === 1 ? 'analysis' : 'analyses'} in this browser. Latest: ${formatWhen(history[0].uploadedAt)}.`.replace(/^./, (c) => c.toUpperCase())}
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
               disabled={history.length === 0}
@@ -77,7 +77,7 @@ export function Settings() {
             href="https://github.com/1anc6/metaproof"
             target="_blank"
             rel="noreferrer"
-            className="btn-ghost mt-5"
+            className="btn-ghost mt-4"
           >
             <GithubMark className="size-4" /> Source code
           </a>
@@ -191,7 +191,7 @@ function InstallCard() {
             Install MetaProof to open it like an app. On Android it also appears in the share menu, so you
             can send a suspicious photo straight from your gallery or WhatsApp.
           </p>
-          <button type="button" onClick={promptInstall} className="btn-primary mt-5">
+          <button type="button" onClick={promptInstall} className="btn-primary mt-4">
             <Download className="size-4" strokeWidth={2.25} /> Install MetaProof
           </button>
         </>
@@ -226,7 +226,7 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className={`panel animate-rise rounded-xl p-5 sm:p-7 ${className}`}>
+    <section className={`panel animate-rise rounded-xl p-4 sm:p-5 ${className}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="eyebrow">{title}</h2>
         {action}

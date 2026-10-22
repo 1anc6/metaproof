@@ -1,22 +1,28 @@
-import { ArrowUpRight, EyeOff, Filter, Plus } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { ArrowRight, EyeOff, Filter } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { VerdictLabel } from '../lib/api'
 import { formatBytes, formatWhen } from '../lib/format'
-import { useHistory } from '../lib/history'
+import { useHistory, type HistoryEntry } from '../lib/history'
 import { useSummaries } from '../lib/hooks'
 import { setPref, usePrefs } from '../lib/prefs'
-import { DEMO_REPORT_PATH } from '../lib/demo'
-import { toneOf, VERDICTS } from '../lib/verdicts'
-import { ArcGauge, Chip, FileName, Figure, LeaderRow, PanelTitle, Thumb, VerdictBadge } from '../components/ui'
-import { CheckWheel, Lens } from '../components/CheckWheel'
-import { CHECKS, DEMO_SHA } from '../lib/checks'
+import { VERDICTS } from '../lib/verdicts'
+import { Chip, FileName, Thumb, VerdictBadge } from '../components/ui'
+import { CheckDial, type CanvasPhoto } from '../components/CheckDial'
+import { UploadPanel } from '../components/UploadPanel'
+import { VerdictGlyph, VerdictSpectrum } from '../components/Verdict'
+import { CHECKS } from '../lib/checks'
 
-
+/**
+ * The workspace: opening the app shows the tool. The dial and its canvas, then (once something is
+ * analyzed) the latest verdict, then the upload panel; beside them on a desktop, below on a phone,
+ * the chosen check, the counts and the recent list, all compact so the image and verdict lead.
+ */
 export function Overview() {
   const history = useHistory()
   const { data, loading } = useSummaries(history.slice(0, 50))
-  const n = (value: number) => (loading ? null : value)
+  const prefs = usePrefs()
+  const [active, setActive] = useState('c2pa')
 
   const counts = Object.values(data).reduce(
     (acc, s) => {
@@ -25,243 +31,184 @@ export function Overview() {
     },
     { likely_authentic: 0, edited: 0, likely_ai_generated: 0, inconclusive: 0 } as Record<VerdictLabel, number>,
   )
-  const flagged = counts.edited + counts.likely_ai_generated
-  const prefs = usePrefs()
   const isFlagged = (jobId: string) => {
     const label = data[jobId]?.label
     return label === 'edited' || label === 'likely_ai_generated'
   }
-  const recent = (prefs.onlyFlagged ? history.filter((e) => isFlagged(e.jobId)) : history).slice(0, 4)
+  const recent = (prefs.onlyFlagged ? history.filter((e) => isFlagged(e.jobId)) : history).slice(0, 5)
   const latest = history.find((e) => data[e.jobId]?.status === 'done' && data[e.jobId]?.label)
-  const counted = Math.min(history.length, 50) // verdicts are fetched for the 50 most recent
+  const photo: CanvasPhoto | undefined = latest && {
+    sha: latest.sha256,
+    name: latest.filename,
+    label: data[latest.jobId].label,
+    status: data[latest.jobId].status,
+  }
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
-      {/* The title runs across the top; below it the wheel and the cards share one row, top and
-          bottom aligned. */}
-      <header className="animate-rise grid gap-x-10 gap-y-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-end">
-        <h1 className="text-[40px] leading-[1.02] font-normal tracking-[-0.035em] sm:text-[56px]">See what's behind the image</h1>
-        <p className="max-w-lg text-[16px] leading-relaxed text-muted lg:pb-1.5">
-          MetaProof reads an image's metadata, Content Credentials and pixels, then tells you what the evidence
-          shows, and when it isn't enough to say anything.
-        </p>
-      </header>
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:items-start lg:gap-x-8">
+      <h1 className="sr-only">MetaProof: see what's behind an image</h1>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8">
-        <ChecksPanel className="animate-rise" />
+      {/* the workspace */}
+      <div className="flex min-w-0 flex-col gap-3">
+        <h2 className="sr-only">The six checks</h2>
+        <CheckDial active={active} onSelect={setActive} photo={photo} className="max-w-none" />
+        {latest && (
+          <LatestVerdict
+            entry={latest}
+            label={data[latest.jobId].label!}
+            facts={[`${data[latest.jobId].width}×${data[latest.jobId].height}`, formatBytes(latest.sizeBytes), formatWhen(latest.uploadedAt)]}
+          />
+        )}
+        <UploadPanel />
+      </div>
 
-        <div className="animate-rise flex min-w-0 flex-col gap-4 [&>*:last-child]:flex-1">
-          {latest ? (
-            <ResultCard
-              to={`/analysis/${latest.jobId}`}
-              title="Latest analysis"
-              verdict={data[latest.jobId].label!}
-              figures={[
-                ['Confidence', data[latest.jobId].confidence === null ? '–' : Math.round(data[latest.jobId].confidence! * 100), '%'],
-                ['Size', formatBytes(latest.sizeBytes).split(' ')[0], formatBytes(latest.sizeBytes).split(' ')[1]],
-              ]}
-              rows={[
-                ['File', <FileName key="f" name={latest.filename} className="justify-end" />],
-                ['Pixels', `${data[latest.jobId].width}×${data[latest.jobId].height}`],
-                ['Analyzed', formatWhen(latest.uploadedAt)],
-              ]}
-            />
-          ) : (
-            // The example's figures mirror the stored demo report (lib/demo.ts).
-            <ResultCard
-              to={DEMO_REPORT_PATH}
-              title="Example report"
-              verdict="likely_ai_generated"
-              figures={[
-                ['AI likelihood', 99, '%'],
-                ['Findings', 3, 'checks'],
-              ]}
-              rows={[
-                ['Metadata', 'None found'],
-                ['Credentials', 'None found'],
-                ['Pixel detector', 'Strong signs of AI'],
-              ]}
-            />
-          )}
-
-          {history.length > 0 ? (
-            <section className="panel rounded-xl p-5 sm:p-6" aria-label="Your analyses">
-              <PanelTitle
-                title="Your analyses"
-                action={
-                  <Link to="/history" className="well size-10" aria-label="Open history">
-                    <ArrowUpRight className="size-4" strokeWidth={1.5} />
-                  </Link>
-                }
-              />
-              <div className="mt-2 text-ink">
-                <ArcGauge value={counted ? flagged / counted : 0} valueLabel={loading ? '…' : `${flagged} flagged`} startLabel="0" endLabel={`${counted}`} />
-              </div>
-              <div className="mt-1 grid grid-cols-3 gap-3">
-                <StatLink to="/history" label="Total" value={history.length} />
-                <StatLink to="/history?filter=likely_ai_generated" label="Likely AI" value={n(counts.likely_ai_generated)} />
-                <StatLink to="/history?filter=inconclusive" label="Inconclusive" value={n(counts.inconclusive)} />
-              </div>
-            </section>
-          ) : (
-            <UploadCard />
-          )}
-        </div>
-      </section>
-
-      <section className="animate-rise">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="text-[26px] font-normal tracking-[-0.02em]">Recent analyses</h2>
-          {history.length > 0 && (
-            <Link to="/history" className="btn-ghost h-10 px-4 text-[14px]">
-              See all
-            </Link>
-          )}
-        </div>
+      {/* beside it */}
+      <div className="flex min-w-0 flex-col gap-3 lg:sticky lg:top-6 lg:pt-[42px]">
+        <CheckPanel active={active} />
+        {history.length > 0 && <Counts total={history.length} counts={counts} loading={loading} />}
         {history.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Chip icon={EyeOff} label="Blur previews" checked={prefs.blurPreviews} onChange={(v) => setPref('blurPreviews', v)} />
-            <Chip icon={Filter} label="Only flagged" checked={prefs.onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
-          </div>
+          <Recent entries={recent} data={data} loading={loading} blur={prefs.blurPreviews} onlyFlagged={prefs.onlyFlagged} />
         )}
-        {history.length === 0 ? (
-          <div className="panel mt-4 rounded-xl px-6 py-8">
-            <p className="text-[17px]">No analyses yet</p>
-            <p className="mt-1 max-w-sm text-[15px] text-muted">
-              Upload an image to see its metadata, credentials and verdict. Your history stays on this device.
-            </p>
-            <Link to="/new" className="btn-primary mt-5">
-              <Plus className="size-4" strokeWidth={2} /> Analyze an image
-            </Link>
-          </div>
-        ) : recent.length === 0 ? (
-          <p className="mt-4 text-[15px] text-muted">
-            {loading ? 'Loading verdicts…' : 'Nothing edited or AI-generated among your analyses.'}
-          </p>
-        ) : (
-          <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {recent.map((entry) => {
-              const s = data[entry.jobId]
-              return (
-                <li key={entry.jobId} className="min-w-0">
-                  <Link to={`/analysis/${entry.jobId}`} className="panel flex h-full flex-col rounded-xl p-3">
-                    <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="aspect-[4/3] w-full rounded-lg" />
-                    <FileName name={entry.filename} className="mt-3 px-1 text-[14px]" />
-                    <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-1 pb-1">
-                      {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
-                      <span className="truncate text-[12px] text-faint">{formatWhen(entry.uploadedAt)}</span>
-                    </div>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
+      </div>
     </div>
   )
 }
 
-/**
- * The reference's monitoring home: a dark photo panel (the example image, blurred), the six checks
- * as a radial menu around a lemon lens, and a glass card that explains the chosen check.
- */
-export function ChecksPanel({ className = '' }: { className?: string }) {
-  const [active, setActive] = useState('c2pa')
-  const check = CHECKS.find((c) => c.key === active)!
+/** The latest analysis as its verdict: the outcome in the serif, its place on the scale, and one sentence. */
+function LatestVerdict({ entry, label, facts }: { entry: HistoryEntry; label: VerdictLabel; facts: string[] }) {
+  const v = VERDICTS[label]
   return (
-    <section className={`relative isolate flex flex-col overflow-hidden rounded-xl bg-[#2a2620] p-5 text-white sm:p-7 ${className}`} aria-label="The six checks">
-      <Thumb sha={DEMO_SHA} eager className="!absolute inset-0 -z-10 scale-125 !bg-transparent opacity-80 blur-2xl brightness-[0.55]" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-transparent to-black/40" aria-hidden />
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] tracking-[0.02em] uppercase">Six checks</h2>
-        <span className="status text-white/80">
-          <span className="size-2 rounded-full bg-accent" aria-hidden /> Live
-        </span>
-      </div>
-      <CheckWheel items={CHECKS} active={active} onSelect={setActive} className="mx-auto mt-1 max-w-[440px]" center={<Lens />} />
-      <div className="glass mt-auto rounded-lg p-4 sm:p-5" aria-live="polite">
-        <h3 key={check.key} className="animate-rise text-[15px] tracking-[0.02em] uppercase">{check.label}</h3>
-        <p key={`${check.key}-d`} className="animate-rise mt-2 text-[15px] leading-relaxed text-white/85 [animation-delay:60ms]">{check.detail}</p>
-        <div key={`${check.key}-w`} className="animate-rise mt-3 flex items-center gap-3 text-[14px] [animation-delay:120ms]">
-          <span className="text-white/70">Weight in the verdict</span>
-          <span className="leader opacity-60 invert" aria-hidden />
-          <span>{check.weight}</span>
+    <Link to={`/analysis/${entry.jobId}`} className="panel group block rounded-xl p-4" aria-label={`Latest analysis: ${v.title}. Open the report`}>
+      <div className="flex items-center gap-3">
+        <VerdictGlyph label={label} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12px] text-faint">Latest analysis · {facts.join(' · ')}</p>
+          <p className="display text-[26px] leading-tight" style={{ color: v.color }}>
+            {v.title}
+          </p>
         </div>
+        <ArrowRight className="size-4 shrink-0 text-faint transition-transform group-hover:translate-x-0.5" aria-hidden />
       </div>
+      <VerdictSpectrum label={label} className="mt-3" />
+      <p className="mt-3 text-[14px] leading-relaxed text-muted">{v.summary}</p>
+    </Link>
+  )
+}
+
+/** The chosen check, explained in one compact panel. */
+function CheckPanel({ active }: { active: string }) {
+  const check = CHECKS.find((c) => c.key === active)!
+  const Icon = check.icon
+  return (
+    <div className="panel rounded-xl p-4" aria-live="polite">
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-raised">
+          <Icon className="size-4" strokeWidth={1.5} aria-hidden />
+        </span>
+        <h3 key={check.key} className="animate-rise min-w-0 flex-1 text-[15px] font-medium">
+          {check.label}
+        </h3>
+        <span className="tag shrink-0">{check.weight}</span>
+      </div>
+      <p key={`${check.key}-d`} className="animate-rise mt-2 text-[14px] leading-relaxed text-muted [animation-delay:60ms]">
+        {check.detail}
+      </p>
+    </div>
+  )
+}
+
+/** The counts at a glance: four figures that open History filtered, over one thin bar of the verdict mix. */
+function Counts({ total, counts, loading }: { total: number; counts: Record<VerdictLabel, number>; loading: boolean }) {
+  const flagged = counts.edited + counts.likely_ai_generated
+  const known = Object.values(counts).reduce((a, b) => a + b, 0)
+  const stats: [string, string, number][] = [
+    ['Total', '/history', total],
+    ['Flagged', '/history?filter=flagged', flagged],
+    ['Likely AI', '/history?filter=likely_ai_generated', counts.likely_ai_generated],
+    ['Inconclusive', '/history?filter=inconclusive', counts.inconclusive],
+  ]
+  const MIX: [VerdictLabel, string][] = [
+    ['likely_authentic', 'bg-authentic'],
+    ['inconclusive', 'bg-neutral'],
+    ['edited', 'bg-edited'],
+    ['likely_ai_generated', 'bg-ai'],
+  ]
+  return (
+    <section className="panel rounded-xl p-4" aria-label="Your analyses">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[15px] font-medium">Your analyses</h2>
+        <Link to="/history" className="text-[13px] text-faint transition hover:text-ink">
+          Open history
+        </Link>
+      </div>
+      <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {stats.map(([label, to, value], i) => (
+          <Link key={label} to={to} className="group flex min-w-0 items-baseline gap-2 rounded-lg bg-raised px-3 py-2 transition hover:bg-hover sm:block">
+            {loading && i > 0 ? <span className="skeleton block h-6 w-8" /> : <span className="num block text-[24px] leading-none">{value}</span>}
+            <span className="block truncate text-[12px] text-faint group-hover:text-ink sm:mt-1">{label}</span>
+          </Link>
+        ))}
+      </div>
+      {known > 0 && (
+        <div className="mt-2.5 flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden>
+          {MIX.filter(([k]) => counts[k] > 0).map(([k, bg]) => (
+            <span key={k} className={`${bg} h-full rounded-full`} style={{ flexGrow: counts[k] }} title={`${VERDICTS[k].short}: ${counts[k]}`} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
 
-/** The reference's sensor card: a cream panel with a title and status, figures, and leader rows. */
-function ResultCard({
-  to,
-  title,
-  verdict,
-  figures,
-  rows,
+/** The last few analyses as compact rows, with the blur and only-flagged switches. */
+function Recent({
+  entries,
+  data,
+  loading,
+  blur,
+  onlyFlagged,
 }: {
-  to: string
-  title: string
-  verdict: VerdictLabel
-  figures: [string, number | string, string?][]
-  rows: [string, ReactNode][]
+  entries: HistoryEntry[]
+  data: ReturnType<typeof useSummaries>['data']
+  loading: boolean
+  blur: boolean
+  onlyFlagged: boolean
 }) {
-  const v = VERDICTS[verdict]
   return (
-    <Link to={to} className={`cream ${toneOf(verdict)} group flex flex-col rounded-xl p-5 sm:p-6`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow">{title}</p>
-          <span className={`status mt-1 ${v.text}`}>
-            <span className="size-2 rounded-full bg-current" aria-hidden /> {v.title}
-          </span>
-        </div>
-        <span className="well size-10">
-          <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.5} />
-        </span>
+    <section className="panel rounded-xl p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[15px] font-medium">Recent analyses</h2>
+        <Link to="/history" className="text-[13px] text-faint transition hover:text-ink">
+          See all
+        </Link>
       </div>
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        {figures.map(([label, value, unit]) => (
-          <Figure key={label} label={label} value={value} unit={unit} />
-        ))}
+      <div className="mt-2.5 flex flex-wrap gap-2">
+        <Chip icon={EyeOff} label="Blur previews" checked={blur} onChange={(v) => setPref('blurPreviews', v)} />
+        <Chip icon={Filter} label="Only flagged" checked={onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
       </div>
-      <dl className="mt-4">
-        {rows.map(([label, value]) => (
-          <LeaderRow key={label} label={label} value={value} />
-        ))}
-      </dl>
-    </Link>
-  )
-}
-
-function StatLink({ to, label, value }: { to: string; label: string; value: number | null }) {
-  return (
-    <Link to={to} className="group min-w-0 rounded-lg">
-      <p className="text-[14px] text-muted">{label}</p>
-      {value === null ? (
-        <span className="skeleton mt-2 block h-8 w-10" />
+      {entries.length === 0 ? (
+        <p className="mt-3 text-[14px] text-muted">{loading ? 'Loading verdicts…' : 'Nothing edited or AI-generated among your analyses.'}</p>
       ) : (
-        <p className="num mt-1 text-[36px] leading-none transition-opacity group-hover:opacity-70">{value}</p>
+        <ul className="-mx-1.5 mt-2">
+          {entries.map((entry) => {
+            const s = data[entry.jobId]
+            return (
+              <li key={entry.jobId}>
+                <Link to={`/analysis/${entry.jobId}`} className="flex items-center gap-3 rounded-lg px-1.5 py-1.5 transition hover:bg-hover">
+                  <Thumb sha={entry.sha256} blur={blur} className="size-10 shrink-0 rounded-[10px]" />
+                  <div className="min-w-0 flex-1">
+                    <FileName name={entry.filename} className="text-[14px]" />
+                    <div className="flex min-w-0 items-center gap-2">
+                      {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
+                      <span className="truncate text-[12px] text-faint">{formatWhen(entry.uploadedAt)}</span>
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       )}
-    </Link>
-  )
-}
-
-function UploadCard() {
-  return (
-    <Link to="/new" className="panel group flex flex-col gap-6 rounded-xl p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <p className="eyebrow">Upload an image</p>
-        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-on-primary transition-transform group-hover:scale-105">
-          <Plus className="size-5" strokeWidth={1.75} />
-        </span>
-      </div>
-      <dl className="mt-auto">
-        <LeaderRow label="Formats" value="JPEG · PNG · WebP · TIFF · HEIC" />
-        <LeaderRow label="Size" value="Up to 25 MB" />
-        <LeaderRow label="File" value="Deleted after" />
-      </dl>
-    </Link>
+    </section>
   )
 }

@@ -10,13 +10,13 @@ const theme = (page: import('@playwright/test').Page) => page.locator('html').ge
 
 test('follows the system theme until one is picked, then remembers it', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' })
-  await page.goto('/')
+  await page.goto('/settings') // the full theme switch lives in Settings
   expect(await theme(page)).toBe('dark')
 
   const switcher = page.getByRole('radiogroup', { name: 'Colour theme' }).first()
   await switcher.getByRole('radio', { name: 'Light' }).click()
   expect(await theme(page)).toBe('light')
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#e9e7e4')
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#f4f3f0')
 
   // Set before first paint on reload, even though the system is still dark.
   await page.reload()
@@ -28,7 +28,7 @@ test('follows the system theme until one is picked, then remembers it', async ({
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
 })
 
-test('the phone top bar toggles between light and dark', async ({ page }) => {
+test('the top bar toggles between light and dark', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.emulateMedia({ colorScheme: 'light' })
   await page.goto('/')
