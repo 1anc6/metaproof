@@ -10,17 +10,17 @@ const ICONS: Record<VerdictLabel, LucideIcon> = {
   likely_ai_generated: Sparkles,
 }
 
-/** The verdict's icon in a softly tinted circle. */
+/** The verdict's icon on a pale disc of its colour. */
 export function VerdictGlyph({ label, className = 'size-10' }: { label: VerdictLabel; className?: string }) {
   const Icon = ICONS[label]
-  const color = VERDICTS[label].color
+  const { color, dot } = VERDICTS[label]
   return (
     <span
       className={`grid shrink-0 place-items-center rounded-full ${className}`}
-      style={{ color, background: `color-mix(in srgb, ${color} 14%, transparent)` }}
+      style={{ color, background: `color-mix(in srgb, ${dot} 16%, transparent)`, boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${dot} 22%, transparent)` }}
       aria-hidden
     >
-      <Icon className="size-[48%]" strokeWidth={1.75} />
+      <Icon className="size-[48%]" strokeWidth={1.8} />
     </span>
   )
 }
@@ -34,9 +34,10 @@ const SEGMENTS: { key: VerdictLabel; label: string }[] = [
 ]
 
 /**
- * The verdict as a place on a segmented scale: the outcome's segment fills with its colour and its
- * label darkens; the rest stay quiet. For an inconclusive verdict that still tilts one way, a small
- * dot inside the grey segment sits toward that side. Categories only: no invented percentages.
+ * The verdict as a place on a segmented scale, like the reference's alert line: the outcome's
+ * segment fills with its colour and its label darkens; the rest stay grey. For an inconclusive
+ * verdict that still tilts one way, a dot inside the grey segment sits toward that side.
+ * Categories only: no invented percentages.
  */
 export function VerdictSpectrum({
   label,
@@ -50,33 +51,29 @@ export function VerdictSpectrum({
 }) {
   const v = VERDICTS[label]
   return (
-    <div
-      role="img"
-      aria-label={`${v.title}${lean ? `, leaning ${lean.label}` : ''}, on a scale from authentic to AI-generated`}
-      className={className}
-    >
-      <div className="grid grid-cols-4 gap-1">
+    <div role="img" aria-label={`${v.title}${lean ? `, leaning ${lean.label}` : ''}, on a scale from authentic to AI-generated`} className={className}>
+      <div className="grid grid-cols-4 gap-1.5">
         {SEGMENTS.map((s) => {
           const on = s.key === label
           return (
             <span
               key={s.key}
               className="relative h-2 rounded-full transition-colors duration-500"
-              style={{ background: on ? VERDICTS[s.key].color : 'var(--color-line)' }}
+              style={{ background: on ? VERDICTS[s.key].dot : 'var(--track-bg)' }}
             >
               {on && lean && (
                 <span
-                  className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-[var(--panel-bg)]"
-                  style={{ left: lean.key === 'authentic' ? '12%' : '88%', background: lean.color }}
+                  className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-[3px] ring-[var(--raise-bg)]"
+                  style={{ left: lean.key === 'authentic' ? '14%' : '86%', background: lean.color }}
                 />
               )}
             </span>
           )
         })}
       </div>
-      <div className="mt-1.5 grid grid-cols-4 gap-1 text-[11px] leading-tight" aria-hidden>
+      <div className="mt-2 grid grid-cols-4 gap-1.5 text-[12px] leading-tight" aria-hidden>
         {SEGMENTS.map((s) => (
-          <span key={s.key} className={s.key === label ? 'font-medium text-ink' : 'text-faint'}>
+          <span key={s.key} className={s.key === label ? 'font-semibold text-ink' : 'text-faint'}>
             {s.label}
           </span>
         ))}

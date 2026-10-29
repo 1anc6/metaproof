@@ -1,13 +1,14 @@
-import { Lock, MoonStar, WifiOff } from 'lucide-react'
+import { MoonStar, WifiOff } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useServerStatus } from '../lib/hooks'
 import { takeSharedImage } from '../lib/share'
 import { useUpload } from '../lib/upload'
-import { PageHeader, LeaderRow } from '../components/ui'
+import { PageHeader } from '../components/ui'
+import { FileFacts } from '../components/FileFacts'
 import { UploadPanel } from '../components/UploadPanel'
 
-/** The upload page: the upload panel (a chosen file goes straight away) beside what happens to the file. */
+/** The upload page: the upload card (a chosen file goes straight away) beside what happens to the file. */
 export function NewAnalysis() {
   const [params, setParams] = useSearchParams()
   const upload = useUpload(
@@ -33,33 +34,15 @@ export function NewAnalysis() {
   const server = useServerStatus()
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div>
       <PageHeader title="New analysis" subtitle="Choose an image to check where it came from and whether it was edited or generated." />
 
       <ServerNotice state={server} />
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-start">
-        <UploadPanel upload={upload} autoStart className="animate-rise" />
+      <div className="grid gap-4 lg:grid-cols-12">
+        <UploadPanel upload={upload} autoStart className="lg:col-span-7" />
 
-        {/* What happens to the file. */}
-        <section className="panel animate-rise rounded-xl p-4">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h2 className="eyebrow">What happens</h2>
-            <span className="status text-[13px]">
-              <Lock className="size-3.5" strokeWidth={1.75} aria-hidden /> Private
-            </span>
-          </div>
-          <dl className="mt-2 [&>div]:py-2 [&>div]:text-[14px]">
-            <LeaderRow label="Fingerprint" value="SHA-256" />
-            <LeaderRow label="Checks" value="Six, in seconds" />
-            <LeaderRow label="Your file" value="Deleted after" />
-            <LeaderRow label="Findings kept" value="90 days" />
-            <LeaderRow label="GPS" value="Never stored" />
-          </dl>
-          <p className="mt-2 text-[13px] leading-relaxed text-faint">
-            Only the hash, a thumbnail and the findings stay, so the report can be shared by link.
-          </p>
-        </section>
+        <FileFacts className="lg:col-span-5" />
       </div>
     </div>
   )
@@ -70,13 +53,8 @@ function ServerNotice({ state }: { state: ReturnType<typeof useServerStatus> }) 
   const waking = state === 'waking'
   const Icon = waking ? MoonStar : WifiOff
   return (
-    <div
-      role="status"
-      className={`panel animate-rise mb-4 flex items-start gap-3 rounded-xl px-4 py-3 text-[15px] font-medium ${
-        waking ? 'text-edited' : 'text-ai'
-      }`}
-    >
-      <Icon className="mt-0.5 size-4 shrink-0" />
+    <div role="status" className="panel animate-rise mb-4 flex items-start gap-3 rounded-[22px] px-4 py-3.5 text-[14.5px] font-medium">
+      <Icon className={`mt-0.5 size-4 shrink-0 ${waking ? 'text-edited' : 'text-ai'}`} strokeWidth={1.8} aria-hidden />
       <p>
         {waking
           ? 'The server is waking up. Free hosting sleeps when idle, so this takes about a minute; you can upload now and it will continue on its own.'

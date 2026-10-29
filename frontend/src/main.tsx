@@ -1,7 +1,4 @@
-import '@fontsource-variable/urbanist'
-import '@fontsource/instrument-serif/400.css'
-import '@fontsource/instrument-serif/400-italic.css'
-import '@fontsource-variable/jetbrains-mono'
+import '@fontsource-variable/figtree'
 import './index.css'
 
 import { StrictMode } from 'react'

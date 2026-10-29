@@ -29,18 +29,16 @@ export function Settings() {
           cards into two stacks of about equal height, without changing that order. */}
       <div className="flex flex-col gap-4 lg:block lg:columns-2 lg:gap-4 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
         <Card title="Appearance">
-          <p className="text-sm text-muted">
-            Light, dark, or follow this device's setting. Saved in this browser.
-          </p>
+          <p className="text-[14.5px] text-muted">Light, dark, or follow this device's setting. Saved in this browser.</p>
           <ThemeSwitch labels className="mt-4" />
         </Card>
 
         <Card title="This device">
-          <p className="flex items-start gap-2">
-            <span className="num text-[56px] leading-none">{history.length}</span>
-            <span className="mt-1 text-[14px] text-faint">saved here</span>
+          <p className="flex items-baseline gap-2">
+            <span className="num text-[44px] leading-none">{history.length}</span>
+            <span className="text-[14px] text-faint">saved here</span>
           </p>
-          <p className="mt-3 text-[15px] text-muted">
+          <p className="mt-3 text-[14.5px] text-muted">
             {history.length === 0
               ? 'No analyses saved in this browser.'
               : `${history.length === 1 ? 'analysis' : 'analyses'} in this browser. Latest: ${formatWhen(history[0].uploadedAt)}.`.replace(/^./, (c) => c.toUpperCase())}
@@ -50,17 +48,17 @@ export function Settings() {
               type="button"
               disabled={history.length === 0}
               onClick={() => exportHistory(history)}
-              className="btn-ghost disabled:opacity-40"
+              className="btn-ghost btn-sm"
             >
-              <Download className="size-4" /> Export list
+              <Download className="size-4" strokeWidth={1.7} /> Export list
             </button>
             <button
               type="button"
               disabled={history.length === 0}
               onClick={clearWithUndo}
-              className="btn-ghost text-ai disabled:opacity-40"
+              className="btn-ghost btn-sm !text-ai"
             >
-              <Trash2 className="size-4" /> Clear history
+              <Trash2 className="size-4" strokeWidth={1.7} /> Clear history
             </button>
           </div>
         </Card>
@@ -77,7 +75,7 @@ export function Settings() {
             href="https://github.com/1anc6/metaproof"
             target="_blank"
             rel="noreferrer"
-            className="btn-ghost mt-4"
+            className="btn-ghost btn-sm mt-4"
           >
             <GithubMark className="size-4" /> Source code
           </a>
@@ -86,8 +84,8 @@ export function Settings() {
         <Card title="Privacy and data">
           <ul className="flex flex-col gap-2.5">
             {PRIVACY.map((line) => (
-              <li key={line} className="flex gap-3 text-sm text-muted">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
+              <li key={line} className="flex gap-3 text-[14.5px] leading-relaxed text-muted">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
                 {line}
               </li>
             ))}
@@ -100,9 +98,9 @@ export function Settings() {
 
 type Level = { label: string; color: string; icon: typeof CircleCheck }
 const LEVELS: Record<'ok' | 'warn' | 'full', Level> = {
-  ok: { label: 'Healthy', color: 'var(--color-authentic)', icon: CircleCheck },
-  warn: { label: 'Getting full', color: 'var(--color-edited)', icon: CircleAlert },
-  full: { label: 'Almost full', color: 'var(--color-ai)', icon: OctagonAlert },
+  ok: { label: 'Healthy', color: 'var(--color-dot-authentic)', icon: CircleCheck },
+  warn: { label: 'Getting full', color: 'var(--color-dot-edited)', icon: CircleAlert },
+  full: { label: 'Almost full', color: 'var(--color-dot-ai)', icon: OctagonAlert },
 }
 
 /** Live figures from GET /api/status: storage against the plan's limit and the last day's work. */
@@ -117,8 +115,8 @@ function ServiceFigures() {
     }
   }, [])
 
-  if (failed) return <p className="text-sm text-muted">Storage figures are unavailable while the server is unreachable.</p>
-  if (!status) return <div className="skeleton h-24" aria-label="Loading storage figures" />
+  if (failed) return <p className="text-[14.5px] leading-relaxed text-muted">Storage figures are unavailable while the server is unreachable.</p>
+  if (!status) return <div className="skeleton h-24 !rounded-[18px]" aria-label="Loading storage figures" />
 
   const { database_mb: used, storage_limit_mb: limit, storage_warn_mb: warn } = status
   const share = Math.min(1, used / limit)
@@ -127,14 +125,14 @@ function ServiceFigures() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="flex items-baseline justify-between gap-3 text-sm">
+        <div className="flex items-baseline justify-between gap-3 text-[14px]">
           <span className="text-muted">Database storage</span>
           <span className="text-[13px] text-muted tabular-nums">
             <span className="num text-[28px] text-ink">{used.toFixed(1)}</span> MB of {limit} MB
           </span>
         </div>
         <div
-          className="relative mt-2 h-1.5 rounded-full bg-line"
+          className="bar-track relative mt-2.5 h-2 rounded-full"
           role="meter"
           aria-label="Database storage used"
           aria-valuemin={0}
@@ -145,14 +143,14 @@ function ServiceFigures() {
         >
           <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, 1)}%`, background: level.color }} />
           {/* where the server starts logging warnings */}
-          <div className="absolute top-[-3px] h-[12px] w-px bg-faint" style={{ left: `${(warn / limit) * 100}%` }} aria-hidden />
+          <div className="absolute top-[-4px] h-4 w-0.5 rounded-full bg-line-strong" style={{ left: `${(warn / limit) * 100}%` }} aria-hidden />
         </div>
         <p className="mt-2 flex items-center gap-1.5 text-[13px] text-muted">
           <Icon className="size-3.5" style={{ color: level.color }} strokeWidth={2} aria-hidden />
           {level.label} · reports are kept for {status.retention_days} days
         </p>
       </div>
-      <dl className="grid grid-cols-3 gap-3">
+      <dl className="well grid grid-cols-3 rounded-[18px] py-3">
         <Figure label="Analyses today" value={`${status.analyses_24h}`} note={`of ${status.daily_cap} a day`} />
         <Figure
           label="Failed today"
@@ -167,9 +165,9 @@ function ServiceFigures() {
 
 function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="min-w-0 rounded-lg bg-raised p-3">
-      <dt className="text-[12px] leading-tight text-faint">{label}</dt>
-      <dd className={`mt-2 ${/^\d+$/.test(value) ? 'num text-[34px] leading-none' : 'text-base leading-tight sm:text-lg'}`}>{value}</dd>
+    <div className="min-w-0 border-l border-line px-3.5 first:border-l-0">
+      <dt className="truncate text-[12px] leading-tight text-faint">{label}</dt>
+      <dd className={`mt-2 ${/^\d+$/.test(value) ? 'num text-[30px] leading-none' : 'text-[15px] leading-tight font-medium sm:text-[17px]'}`}>{value}</dd>
       {note && <dd className="mt-0.5 text-[12px] leading-tight text-faint">{note}</dd>}
     </div>
   )
@@ -180,31 +178,31 @@ function InstallCard() {
   return (
     <Card title="Install the app">
       {state === 'installed' && (
-        <p className="text-sm text-muted">
+        <p className="text-[14.5px] leading-relaxed text-muted">
           MetaProof is installed on this device. On Android, share any photo to it from your gallery,
           WhatsApp or the browser, and it opens straight into the analysis.
         </p>
       )}
       {state === 'available' && (
         <>
-          <p className="text-sm text-muted">
+          <p className="text-[14.5px] leading-relaxed text-muted">
             Install MetaProof to open it like an app. On Android it also appears in the share menu, so you
             can send a suspicious photo straight from your gallery or WhatsApp.
           </p>
           <button type="button" onClick={promptInstall} className="btn-primary mt-4">
-            <Download className="size-4" strokeWidth={2.25} /> Install MetaProof
+            <Download className="size-4" strokeWidth={2.2} /> Install MetaProof
           </button>
         </>
       )}
       {state === 'ios' && (
-        <p className="text-sm text-muted">
+        <p className="text-[14.5px] leading-relaxed text-muted">
           In Safari, tap <span className="text-ink">Share</span>, then{' '}
           <span className="text-ink">Add to Home Screen</span>. iPhones don't let web apps appear in the
           share menu, so open MetaProof and choose the photo there.
         </p>
       )}
       {state === 'unavailable' && (
-        <p className="text-sm text-muted">
+        <p className="text-[14.5px] leading-relaxed text-muted">
           Open this site in Chrome on Android, or in Chrome or Edge on a computer, to install it. On
           Android it then appears in the share menu for photos.
         </p>
@@ -213,7 +211,7 @@ function InstallCard() {
   )
 }
 
-/** A settings card: icon disc and title on one line, an optional status on the right. */
+/** A settings card: its title, with an optional status on the right. */
 function Card({
   title,
   action,
@@ -226,9 +224,9 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className={`panel animate-rise rounded-xl p-4 sm:p-5 ${className}`}>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="eyebrow">{title}</h2>
+    <section className={`panel rounded-[28px] p-5 sm:p-6 ${className}`}>
+      <div className="mb-3 flex min-h-7 items-center justify-between gap-3">
+        <h2 className="card-title">{title}</h2>
         {action}
       </div>
       {children}

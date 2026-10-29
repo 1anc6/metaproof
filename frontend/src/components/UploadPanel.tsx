@@ -1,9 +1,10 @@
-import { ClipboardPaste, FileImage, Upload, X } from 'lucide-react'
+import { ClipboardPaste, FileImage, LoaderCircle, Upload, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { formatBytes } from '../lib/format'
 import { ACCEPTED, MAX_MB, imageFromClipboard, rejectReason, useUpload } from '../lib/upload'
+import { FileName } from './ui'
 
 // Touch screens have no drag and drop, so the zone words itself as a picker there.
 const TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
@@ -11,11 +12,11 @@ const TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coar
 const typeOf = (file: File) => (file.type.split('/')[1] ?? 'image').replace('jpeg', 'jpg').toUpperCase()
 
 /**
- * The way in: a dashed drop zone holding the file (or a small upload icon until there is one), one
- * clear button under it, and Paste beside it. Choose, drop or paste an image. On the workspace the
+ * The way in, after the upload card reference: a dashed drop zone with a glowing blue orb and a line
+ * on what makes a good upload; once there is a file, a white row with its preview, size and time
+ * left over a blue bar; then two equal buttons. Choose, drop or paste an image. On the workspace the
  * file waits for "Analyze image"; with `autoStart` (the upload page) it goes as soon as it is chosen.
- * While uploading, the zone shows the time left with a progress bar and a cancel button. Pass
- * `upload` to share the upload with the page (a shared image from the phone's share menu).
+ * Pass `upload` to share the upload with the page (a shared image from the phone's share menu).
  */
 export function UploadPanel({
   upload,
@@ -39,12 +40,12 @@ export function UploadPanel({
 
   const take = useCallback(
     (next: File) => {
+      setUnreadable(false)
       if (autoStart) return start(next)
       const reason = rejectReason(next)
       if (reason) return fail(reason)
       clear()
       setPicked(next)
-      setUnreadable(false)
       setPreview((old) => {
         if (old) URL.revokeObjectURL(old)
         return URL.createObjectURL(next)
@@ -81,7 +82,17 @@ export function UploadPanel({
     }
   }
 
-  const title = busy ? 'Uploading' : file ? file.name || 'Pasted image' : TOUCH ? 'Choose a photo' : dragging ? 'Release to add it' : 'Drop an image here'
+  const title = busy
+    ? 'Uploading your image'
+    : dragging
+      ? 'Release to add it'
+      : picked
+        ? TOUCH
+          ? 'Choose another to replace it'
+          : 'Drop another to replace it'
+        : TOUCH
+          ? 'Choose a photo to check'
+          : 'Drop your image here'
   const detail =
     state.kind === 'uploading'
       ? `${typeOf(state.file)} · ${formatBytes(state.file.size)} · ${
@@ -89,12 +100,13 @@ export function UploadPanel({
         }`
       : file
         ? `${typeOf(file)} · ${formatBytes(file.size)} · ready to analyze`
-        : `JPEG, PNG, WebP, TIFF or HEIC, up to ${MAX_MB} MB`
+        : ''
 
   return (
-    <section aria-label="Upload an image" className={`panel min-w-0 rounded-xl p-3 ${className}`}>
+    <section aria-label="Upload an image" className={`panel flex min-w-0 flex-col rounded-[32px] p-2.5 sm:p-3 ${className}`}>
+      {/* The drop zone: what to do, the orb, and what makes a good upload. The whole zone picks a file. */}
       <div
-        onClick={() => !file && choose()}
+        onClick={choose}
         onDragOver={(e) => {
           e.preventDefault()
           setDragging(true)
@@ -106,71 +118,99 @@ export function UploadPanel({
           const dropped = e.dataTransfer.files[0]
           if (dropped && !busy) take(dropped)
         }}
-        className={`flex items-center gap-3 rounded-lg border-[1.5px] border-dashed p-3 transition ${
-          dragging ? 'border-ink bg-hover' : 'border-line-strong'
-        } ${file ? '' : 'cursor-pointer hover:bg-hover'}`}
+        className={`zone flex flex-1 flex-col items-center justify-center rounded-[24px] px-5 pt-6 pb-6 text-center transition ${
+          busy ? '' : 'cursor-pointer hover:bg-[var(--panel-hover)]'
+        } ${dragging ? '!border-primary bg-accent-soft' : ''}`}
       >
-        <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[10px] bg-raised text-muted">
-          {file && shownPreview && !unreadable ? (
-            <img src={shownPreview} alt="" onError={() => setUnreadable(true)} className="size-full object-cover" />
-          ) : file ? (
-            <FileImage className="size-5" strokeWidth={1.5} />
-          ) : (
-            <Upload className="size-5" strokeWidth={1.5} />
-          )}
+        <p className="text-[17px] font-semibold tracking-[-0.01em]" aria-live="polite">
+          {title}
+        </p>
+        <span className={`orb mt-5 size-[112px] transition-transform duration-300 sm:size-[124px] ${dragging ? 'orb-live scale-105' : busy ? 'orb-live' : ''}`} aria-hidden>
+          {busy ? <LoaderCircle className="size-8 animate-spin" strokeWidth={1.6} /> : <Upload className="size-9" strokeWidth={1.6} />}
         </span>
-        <div className="min-w-0 flex-1" aria-live="polite">
-          <p className="truncate text-[15px] font-medium">{title}</p>
-          <p className="truncate text-[13px] text-faint tabular-nums">{detail}</p>
-        </div>
-        {busy ? (
-          <button type="button" onClick={cancel} className="well size-9" aria-label="Cancel upload">
-            <X className="size-4" />
-          </button>
-        ) : (
-          picked && (
-            <button type="button" onClick={drop} className="well size-9" aria-label="Remove the image">
-              <X className="size-4" />
-            </button>
-          )
-        )}
+        <p className="mt-6 max-w-[38ch] text-[14px] leading-relaxed text-faint">
+          For the clearest verdict, upload the original file rather than a screenshot. JPEG, PNG, WebP, TIFF or HEIC, up
+          to {MAX_MB} MB.
+        </p>
       </div>
 
-      {state.kind === 'uploading' && (
-        <div
-          className="mt-2.5 h-1 overflow-hidden rounded-full bg-line"
-          role="progressbar"
-          aria-label="Upload progress"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(state.progress * 100)}
-        >
-          <div className="h-full rounded-full bg-ink transition-[width] duration-300" style={{ width: `${Math.max(3, state.progress * 100)}%` }} />
+      {file && (
+        <div className="raise animate-rise mt-2.5 rounded-[22px] p-2.5 pr-3">
+          <div className="flex items-center gap-3">
+            <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-[16px] bg-accent-soft text-primary shadow-[inset_0_0_0_1px_rgb(255_255_255/0.7)]">
+              {shownPreview && !unreadable ? (
+                <img src={shownPreview} alt="" onError={() => setUnreadable(true)} className="size-full object-cover" />
+              ) : (
+                <FileImage className="size-6" strokeWidth={1.6} />
+              )}
+            </span>
+            <div className="min-w-0 flex-1" aria-live="polite">
+              <FileName name={file.name || 'Pasted image'} className="text-[15px] font-semibold" />
+              <p className="mt-0.5 truncate text-[13.5px] text-faint tabular-nums">{detail}</p>
+            </div>
+            <button
+              type="button"
+              onClick={busy ? cancel : drop}
+              className="icon-btn size-10"
+              aria-label={busy ? 'Cancel upload' : 'Remove the image'}
+            >
+              <X className="size-4" strokeWidth={1.8} />
+            </button>
+          </div>
+          {state.kind === 'uploading' && (
+            <div
+              className="bar-track mx-0.5 mt-3 mb-1 h-1.5 overflow-hidden rounded-full"
+              role="progressbar"
+              aria-label="Upload progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(state.progress * 100)}
+            >
+              <div className="bar-fill h-full rounded-full transition-[width] duration-300" style={{ width: `${Math.max(3, state.progress * 100)}%` }} />
+            </div>
+          )}
         </div>
       )}
+
       {state.kind === 'error' && (
-        <p role="alert" className="mt-2.5 text-[14px] font-medium text-ai">
+        <p role="alert" className="mt-3 px-2 text-[14px] font-medium text-ai">
           {state.message}
         </p>
       )}
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+        {busy ? (
+          <button type="button" onClick={cancel} className="btn-ghost h-12">
+            Cancel
+          </button>
+        ) : picked ? (
+          <button type="button" onClick={drop} className="btn-ghost h-12">
+            Cancel
+          </button>
+        ) : (
+          <button type="button" onClick={paste} className="btn-ghost h-12">
+            <ClipboardPaste className="size-4" strokeWidth={1.6} /> Paste
+          </button>
+        )}
         {picked && !busy ? (
-          <button type="button" onClick={() => start(picked)} className="btn-primary h-11 flex-1">
+          <button type="button" onClick={() => start(picked)} className="btn-primary h-12">
             Analyze image
           </button>
         ) : (
-          <button type="button" onClick={choose} disabled={busy} className="btn-primary h-11 flex-1">
-            <Upload className="size-4" strokeWidth={2} /> Choose image
+          <button type="button" onClick={choose} disabled={busy} className="btn-primary h-12">
+            {busy ? (
+              'Uploading…'
+            ) : (
+              <>
+                <Upload className="size-4" strokeWidth={2} /> Choose image
+              </>
+            )}
           </button>
         )}
-        <button type="button" onClick={paste} disabled={busy} className="btn-ghost h-11 px-4">
-          <ClipboardPaste className="size-4" strokeWidth={1.5} /> Paste
-        </button>
       </div>
-      <p className="mt-2.5 px-0.5 text-[13px] text-faint">
+      <p className="mt-3 mb-1 px-2 text-[13px] text-faint">
         {busy ? 'If the server was asleep, the first upload can take up to a minute. ' : 'The file is deleted after the analysis. '}
-        <Link to={DEMO_REPORT_PATH} className="text-ink underline decoration-line-strong underline-offset-4">
+        <Link to={DEMO_REPORT_PATH} className="font-medium text-accent hover:underline">
           See an example report
         </Link>
       </p>

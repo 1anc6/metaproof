@@ -1,98 +1,64 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import { ImageOff, Monitor, Moon, Sun, type LucideIcon } from 'lucide-react'
 import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
 import { setPref, usePrefs } from '../lib/prefs'
 import { PENDING, SIGNALS, VERDICTS } from '../lib/verdicts'
 
-/** A viewfinder: four corner brackets around a lemon point of focus. */
+/** A viewfinder: four corner brackets around a blue point of focus. */
 export function Mark({ className = 'size-6' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
       <path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="12" r="3.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="3.4" fill="var(--color-primary)" />
     </svg>
   )
 }
 
-/** The mark on a glossy dark disc with a bright rim beside the name, like the reference's badge. */
+/** The mark beside the name, like the reference's small logo over the sidebar. */
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <span className="flex items-center gap-3 text-ink">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
-        <Mark className="size-5" />
-      </span>
-      {!compact && <span className="text-[16px] tracking-[-0.01em]">MetaProof</span>}
+    <span className="flex items-center gap-2.5 text-ink">
+      <Mark className="size-[26px] shrink-0" />
+      {!compact && (
+        <span translate="no" className="text-[17px] font-semibold tracking-[-0.015em]">
+          MetaProof
+        </span>
+      )}
     </span>
   )
 }
 
-/**
- * A slider-style meter: a fill up to a marker over a dotted scale with labels. Kept for the
- * detector's band scale in the report details.
- */
-export function Meter({
-  value,
-  className = '',
-  color,
-  labels = ['0.0', '0.25', '0.5', '0.75', '1.0'],
-  ticks = [],
-}: {
-  value: number
-  className?: string
-  onDark?: boolean
-  color?: string
-  labels?: string[]
-  ticks?: number[]
-}) {
-  const pct = Math.max(0, Math.min(1, value)) * 100
-  return (
-    <div className={className}>
-      <div className="relative h-5">
-        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-line-strong" />
-        <div
-          className="animate-grow absolute top-1/2 left-0 h-[3px] origin-left -translate-y-1/2 rounded-full"
-          style={{ width: `${pct}%`, background: color ?? 'var(--color-ink)' }}
-        />
-        {ticks.map((t) => (
-          <span key={t} className="absolute top-1/2 h-2.5 w-px -translate-y-1/2 bg-faint/60" style={{ left: `${t * 100}%` }} />
-        ))}
-        <span
-          className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink bg-accent"
-          style={{ left: `${pct}%` }}
-          aria-hidden
-        />
-      </div>
-      <div className="mt-2 flex justify-between text-[12px] text-faint tabular-nums">
-        {labels.map((l) => (
-          <span key={l}>{l}</span>
-        ))}
-      </div>
-    </div>
-  )
+/** The verdict's dot, in its bright colour. */
+export function VerdictDot({ label, className = 'size-2' }: { label: VerdictLabel; className?: string }) {
+  return <span className={`shrink-0 rounded-full ${className}`} style={{ background: VERDICTS[label].dot }} aria-hidden />
 }
 
-/** "• Active": a status dot and a word, as the reference marks state. */
-export function VerdictBadge({ label, status = 'done' }: { label: VerdictLabel | null; status?: JobStatus }) {
+/**
+ * "• Off Track": a dot and a word, as the reference marks state. `pill` sets it on a small white pill,
+ * for tables.
+ */
+export function VerdictBadge({ label, status = 'done', pill = false }: { label: VerdictLabel | null; status?: JobStatus; pill?: boolean }) {
+  const shell = pill ? 'chip' : 'inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium whitespace-nowrap'
   if (status !== 'done' || !label) {
     const p = PENDING[status === 'done' ? 'queued' : status]
     return (
-      <span className={`inline-flex shrink-0 items-center gap-1.5 text-[13px] whitespace-nowrap ${p.text}`}>
-        <span className={`size-2 rounded-full bg-current ${status === 'running' || status === 'queued' ? 'animate-pulse' : ''}`} />
+      <span className={`${shell} ${p.text}`}>
+        <span className={`size-1.5 rounded-full bg-current ${status === 'running' || status === 'queued' ? 'animate-pulse' : ''}`} />
         {p.title}
       </span>
     )
   }
   const v = VERDICTS[label]
   return (
-    <span className={`inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium whitespace-nowrap ${v.text}`}>
-      <span className="size-2 rounded-full bg-current" />
+    <span className={`${shell} text-ink`}>
+      <VerdictDot label={label} className="size-1.5" />
       {v.short}
     </span>
   )
 }
 
 export function SignalDot({ signal }: { signal: Signal }) {
-  return <span className="mt-[7px] size-2 shrink-0 rounded-full" style={{ background: SIGNALS[signal].color }} aria-hidden />
+  return <span className="mt-[7px] size-2 shrink-0 rounded-full" style={{ background: SIGNALS[signal].dot }} aria-hidden />
 }
 
 /**
@@ -104,21 +70,20 @@ export function FileName({ name, className = '' }: { name: string; className?: s
   const tail = chars.length > 16 ? chars.slice(-10).join('') : ''
   const head = tail ? chars.slice(0, -10).join('') : name
   return (
-    <p className={`flex min-w-0 ${className}`} title={name}>
+    <span className={`flex min-w-0 ${className}`} title={name}>
       <span className="truncate">{head}</span>
       {tail && <span className="shrink-0 whitespace-pre">{tail}</span>}
-    </p>
+    </span>
   )
 }
 
-/** "Signal ········ Strong": a label, a dotted leader and the value. Use inside a <dl>. */
-export function LeaderRow({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; value: ReactNode }) {
+/** "Fingerprint      SHA-256": a label and its value on one line. Use inside a <dl>. */
+export function KeyRow({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; value: ReactNode }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 text-[15px]">
+    <div className="flex items-center gap-3 py-2.5 text-[14px]">
       {Icon && <Icon className="size-[18px] shrink-0 text-faint" strokeWidth={1.5} aria-hidden />}
-      <dt className="shrink-0 text-muted">{label}</dt>
-      <span className="leader" aria-hidden />
-      <dd className="min-w-0 truncate text-right text-ink">{value}</dd>
+      <dt className="min-w-0 flex-1 text-muted">{label}</dt>
+      <dd className="shrink-0 text-right font-medium text-ink">{value}</dd>
     </div>
   )
 }
@@ -148,84 +113,128 @@ export function CountUp({ to, decimals = 0, ms = 900 }: { to: number; decimals?:
   return <>{(still ? to : shown).toFixed(decimals)}</>
 }
 
-/** A figure's value, counting up when it is a plain number like 99 or 2.0. */
-function animated(value: ReactNode) {
-  if (typeof value === 'number') return <CountUp to={value} decimals={Number.isInteger(value) ? 0 : 1} />
-  if (typeof value === 'string' && /^\d+(\.\d+)?$/.test(value)) {
-    return <CountUp to={Number(value)} decimals={value.split('.')[1]?.length ?? 0} />
-  }
-  return value
-}
-
-/** "Accuracy / 98 %": a label over a large light figure and its unit. */
-export function Figure({
-  label,
-  value,
-  unit,
-  size = 'md',
-  className = '',
-}: {
-  label: string
-  value: ReactNode
-  unit?: string
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
-}) {
-  const text = size === 'lg' ? 'text-[64px] sm:text-[76px]' : size === 'sm' ? 'text-[34px]' : 'text-[48px] sm:text-[56px]'
+/** "Steps done / 4 of 7": a label over a large light figure and its unit. */
+export function Figure({ label, value, unit, className = '' }: { label: string; value: ReactNode; unit?: string; className?: string }) {
   return (
     <div className={`min-w-0 ${className}`}>
-      <p className="text-[15px] text-muted">{label}</p>
+      <p className="label">{label}</p>
       <p className="mt-1 flex items-baseline gap-1">
-        <span className={`num leading-none ${text}`}>{animated(value)}</span>
-        {unit && <span className="text-[14px] text-faint">{unit}</span>}
+        <span className="num text-[30px] leading-none">{value}</span>
+        {unit && <span className="text-[13px] text-faint">{unit}</span>}
       </p>
     </div>
   )
 }
 
 /**
- * The reference's range ruler: fine ticks, taller marks with labels, shaded bands, and a lemon
- * marker at the value. Positions run from 0 to 100.
+ * The reference's half-ring gauge ("57% / 100%"): a thick grey arc, the value drawn over it in one
+ * colour or a two-stop blend, and the figure in light type under its centre. `value` runs 0 to 1.
  */
-export function RangeRuler({
+export function Gauge({
   value,
-  marks,
-  bands = [],
+  figure,
+  unit,
+  caption,
+  colors = ['#f5a524', '#f7c948'],
+  ticks = [],
   className = '',
+  label,
 }: {
   value: number
-  marks: { at: number; label: string }[]
-  bands?: { from: number; to: number; label?: string }[]
+  figure: ReactNode
+  unit?: string
+  caption?: ReactNode
+  /** one colour, or the arc's start and end */
+  colors?: [string, string] | [string]
+  /** marks across the arc, 0 to 1: where a band starts */
+  ticks?: number[]
   className?: string
+  /** what the gauge measures, for screen readers */
+  label: string
 }) {
-  const v = Math.max(0, Math.min(100, value))
+  const id = useId()
+  const v = Math.max(0, Math.min(1, value))
+  const [from, to = from] = colors
   return (
-    <div className={className} aria-hidden>
-      <div className="relative h-10">
-        {bands.map((b) => (
-          <span
-            key={`${b.from}-${b.to}`}
-            className="absolute bottom-0 h-6 rounded-sm bg-accent-soft"
-            style={{ left: `${b.from}%`, width: `${b.to - b.from}%` }}
+    <div className={`relative ${className}`} role="img" aria-label={label}>
+      <svg viewBox="0 0 200 108" className="w-full overflow-visible" aria-hidden>
+        <defs>
+          <linearGradient id={`${id}-arc`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor={from} />
+            <stop offset="1" stopColor={to} />
+          </linearGradient>
+        </defs>
+        <path d="M16 100 A84 84 0 0 1 184 100" fill="none" stroke="var(--track-bg)" strokeWidth="13" strokeLinecap="round" />
+        {v > 0 && (
+          <path
+            d="M16 100 A84 84 0 0 1 184 100"
+            pathLength={1}
+            fill="none"
+            stroke={`url(#${id}-arc)`}
+            strokeWidth="13"
+            strokeLinecap="round"
+            strokeDasharray={`${v} 1`}
+            className="animate-draw"
+            style={{ strokeDashoffset: 0 }}
           />
-        ))}
-        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between">
-          {Array.from({ length: 51 }, (_, i) => (
-            <span key={i} className={`w-px ${i % 10 === 0 ? 'h-5 bg-ink/60' : 'h-2.5 bg-ink/25'}`} />
-          ))}
-        </div>
-        <span
-          className="animate-slide-to absolute bottom-0 h-9 w-[3px] -translate-x-1/2 rounded-full bg-ink"
-          style={{ left: `${v}%`, '--to': `${v}%` } as CSSProperties}
-        >
-          <span className="absolute -top-1.5 left-1/2 size-3 -translate-x-1/2 rounded-full border-2 border-ink bg-accent" />
-        </span>
+        )}
+        {ticks.map((t) => {
+          const a = Math.PI * (1 - Math.max(0, Math.min(1, t)))
+          const at = (r: number) => [100 + r * Math.cos(a), 100 - r * Math.sin(a)]
+          const [x1, y1] = at(72)
+          const [x2, y2] = at(96)
+          return <line key={t} x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--color-ink)" strokeOpacity="0.55" strokeWidth="2" strokeLinecap="round" />
+        })}
+      </svg>
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center text-center">
+        {caption && <p className="label mb-1">{caption}</p>}
+        <p className="flex items-baseline gap-0.5">
+          <span className="num text-[40px] leading-[0.9]">{figure}</span>
+          {unit && <span className="text-[14px] text-faint">{unit}</span>}
+        </p>
       </div>
-      <div className="relative mt-2 h-4 text-[12px] text-faint tabular-nums">
-        {marks.map((m) => (
-          <span key={m.at} className="absolute -translate-x-1/2" style={{ left: `${m.at}%` }}>
-            {m.label}
-          </span>
+    </div>
+  )
+}
+
+/**
+ * A track with a fill up to a marker, over labels. Kept for the detector's bands in the report
+ * details, with ticks where the evidence engine cuts.
+ */
+export function Meter({
+  value,
+  className = '',
+  color,
+  labels = ['0.0', '0.25', '0.5', '0.75', '1.0'],
+  ticks = [],
+}: {
+  value: number
+  className?: string
+  color?: string
+  labels?: string[]
+  ticks?: number[]
+}) {
+  const pct = Math.max(0, Math.min(1, value)) * 100
+  return (
+    <div className={className}>
+      <div className="relative h-4">
+        <div className="bar-track absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full" />
+        <div
+          className="animate-grow absolute top-1/2 left-0 h-1.5 origin-left -translate-y-1/2 rounded-full"
+          style={{ width: `${pct}%`, background: color ?? 'var(--color-primary)' }}
+        />
+        {ticks.map((t) => (
+          <span key={t} className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-line-strong" style={{ left: `${t * 100}%` }} />
+        ))}
+        <span
+          className="raise absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ left: `${pct}%`, boxShadow: `0 0 0 4px color-mix(in srgb, ${color ?? 'var(--color-primary)'} 22%, transparent), var(--raise-shadow)` }}
+          aria-hidden
+        />
+      </div>
+      <div className="mt-2 flex justify-between text-[12px] text-faint tabular-nums">
+        {labels.map((l) => (
+          <span key={l}>{l}</span>
         ))}
       </div>
     </div>
@@ -239,7 +248,7 @@ export function Thumb({ sha, className = '', blur = false, eager = false }: { sh
     <div className={`relative overflow-hidden bg-raised ${className}`}>
       {failed ? (
         <div className="grid size-full place-items-center text-faint">
-          <ImageOff className="size-4" />
+          <ImageOff className="size-4" strokeWidth={1.5} />
         </div>
       ) : (
         <img
@@ -254,39 +263,28 @@ export function Thumb({ sha, className = '', blur = false, eager = false }: { sh
   )
 }
 
-/** A screen's title, named like its nav item, with one line of context. */
-export function PageHeader({
-  title,
-  dim,
-  subtitle,
-  action,
-}: {
-  title: string
-  dim?: string
-  subtitle?: string
-  action?: ReactNode
-}) {
+/** A screen's title, large and light, named like its nav item, with one line of context. */
+export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: ReactNode; action?: ReactNode }) {
   return (
-    <header className="animate-rise mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="display text-[38px] leading-none sm:text-[48px]">
-          {title}
-          {dim && <span className="text-faint italic"> {dim}</span>}
-        </h1>
-        {subtitle && <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">{subtitle}</p>}
+    <header className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="display text-[26px] leading-[1.1] sm:text-[34px]">{title}</h1>
+        {subtitle && <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted">{subtitle}</p>}
       </div>
-      {/* On phones the bottom bar's centre button covers the action, so it would only repeat it. */}
-      {action && <div className="no-print shrink-0 max-sm:hidden">{action}</div>}
+      {/* On phones the bar's centre button already starts an analysis, so it would only repeat it. */}
+      {action && <div className="no-print flex shrink-0 gap-2 max-sm:hidden">{action}</div>}
     </header>
   )
 }
 
-/** A card's title in the reference's voice: plain capitals, with an optional status and action. */
-export function PanelTitle({ title, status, action }: { eyebrow?: string; title: ReactNode; status?: ReactNode; action?: ReactNode }) {
+/** A card's header: its title, an optional status beside it, and an action on the right. */
+export function PanelTitle({ title, status, action, id }: { title: ReactNode; status?: ReactNode; action?: ReactNode; id?: string }) {
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex min-h-7 items-center justify-between gap-4">
       <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 className="eyebrow">{title}</h2>
+        <h2 id={id} className="card-title">
+          {title}
+        </h2>
         {status}
       </div>
       {action}
@@ -306,10 +304,10 @@ export function ErrorPanel({
   children?: ReactNode
 }) {
   return (
-    <div className="cream rounded-xl p-8 text-center sm:p-10">
-      <p className="eyebrow text-faint">{label}</p>
-      <h1 className="display mt-3 text-[42px] leading-none">{title}</h1>
-      <p className="mx-auto mt-3 max-w-md text-[15px] text-muted">{message}</p>
+    <div className="panel mx-auto max-w-xl rounded-3xl px-6 py-10 text-center sm:px-10">
+      <p className="num text-[44px] leading-none text-faint">{label}</p>
+      <h1 className="display mt-4 text-[30px] leading-tight">{title}</h1>
+      <p className="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-muted">{message}</p>
       {children && <div className="mt-6 flex justify-center gap-3">{children}</div>}
     </div>
   )
@@ -323,36 +321,6 @@ export function GithubMark({ className = '' }: { className?: string }) {
   )
 }
 
-/** Pill switch: a soft track with a white knob that slides right and turns the track lemon. */
-export function Toggle({
-  checked,
-  onChange,
-  label,
-  className = '',
-}: {
-  checked: boolean
-  onChange: (next: boolean) => void
-  label: string
-  className?: string
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={`track relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? '!bg-primary' : ''} ${className}`}
-    >
-      <span
-        className={`absolute top-[3px] left-[3px] size-[22px] rounded-full bg-[linear-gradient(180deg,#ffffff,#d6d6d6)] shadow-[0_2px_6px_rgb(0_0_0/0.35)] transition-transform duration-300 ease-[var(--ease-out)] ${
-          checked ? 'translate-x-5' : ''
-        }`}
-      />
-    </button>
-  )
-}
-
 const THEMES = [
   { value: 'light', label: 'Light', icon: Sun },
   { value: 'dark', label: 'Dark', icon: Moon },
@@ -360,25 +328,13 @@ const THEMES = [
 ] as const
 
 /**
- * Light / dark / system, as a row of round segments. `labels` shows the words beside the icons;
- * `stretch` fills the container with three equal segments.
+ * Light / dark / system as a segmented track with a white chosen segment. `labels` shows the words
+ * beside the icons; `stretch` fills the container with three equal segments.
  */
-export function ThemeSwitch({
-  labels = false,
-  stretch = false,
-  className = '',
-}: {
-  labels?: boolean
-  stretch?: boolean
-  className?: string
-}) {
+export function ThemeSwitch({ labels = false, stretch = false, className = '' }: { labels?: boolean; stretch?: boolean; className?: string }) {
   const { theme } = usePrefs()
   return (
-    <div
-      className={`track gap-0.5 rounded-full p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`}
-      role="radiogroup"
-      aria-label="Colour theme"
-    >
+    <div className={`track gap-0.5 rounded-full p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`} role="radiogroup" aria-label="Colour theme">
       {THEMES.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
@@ -388,11 +344,11 @@ export function ThemeSwitch({
           aria-label={labels ? undefined : label}
           title={label}
           onClick={() => setPref('theme', value)}
-          className={`flex h-9 items-center justify-center gap-1.5 rounded-full text-[13px] transition ${
+          className={`flex h-9 items-center justify-center gap-1.5 rounded-full text-[13.5px] transition ${
             stretch ? 'flex-1' : labels ? 'px-4' : 'w-9'
-          } ${theme === value ? 'selected' : 'text-faint hover:text-ink'}`}
+          } ${theme === value ? 'selected font-medium' : 'text-faint hover:text-ink'}`}
         >
-          <Icon className="size-4" strokeWidth={1.5} />
+          <Icon className="size-4" strokeWidth={1.6} />
           {labels && label}
         </button>
       ))}
@@ -400,18 +356,18 @@ export function ThemeSwitch({
   )
 }
 
-/** One tap between light and dark, for the phone top bar. */
-export function ThemeToggle({ resolved }: { resolved: 'light' | 'dark' }) {
+/** One tap between light and dark. */
+export function ThemeToggle({ resolved, className = 'size-10' }: { resolved: 'light' | 'dark'; className?: string }) {
   const next = resolved === 'dark' ? 'light' : 'dark'
   const Icon = resolved === 'dark' ? Sun : Moon
   return (
-    <button type="button" onClick={() => setPref('theme', next)} className="well-glass size-10 lg:size-11" aria-label={`Switch to ${next} theme`}>
-      <Icon className="size-[18px]" strokeWidth={1.5} />
+    <button type="button" onClick={() => setPref('theme', next)} className={`icon-btn ${className}`} aria-label={`Switch to ${next} theme`}>
+      <Icon className="size-[17px]" strokeWidth={1.6} />
     </button>
   )
 }
 
-/** A pill tab, like the reference's "Cholesterol / Metabolic" row: dark when on, raised when off. */
+/** A switch shaped as a pill: white when off, pale blue with a blue word when on. */
 export function Chip({
   icon: Icon,
   label,
@@ -429,11 +385,11 @@ export function Chip({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] transition ${
-        checked ? 'selected' : 'well text-muted hover:text-ink'
+      className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition ${
+        checked ? 'bg-accent-soft text-accent shadow-[inset_0_0_0_1px_var(--color-highlight)]' : 'chip !h-8 !px-3 text-muted hover:text-ink'
       }`}
     >
-      {Icon && <Icon className="size-4" strokeWidth={1.5} />}
+      {Icon && <Icon className="size-[15px]" strokeWidth={1.7} />}
       {label}
     </button>
   )

@@ -51,14 +51,14 @@ export function ErrorLevel({ job }: { job: Job }) {
   }
 
   return (
-    <section className="panel animate-rise no-print rounded-xl p-4 sm:p-5">
+    <section className="panel no-print rounded-[28px] p-5 sm:p-6">
       <div className="flex items-start gap-3">
-        <ScanEye className="mt-0.5 size-5 shrink-0" strokeWidth={1.5} />
+        <ScanEye className="mt-0.5 size-[18px] shrink-0 text-faint" strokeWidth={1.6} />
         <div>
-          <h2 className="text-[17px] font-semibold tracking-[-0.02em]">Error level view</h2>
+          <h2 className="card-title">Error level view</h2>
           <p className="mt-1 text-[13px] text-faint">A way to look closer. It does not affect the verdict.</p>
           <details className="group mt-1.5 text-[13px] text-faint">
-            <summary className="cursor-pointer list-none text-muted underline decoration-line-strong underline-offset-4 hover:text-ink">
+            <summary className="cursor-pointer list-none font-medium text-accent hover:underline">
               How to read it
             </summary>
             <p className="mt-2 max-w-2xl leading-relaxed">
@@ -74,14 +74,14 @@ export function ErrorLevel({ job }: { job: Job }) {
       {state.kind === 'ready' ? (
         <div className="mt-4">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="panel inline-flex rounded-md p-0.5" role="group" aria-label="Image shown">
+            <div className="track inline-flex gap-0.5 rounded-full p-1" role="group" aria-label="Image shown">
               {(['ela', 'original'] as const).map((v) => (
                 <button
                   key={v}
                   type="button"
                   aria-pressed={view === v}
                   onClick={() => setView(v)}
-                  className={`rounded px-3 py-1.5 text-[13px] transition ${view === v ? 'selected font-medium' : 'text-muted hover:text-ink'}`}
+                  className={`h-8 rounded-full px-3.5 text-[13px] transition ${view === v ? 'selected font-medium' : 'text-muted hover:text-ink'}`}
                 >
                   {v === 'ela' ? 'Error levels' : 'Original'}
                 </button>
@@ -98,7 +98,7 @@ export function ErrorLevel({ job }: { job: Job }) {
                 onChange={(e) => setAmplify(Number(e.target.value))}
                 className="w-28 accent-primary"
               />
-              <span className="w-8 font-mono tabular-nums text-faint">{amplify}×</span>
+              <span className="w-8 text-faint tabular-nums">{amplify}×</span>
             </label>
           </div>
           <img
@@ -107,7 +107,7 @@ export function ErrorLevel({ job }: { job: Job }) {
             width={job.media.width}
             height={job.media.height}
             style={view === 'ela' ? { filter: `brightness(${amplify})` } : undefined}
-            className="mt-4 h-auto max-h-[70vh] w-full rounded-lg bg-black object-contain ring-1 ring-line"
+            className="mt-4 h-auto max-h-[70vh] w-full rounded-[18px] bg-black object-contain"
           />
           {state.scaled && (
             <p className="mt-2 text-[12px] text-faint">Scaled down to {MAX_SIDE} px on the long side for the browser.</p>
@@ -118,13 +118,13 @@ export function ErrorLevel({ job }: { job: Job }) {
           {state.kind === 'working' ? (
             <ThinkingPill label="Computing error levels…" />
           ) : preview ? (
-            <button type="button" onClick={takePreview} className="btn-ghost">
-              <ScanEye className="size-4" /> Show error levels
+            <button type="button" onClick={takePreview} className="btn-ghost btn-sm">
+              <ScanEye className="size-4" strokeWidth={1.7} /> Show error levels
             </button>
           ) : (
             <>
-              <button type="button" onClick={() => input.current?.click()} className="btn-ghost">
-                <FileSearch className="size-4" /> Choose the file on this device
+              <button type="button" onClick={() => input.current?.click()} className="btn-ghost btn-sm">
+                <FileSearch className="size-4" strokeWidth={1.7} /> Choose the file on this device
               </button>
               <span className="text-[13px] text-faint">It stays on your device; nothing is uploaded.</span>
             </>

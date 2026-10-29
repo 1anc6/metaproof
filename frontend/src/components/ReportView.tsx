@@ -1,11 +1,11 @@
-import { ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
 import { formatBytes, formatType, formatWhen, shortHash } from '../lib/format'
-import { leaning, SIGNALS, STRENGTH_LABEL, toneOf, VERDICTS } from '../lib/verdicts'
-import { FileName, Meter, PanelTitle, RangeRuler, SignalDot, Thumb, VerdictBadge } from './ui'
+import { leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
+import { FileName, Gauge, Meter, PanelTitle, SignalDot, Thumb, VerdictBadge } from './ui'
 import { VerdictGlyph, VerdictSpectrum } from './Verdict'
 import { ErrorLevel } from './ErrorLevel'
 
@@ -24,11 +24,24 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   const evidence = job.analyzers.reduce((n, a) => n + a.findings.filter((f) => f.signal !== 'neutral').length, 0)
 
   return (
-    <div className="stagger flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
+      <nav aria-label="Breadcrumb" className="no-print -mt-1 flex min-w-0 items-center gap-3 lg:-mt-3">
+        <Link to="/history" className="icon-btn size-9" aria-label="Back to history">
+          <ArrowLeft className="size-4" strokeWidth={1.8} />
+        </Link>
+        <p className="flex min-w-0 items-center gap-1.5 text-[14px] text-faint">
+          <Link to="/history" className="shrink-0 hover:text-ink">
+            History
+          </Link>
+          <span aria-hidden>/</span>
+          {filename ? <FileName name={filename} className="font-medium text-ink" /> : <span className="font-medium text-ink">Report</span>}
+        </p>
+      </nav>
+
       {/* The image beside its verdict: one outcome, its place on the scale, one sentence, three facts. */}
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start">
-        <figure className="panel animate-rise rounded-xl p-2">
-          <div className="relative h-[clamp(160px,44vw,340px)] overflow-hidden rounded-lg bg-[#161614]">
+      <section className="grid gap-4 lg:grid-cols-12">
+        <figure className="panel flex flex-col rounded-[28px] p-2.5 lg:col-span-5">
+          <div className="relative min-h-[clamp(190px,50vw,340px)] flex-1 overflow-hidden rounded-[20px] bg-[var(--frame-bg)]">
             <Thumb sha={sha} className="!absolute inset-0 scale-125 !bg-transparent opacity-50 blur-2xl" />
             <img
               src={api.thumbnailUrl(sha)}
@@ -36,8 +49,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
               className="absolute inset-0 size-full object-contain"
             />
           </div>
-          <figcaption className="flex flex-wrap gap-x-2 gap-y-0.5 px-2 pt-2.5 pb-1 text-[12px] text-faint">
-            {filename && <FileName name={filename} className="max-w-full font-medium text-ink" />}
+          <figcaption className="flex flex-wrap gap-x-2 gap-y-0.5 px-2.5 pt-3 pb-1.5 text-[12.5px] text-faint">
             <span>{formatType(job.media.mime_type)}</span>
             <span aria-hidden>·</span>
             <span>
@@ -46,18 +58,18 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <span aria-hidden>·</span>
             <span>{formatBytes(job.media.size_bytes)}</span>
             <span aria-hidden>·</span>
-            <span>{job.finished_at ? `Analyzed ${formatWhen(job.finished_at).toLowerCase()}` : 'Not finished'}</span>
+            <span>{job.finished_at ? `Analyzed ${analyzedWhen(job.finished_at)}` : 'Not finished'}</span>
             <span aria-hidden>·</span>
             <span>SHA {shortHash(sha).slice(0, 8)}</span>
           </figcaption>
         </figure>
 
-        <section className={`cream ${toneOf(verdict.label)} animate-rise rounded-xl p-4 sm:p-5`} aria-labelledby="verdict-title">
-          <div className="flex items-center gap-3">
-            <VerdictGlyph label={verdict.label} className="size-11" />
+        <section className="panel rounded-[28px] p-5 sm:p-6 lg:col-span-7" aria-labelledby="verdict-title">
+          <div className="flex items-center gap-3.5">
+            <VerdictGlyph label={verdict.label} className="size-10 sm:size-12" />
             <div className="min-w-0">
-              <p className="eyebrow">Verdict</p>
-              <h1 id="verdict-title" className="print-dark display text-[34px] leading-[1.05] sm:text-[40px]" style={{ color: v.color }}>
+              <p className="label">Verdict</p>
+              <h1 id="verdict-title" className="print-dark text-[26px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[34px]" style={{ color: v.color }}>
                 {/* Keep "AI-generated" whole; a break at the hyphen reads as a typo. */}
                 {v.title.split(' ').map((word, i) => (
                   <Fragment key={i}>
@@ -68,18 +80,24 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
               </h1>
             </div>
           </div>
-          {lean && <p className="mt-2 text-[15px] text-ink">Leaning {lean.label}</p>}
+          {lean && (
+            <p className="mt-3 flex items-center gap-2 text-[15px] font-medium text-ink">
+              <span className="size-2 rounded-full" style={{ background: lean.color }} aria-hidden />
+              Leaning {lean.label}
+            </p>
+          )}
 
-          <VerdictSpectrum label={verdict.label} lean={lean} className="mt-4" />
-          <p className="mt-4 text-[15px] leading-relaxed text-ink">{summary}</p>
+          <VerdictSpectrum label={verdict.label} lean={lean} className="mt-5" />
+          <p className="mt-5 text-[15px] leading-relaxed text-ink">{summary}</p>
 
-          <dl className="mt-4 grid grid-cols-3 gap-2">
+          {/* three facts in one strip, split by thin dividers */}
+          <dl className="well mt-5 grid grid-cols-3 rounded-[18px] py-3">
             <Indicator label="Checks completed" value={`${completed}/${job.analyzers.length}`} />
             <Indicator label="Evidence found" value={evidence === 0 ? 'None' : String(evidence)} />
             <Indicator label="Detector score" value={reading ? String(reading.pct) : '—'} unit={reading ? '/ 100' : undefined} />
           </dl>
           {reading && (
-            <p className="mt-2 text-[12px] leading-relaxed text-faint">
+            <p className="mt-2.5 text-[12.5px] leading-relaxed text-faint">
               The detector score is how closely the pixels resemble the AI images the model learned from. It often misses
               newer generators, so it is one signal among the checks, not the chance that this image is AI-generated.
             </p>
@@ -90,14 +108,18 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
         </section>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start">
-        {/* Key findings */}
-        <section className="panel animate-rise rounded-xl p-4 sm:p-5">
-          <PanelTitle title="Key findings" />
+      {/* The findings, then the weight behind each outcome and the detector's score: three in a row
+          on a wide screen, the findings above the other two on a narrower one. */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+        <section className="panel rounded-[28px] p-5 sm:p-6 md:col-span-2 xl:col-span-6">
+          <PanelTitle
+            title="Key findings"
+            status={verdict.top_reasons.length > 0 && <span className="text-[13px] text-faint tabular-nums">{verdict.top_reasons.length}</span>}
+          />
           {verdict.top_reasons.length === 0 ? (
-            <p className="mt-3 text-sm text-faint">No single finding stood out. Every check is listed under analysis details below.</p>
+            <p className="mt-3 text-[14px] text-muted">No single finding stood out. Every check is listed under analysis details below.</p>
           ) : (
-            <ul className="stagger mt-2 flex flex-col divide-y divide-line">
+            <ul className="mt-2 flex flex-col">
               {verdict.top_reasons.map((f) => (
                 <FindingRow key={f.code} finding={f} />
               ))}
@@ -105,19 +127,16 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
           )}
         </section>
 
-        <div className="flex flex-col gap-4">
-          {/* Evidence balance */}
-          <section className="panel animate-rise rounded-xl p-4 sm:p-5">
-            <PanelTitle title="Balance of signals" />
-            <EvidenceBars verdict={verdict} />
-            <p className="mt-3 text-[13px] leading-relaxed text-faint">
-              {decisive(verdict)
-                ? 'Decided by conclusive evidence, which outweighs everything else on its own.'
-                : 'Weights add up the findings for each outcome. A verdict needs enough weight and a clear lead; otherwise MetaProof says inconclusive.'}
-            </p>
-          </section>
-          <DetectorRange job={job} />
-        </div>
+        <section className={`panel rounded-[28px] p-5 sm:p-6 ${reading ? 'xl:col-span-3' : 'md:col-span-2 xl:col-span-6'}`}>
+          <PanelTitle title="Balance of signals" />
+          <EvidenceBars verdict={verdict} />
+          <p className="mt-4 text-[13px] leading-relaxed text-faint">
+            {decisive(verdict)
+              ? 'Decided by conclusive evidence, which outweighs everything else on its own.'
+              : 'Weights add up the findings for each outcome. A verdict needs enough weight and a clear lead; otherwise MetaProof says inconclusive.'}
+          </p>
+        </section>
+        <DetectorScore job={job} className="xl:col-span-3" />
       </div>
 
       {verdict.label === 'inconclusive' && <NextSteps />}
@@ -128,7 +147,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
 
       <AnalysisDetails analyzers={job.analyzers} />
 
-      <p className="px-1 text-[13px] leading-relaxed text-faint">
+      <p className="px-2 text-[13px] leading-relaxed text-faint">
         MetaProof reports evidence, not absolute truth. Missing metadata or credentials are never
         counted against a file. Engine {verdict.engine_version} · pipeline {job.pipeline_version}.
       </p>
@@ -136,13 +155,19 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   )
 }
 
+/** "just now", "5 hours ago", or a date as it is ("Oct 11, 2026"), to follow "Analyzed". */
+function analyzedWhen(iso: string) {
+  const when = formatWhen(iso)
+  return /\d{4}$/.test(when) ? when : when.charAt(0).toLowerCase() + when.slice(1)
+}
+
 /** One of the verdict's three facts: a small label over its value. */
 function Indicator({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
-    <div className="min-w-0 rounded-lg bg-raised px-3 py-2">
+    <div className="min-w-0 border-l border-line px-3 first:border-l-0 sm:px-4">
       <dt className="text-[12px] leading-tight text-faint">{label}</dt>
-      <dd className="mt-0.5 flex items-baseline gap-1">
-        <span className="text-[18px] font-medium tabular-nums">{value}</span>
+      <dd className="mt-1 flex items-baseline gap-1">
+        <span className="text-[20px] leading-none font-semibold tabular-nums">{value}</span>
         {unit && <span className="text-[12px] text-faint">{unit}</span>}
       </dd>
     </div>
@@ -153,24 +178,26 @@ function Indicator({ label, value, unit }: { label: string; value: string; unit?
 function AnalysisDetails({ analyzers }: { analyzers: AnalyzerResult[] }) {
   const [open, setOpen] = useState(false)
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-2.5">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls="analysis-details"
-        className="panel flex items-center gap-3 rounded-xl px-4 py-3.5 text-left transition hover:bg-[var(--panel-hover)]"
+        className="panel flex items-center gap-3 rounded-[22px] px-5 py-4 text-left"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-medium">Analysis details</span>
+          <span className="block text-[15px] font-semibold">Analysis details</span>
           <span className="block truncate text-[13px] text-faint" aria-hidden>
             {analyzers.map((a) => SHORT_NAME[a.analyzer] ?? a.analyzer).join(' · ')}
           </span>
         </span>
-        <ChevronDown className={`size-4 shrink-0 text-faint transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+        <span className="icon-btn size-9" aria-hidden>
+          <ChevronDown className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </span>
       </button>
       {open && (
-        <div id="analysis-details" className="animate-rise flex flex-col gap-2">
+        <div id="analysis-details" className="animate-rise flex flex-col gap-2.5">
           {analyzers.map((a) => (
             <AnalyzerPanel key={a.analyzer} result={a} />
           ))}
@@ -205,16 +232,16 @@ function Actions({ sha, title }: { sha: string; title: string }) {
     }
   }
   return (
-    <div className="no-print flex flex-wrap gap-2 pt-4">
+    <div className="no-print mt-5 flex flex-wrap gap-2.5">
       <button type="button" onClick={share} className="btn-ghost">
-        {nativeShare ? <Share2 className="size-4" /> : <Link2 className="size-4" />}
+        {nativeShare ? <Share2 className="size-4" strokeWidth={1.7} /> : <Link2 className="size-4" strokeWidth={1.7} />}
         {nativeShare ? 'Share report' : 'Copy share link'}
       </button>
       <button type="button" onClick={() => window.print()} className="btn-ghost">
-        <Printer className="size-4" /> Save as PDF
+        <Printer className="size-4" strokeWidth={1.7} /> Save as PDF
       </button>
-      <Link to="/new" className="btn-primary max-sm:w-full">
-        <Plus className="size-4" strokeWidth={2.5} /> Analyze another
+      <Link to="/new" className="btn-primary max-sm:w-full sm:ml-auto">
+        <Plus className="size-4" strokeWidth={2.4} /> Analyze another
       </Link>
     </div>
   )
@@ -223,11 +250,11 @@ function Actions({ sha, title }: { sha: string; title: string }) {
 function FindingRow({ finding }: { finding: Finding }) {
   const s = SIGNALS[finding.signal]
   return (
-    <li className="animate-rise flex gap-3 py-3.5 first:pt-1 last:pb-1">
+    <li className="flex gap-3 border-t border-line py-3.5 first:border-t-0 first:pt-2 last:pb-1">
       <SignalDot signal={finding.signal} />
       <div className="min-w-0">
         <p className="text-[15px] leading-relaxed text-ink">{finding.message}</p>
-        <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] font-medium text-faint">
+        <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px] text-faint">
           {s.label}
           <span className="tag">{STRENGTH_LABEL[finding.strength]}</span>
         </p>
@@ -242,6 +269,7 @@ function decisive(verdict: Verdict): 'authentic' | 'edited' | 'ai' | null {
   return top?.strength === 'conclusive' && top.signal !== 'neutral' ? top.signal : null
 }
 
+/** The weight behind each outcome, as the reference's thin coloured lines with the value at the end. */
 function EvidenceBars({ verdict }: { verdict: Verdict }) {
   const { scores } = verdict
   const settled = decisive(verdict)
@@ -252,20 +280,17 @@ function EvidenceBars({ verdict }: { verdict: Verdict }) {
   ]
   const max = Math.max(3, ...rows.map((r) => scores[r.key]))
   return (
-    <ul className="mt-3 flex flex-col gap-3">
+    <ul className="mt-4 flex flex-col gap-4">
       {rows.map(({ key, label }) => {
         const value = scores[key]
-        const color = SIGNALS[key].color
         return (
           <li key={key}>
-            <div className="flex items-baseline justify-between text-[15px]">
+            <div className="flex items-baseline justify-between text-[14px]">
               <span className="font-medium text-muted">{label}</span>
-              <span className="num text-[18px] leading-none text-ink">
-                {key === settled ? 'conclusive' : value.toFixed(1)}
-              </span>
+              <span className="text-[15px] font-semibold text-ink tabular-nums">{key === settled ? 'conclusive' : value.toFixed(1)}</span>
             </div>
-            <div className="relative mt-2 h-2.5 overflow-hidden rounded-full bg-line">
-              <div className="animate-grow h-full origin-left rounded-full" style={{ width: `${(value / max) * 100}%`, background: color }} />
+            <div className="bar-track relative mt-2 h-1.5 overflow-hidden rounded-full">
+              <div className="animate-grow h-full origin-left rounded-full" style={{ width: `${(value / max) * 100}%`, background: SIGNALS[key].dot }} />
             </div>
           </li>
         )
@@ -282,32 +307,42 @@ const SHORT_NAME: Record<string, string> = {
   detector: 'Pixel detector',
 }
 
-/** The detector's score on the reference's range ruler, with the bands the engine decides on. */
-function DetectorRange({ job }: { job: Job }) {
+// The arc's blend for each band: warm when the pixels look generated, green when they look like a camera's.
+const BAND_ARC: Record<Band['key'], [string, string]> = {
+  strong: ['#f7b733', '#f04e36'],
+  weak: ['#f7c948', '#f59e0b'],
+  unsure: ['#cfcfd6', '#a3a3ad'],
+  camera: ['#8fdcb4', '#22b46e'],
+}
+
+/** The detector's score on the reference's half-ring, with a tick where it starts to count as AI evidence. */
+function DetectorScore({ job, className = '' }: { job: Job; className?: string }) {
   const raw = job.analyzers.find((a) => a.analyzer === 'detector')?.raw
   const reading = detectorReading(job)
   if (!raw || !reading) return null
   const b = detectorBands(raw)
   return (
-    <section className="panel animate-rise rounded-xl p-4 sm:p-5">
+    <section className={`panel flex flex-col rounded-[28px] p-5 sm:p-6 ${className}`}>
       <PanelTitle title="Detector score" />
-      <p className="mt-3 flex items-baseline gap-1">
-        <span className="num text-[36px] leading-none">{reading.pct}</span>
-        <span className="text-[14px] text-faint">/ 100 · {reading.band.label.toLowerCase()}</span>
+      <p className="mt-0.5 text-[13px] font-medium" style={{ color: reading.band.color }}>
+        {reading.band.label}
       </p>
-      <RangeRuler
-        className="mt-5"
-        value={reading.pct}
-        bands={[{ from: b.weak, to: 100 }]}
-        marks={[
-          { at: 0, label: '0' },
-          { at: Math.round(b.weak), label: String(Math.round(b.weak)) },
-          { at: 100, label: '100' },
-        ]}
-      />
-      <p className="mt-3 text-[13px] leading-relaxed text-faint">
-        The shaded band is where the score counts as AI evidence. A score is how much the pixels resemble AI
-        images, not a probability; on its own it never decides the verdict.
+      {/* when the row is taller than this card, the gauge takes the middle of the extra height */}
+      <div className="flex flex-1 items-center">
+        <Gauge
+          value={reading.pct / 100}
+          figure={reading.pct}
+          unit="/ 100"
+          caption="Pixel detector"
+          colors={BAND_ARC[reading.band.key]}
+          ticks={[b.weak / 100]}
+          label={`Detector score ${reading.pct} out of 100: ${reading.band.label.toLowerCase()}`}
+          className="mx-auto my-4 w-full max-w-[250px]"
+        />
+      </div>
+      <p className="text-[13px] leading-relaxed text-faint">
+        The tick marks {Math.round(b.weak)}, where the score starts to count as AI evidence. A score is how much the pixels
+        resemble AI images, not a probability; on its own it never decides the verdict.
       </p>
     </section>
   )
@@ -341,18 +376,11 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
   const meta = ANALYZER_META[result.analyzer] ?? { title: result.analyzer, icon: Fingerprint, blurb: '' }
   const Icon = meta.icon
   return (
-    <div className="panel animate-rise rounded-xl">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 p-4 text-left sm:p-5"
-      >
-        <span className="well size-11">
-          <Icon className="size-4" strokeWidth={1.75} />
-        </span>
+    <div className="panel rounded-[22px]">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-3.5 p-4 text-left sm:px-5">
+        <Icon className="size-[18px] shrink-0 text-faint" strokeWidth={1.6} />
         <div className="min-w-0 flex-1">
-          <p className="text-[16px] font-semibold">{meta.title}</p>
+          <p className="text-[15px] font-semibold">{meta.title}</p>
           <p className="truncate text-[13px] text-faint">
             {result.ok ? `${result.findings.length} finding${result.findings.length === 1 ? '' : 's'} · ${result.duration_ms} ms` : 'Analyzer error'}
             <span className="max-sm:hidden"> · {meta.blurb}</span>
@@ -367,25 +395,25 @@ function AnalyzerPanel({ result }: { result: AnalyzerResult }) {
         }`}
         inert={!open}
       >
-      <div className="min-h-0 overflow-hidden">
-      <div className={`border-t border-line px-4 pt-4 pb-5 transition-opacity duration-300 sm:px-5 print:opacity-100 ${open ? 'opacity-100' : 'opacity-0'}`}>
-        {!result.ok ? (
-          <p className="text-sm text-ai">{result.error}</p>
-        ) : result.analyzer === 'metadata' ? (
-          <MetadataDetails raw={result.raw} />
-        ) : result.analyzer === 'structure' ? (
-          <StructureDetails raw={result.raw} />
-        ) : result.analyzer === 'c2pa' ? (
-          <C2paDetails raw={result.raw} />
-        ) : result.analyzer === 'watermark' ? (
-          <WatermarkDetails raw={result.raw} />
-        ) : result.analyzer === 'detector' ? (
-          <DetectorDetails raw={result.raw} />
-        ) : (
-          <pre className="overflow-x-auto font-mono text-[13px] text-muted">{JSON.stringify(result.raw, null, 2)}</pre>
-        )}
-      </div>
-      </div>
+        <div className="min-h-0 overflow-hidden">
+          <div className={`mx-4 border-t border-line pt-4 pb-5 transition-opacity duration-300 sm:mx-5 print:opacity-100 ${open ? 'opacity-100' : 'opacity-0'}`}>
+            {!result.ok ? (
+              <p className="text-sm text-ai">{result.error}</p>
+            ) : result.analyzer === 'metadata' ? (
+              <MetadataDetails raw={result.raw} />
+            ) : result.analyzer === 'structure' ? (
+              <StructureDetails raw={result.raw} />
+            ) : result.analyzer === 'c2pa' ? (
+              <C2paDetails raw={result.raw} />
+            ) : result.analyzer === 'watermark' ? (
+              <WatermarkDetails raw={result.raw} />
+            ) : result.analyzer === 'detector' ? (
+              <DetectorDetails raw={result.raw} />
+            ) : (
+              <pre className="overflow-x-auto font-mono text-[13px] text-muted">{JSON.stringify(result.raw, null, 2)}</pre>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -442,8 +470,8 @@ function MetadataDetails({ raw }: { raw: Record<string, unknown> }) {
         ]}
       />
       {exiftool && Object.keys(exiftool).length > 0 && (
-        <details className="group rounded-lg border border-line bg-canvas">
-          <summary className="cursor-pointer list-none px-4 py-3 text-[13px] text-muted hover:text-ink">
+        <details className="well group rounded-[16px]">
+          <summary className="cursor-pointer list-none px-4 py-3 text-[13px] font-medium text-muted hover:text-ink">
             All {Object.keys(exiftool).length} ExifTool tags
           </summary>
           <div className="max-h-80 overflow-auto px-4 pb-4">
@@ -534,8 +562,8 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
       <Fields rows={rows} />
       {typeof raw.parse_note === 'string' && <p className="text-[13px] text-faint">{raw.parse_note}</p>}
       {segments.length > 0 && (
-        <div className="rounded-lg border border-line bg-canvas">
-          <p className="px-4 pt-3 text-[13px] text-muted">
+        <div className="well rounded-[16px]">
+          <p className="px-4 pt-3 text-[13px] font-medium text-muted">
             {segments.reduce((n, s) => n + s.count, 0)} {units} in file order
             {typeof raw.segments_truncated === 'number' && `, first ${segments.length} rows shown`}
           </p>
@@ -569,8 +597,8 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
         </div>
       )}
       {jpeg?.quant_tables && jpeg.quant_tables.length > 0 && (
-        <details className="group rounded-lg border border-line bg-canvas">
-          <summary className="cursor-pointer list-none px-4 py-3 text-[13px] text-muted hover:text-ink">
+        <details className="well group rounded-[16px]">
+          <summary className="cursor-pointer list-none px-4 py-3 text-[13px] font-medium text-muted hover:text-ink">
             {jpeg.quant_tables.length} quantization table{jpeg.quant_tables.length === 1 ? '' : 's'}
           </summary>
           <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2">
@@ -579,7 +607,7 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
                 <p className="mb-1.5 text-[12px] text-faint">Table {t.id}</p>
                 <div className="grid grid-cols-8 gap-px font-mono text-[11px] text-muted tabular-nums">
                   {t.values.map((v, i) => (
-                    <span key={i} className="bg-raised py-0.5 text-center">{v}</span>
+                    <span key={i} className="rounded-[3px] bg-[var(--raise-bg)] py-0.5 text-center">{v}</span>
                   ))}
                 </div>
               </div>
@@ -619,7 +647,7 @@ function ActionList({ title, actions }: { title: string; actions: C2paAction[] }
       <ol className="mt-2 flex flex-col gap-1.5">
         {actions.map((a, i) => (
           <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm">
-            <span className="font-mono text-[13px] text-faint">{i + 1}.</span>
+            <span className="text-[13px] text-faint tabular-nums">{i + 1}.</span>
             <span>{a.action}</span>
             {a.digital_source_type && <span className="text-[13px] text-muted">· {a.digital_source_type}</span>}
             {a.software_agent && <span className="text-[13px] text-faint">· {a.software_agent}</span>}
@@ -709,10 +737,10 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
     <div className="flex flex-col gap-4">
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-lg font-semibold tracking-tight" style={{ color }}>
+          <span className="text-[16px] font-semibold" style={{ color }}>
             {label}
           </span>
-          <span className="num text-[22px] leading-none text-ink">{pct}%</span>
+          <span className="num text-[24px] leading-none text-ink">{pct}%</span>
         </div>
         {/* ticks mark the band edges the evidence engine used */}
         <Meter
@@ -751,23 +779,24 @@ function EvidenceChips({ job, verdict }: { job: Job; verdict: Verdict }) {
   // The detector disagrees with a verdict that other evidence carried.
   const missedAi = verdict.label === 'likely_ai_generated' && reading && !flagsAi && source !== SOURCE.detector
   const outweighed = verdict.label === 'likely_authentic' && flagsAi
+  if (!(source && verdict.label !== 'inconclusive') && !reading) return null
   return (
     <div className="mt-4 flex flex-wrap items-start gap-2">
       {source && verdict.label !== 'inconclusive' && (
-        <span className="inline-flex items-start gap-2 rounded-full bg-raised px-3.5 py-1.5 text-[13px] font-semibold text-ink">
-          <ShieldCheck className="mt-px size-4 shrink-0" />
+        <span className="chip h-auto min-h-8 gap-2 py-1.5 text-[13px] whitespace-normal">
+          <ShieldCheck className="size-4 shrink-0 text-accent" strokeWidth={1.8} />
           <span>
-            <span className="font-medium text-muted">{settled ? 'Decided by ' : 'Mainly from '}</span>
-            {source}
+            <span className="text-muted">{settled ? 'Decided by ' : 'Mainly from '}</span>
+            <span className="font-semibold">{source}</span>
           </span>
         </span>
       )}
       {reading && (
-        <span className="inline-flex items-start gap-2 rounded-full bg-raised px-3.5 py-1.5 text-[13px] font-semibold text-ink">
-          <Sparkles className="mt-px size-4 shrink-0" />
+        <span className="chip h-auto min-h-8 gap-2 py-1.5 text-[13px] whitespace-normal">
+          <Sparkles className="size-4 shrink-0 text-accent" strokeWidth={1.8} />
           <span>
-            <span className="font-medium text-muted">Pixel detector: </span>
-            {reading.band.label}
+            <span className="text-muted">Pixel detector: </span>
+            <span className="font-semibold">{reading.band.label}</span>
           </span>
         </span>
       )}
@@ -797,23 +826,23 @@ function SeenBefore({ sha }: { sha: string }) {
   }, [sha])
   if (!items || items.length === 0) return null
   return (
-    <section className="panel animate-rise rounded-xl p-4 sm:p-5">
+    <section className="panel rounded-[28px] p-5 sm:p-6">
       <PanelTitle
         title={items.length === 1 ? 'A near-identical image was analyzed before' : `${items.length} near-identical images were analyzed before`}
       />
       <p className="mt-1 text-[13px] text-faint">
         Resized, cropped or recompressed copies have a different file hash, so MetaProof also compares what the images look like.
       </p>
-      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+      <ul className="mt-3 grid gap-1 sm:grid-cols-2">
         {items.map((m) => (
           <li key={m.sha256}>
-            <Link to={`/report/${m.sha256}`} className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-raised">
-              <Thumb sha={m.sha256} className="size-12 shrink-0 rounded-xl" />
+            <Link to={`/report/${m.sha256}`} className="flex items-center gap-3 rounded-[16px] p-2 transition hover:bg-[var(--raise-bg)] hover:shadow-[var(--raise-shadow)]">
+              <Thumb sha={m.sha256} className="size-12 shrink-0 rounded-[12px]" />
               <div className="min-w-0 flex-1">
-                <p className="font-mono text-[13px] text-muted">{Math.round(m.similarity * 100)}% similar</p>
+                <p className="text-[14px] font-medium tabular-nums">{Math.round(m.similarity * 100)}% similar</p>
                 <p className="text-[13px] text-faint">First seen {formatWhen(m.first_seen_at)}</p>
               </div>
-              <VerdictBadge label={m.label} />
+              <VerdictBadge label={m.label} pill />
             </Link>
           </li>
         ))}
@@ -831,29 +860,29 @@ const SEARCH_TOOLS = [
 /** Inconclusive is the most common verdict, so it should leave the reader with something to do. */
 function NextSteps() {
   return (
-    <section className="panel animate-rise rounded-xl p-4 sm:p-5">
-      <div className="flex items-center gap-3">
-        <Compass className="size-5" strokeWidth={1.5} />
-        <h2 className="text-[17px] font-medium">What you can do next</h2>
+    <section className="panel rounded-[28px] p-5 sm:p-6">
+      <div className="flex items-center gap-2.5">
+        <Compass className="size-[18px] text-faint" strokeWidth={1.6} />
+        <h2 className="card-title">What you can do next</h2>
       </div>
-      <ol className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-muted">
+      <ol className="mt-4 grid gap-4 text-[14px] leading-relaxed text-muted md:grid-cols-3 md:gap-6">
         <li>
-          <span className="text-ink">Find the original.</span> A reverse image search shows where the
+          <span className="font-semibold text-ink">Find the original.</span> A reverse image search shows where the
           picture appeared first and whether an older or larger version exists:
-          <span className="mt-2 flex flex-wrap gap-2">
+          <span className="mt-2.5 flex flex-wrap gap-2">
             {SEARCH_TOOLS.map((t) => (
-              <a key={t.name} href={t.url} target="_blank" rel="noreferrer" className="btn-ghost !py-1 !text-[13px]">
-                {t.name} <ArrowUpRight className="size-3.5" />
+              <a key={t.name} href={t.url} target="_blank" rel="noreferrer" className="chip h-8 px-3 text-[13px] hover:bg-[var(--btn-hover)]">
+                {t.name} <ArrowUpRight className="size-3.5 text-faint" />
               </a>
             ))}
           </span>
         </li>
         <li>
-          <span className="text-ink">Ask for the original file.</span> Photos straight from a camera or
+          <span className="font-semibold text-ink">Ask for the original file.</span> Photos straight from a camera or
           phone keep more metadata, and some carry signed Content Credentials that MetaProof can verify.
         </li>
         <li>
-          <span className="text-ink">Look at the context.</span> Who posted it first, and do other
+          <span className="font-semibold text-ink">Look at the context.</span> Who posted it first, and do other
           sources show the same scene from another angle?
         </li>
       </ol>
