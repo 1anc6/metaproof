@@ -2,12 +2,15 @@ import { History, House, ImagePlus, Lightbulb, Moon, PanelLeftClose, PanelLeftOp
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Toaster } from 'sonner'
+import type { OrbState } from 'thinking-orbs'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { useLens } from '../lib/lens'
+import { useOrbGravity } from '../lib/orbs'
 import { setPref, usePrefs } from '../lib/prefs'
 import { useThemeSync } from '../lib/theme'
 import { AddMenu } from './AddMenu'
 import { SummariesProvider } from './SummariesProvider'
+import { ThinkingOrb } from './ThinkingOrb'
 import { Logo, Mark, ThemeToggle } from './ui'
 
 const NAV = [
@@ -85,6 +88,7 @@ export function Shell() {
   }, [navigate, railOpen])
 
   useSheen()
+  useOrbGravity()
 
   return (
     <SummariesProvider>
@@ -95,7 +99,7 @@ export function Shell() {
           <span />
           <span />
         </div>
-        <a href="#main" className="btn-primary fixed top-3 left-3 z-[60] -translate-y-20 focus-visible:translate-y-0">
+        <a href="#main" className="btn-primary no-print fixed top-3 left-3 z-[60] -translate-y-20 focus-visible:translate-y-0">
           Skip to content
         </a>
         <div className="relative lg:grid lg:min-h-[calc(100dvh-32px)] lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5 lg:rounded-[40px] lg:p-4 print:block print:p-0">
@@ -154,11 +158,27 @@ function useSheen() {
   }, [])
 }
 
-const SERVER_LABEL: Record<ServerState, { text: string; dot: string }> = {
-  checking: { text: 'Connecting', dot: 'bg-dot-neutral animate-pulse' },
-  waking: { text: 'Waking server…', dot: 'bg-dot-edited animate-pulse' },
+// While the server is being reached or is waking up, an orb at text size stands in for the dot.
+const SERVER_LABEL: Record<ServerState, { text: string; dot: string; orb?: OrbState }> = {
+  checking: { text: 'Connecting', dot: 'bg-dot-neutral', orb: 'connecting' },
+  waking: { text: 'Waking server…', dot: 'bg-dot-edited', orb: 'breathing' },
   online: { text: 'API online', dot: 'bg-dot-authentic' },
   offline: { text: 'API offline', dot: 'bg-dot-ai' },
+}
+
+/** The server's state as a dot `size` across, or an orb centred over the dot's place, so the
+ *  words beside it stay put when the server comes online. */
+function ServerMark({ state, size }: { state: ServerState; size: string }) {
+  const s = SERVER_LABEL[state]
+  return (
+    <span className={`relative shrink-0 ${size}`} aria-hidden>
+      {s.orb ? (
+        <ThinkingOrb state={s.orb} size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+      ) : (
+        <span className={`block size-full rounded-full ${s.dot}`} />
+      )}
+    </span>
+  )
 }
 
 /** `compact`: only the dot below 380px, where the words don't fit beside the name. */
@@ -167,7 +187,7 @@ export function ServerBadge({ compact = false }: { compact?: boolean }) {
   const s = SERVER_LABEL[state]
   return (
     <span className="flex items-center gap-2 text-[13px] text-muted" title={s.text}>
-      <span className={`size-2 shrink-0 rounded-full ${s.dot}`} />
+      <ServerMark state={state} size="size-2" />
       <span className={compact ? 'whitespace-nowrap max-[379px]:sr-only' : 'whitespace-nowrap'}>{s.text}</span>
     </span>
   )
@@ -244,11 +264,12 @@ function RailLink({ to, label, icon: Icon, end, hint, open }: (typeof NAV)[numbe
 
 /** The server's state as a dot, with its words beside it once the rail is open. */
 function ServerLine({ open }: { open: boolean }) {
-  const s = SERVER_LABEL[useServerStatus()]
+  const state = useServerStatus()
+  const s = SERVER_LABEL[state]
   return (
     <p className="flex h-11 items-center gap-3.5 overflow-hidden px-5 whitespace-nowrap" title={open ? undefined : s.text}>
-      <span className="grid size-6 shrink-0 place-items-center" aria-hidden>
-        <span className={`size-2.5 rounded-full ${s.dot}`} />
+      <span className="grid size-6 shrink-0 place-items-center">
+        <ServerMark state={state} size="size-2.5" />
       </span>
       <span className="rail-label !text-[13.5px] !font-normal text-muted">{s.text}</span>
     </p>

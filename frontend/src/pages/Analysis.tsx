@@ -1,8 +1,10 @@
 import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import type { ModeFrame, OrbState } from 'thinking-orbs'
 import { api, ApiError, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
+import { fingerprint, useOrbFavicon } from '../lib/orbs'
 import { ReportView } from '../components/ReportView'
 import { ErrorPanel, FileName, Gauge, PageHeader, PanelTitle } from '../components/ui'
 import { ThinkingOrb, ThinkingPill } from '../components/ThinkingOrb'
@@ -64,14 +66,15 @@ export function Analysis() {
   return <Progress job={job} filename={filename} preview={previewFor(jobId)} />
 }
 
-const STEPS = [
-  { key: 'upload', label: 'File received and hashed' },
-  { key: 'metadata', label: 'Reading metadata' },
-  { key: 'structure', label: 'Inspecting the file structure' },
-  { key: 'c2pa', label: 'Checking Content Credentials' },
-  { key: 'watermark', label: 'Looking for invisible watermarks' },
-  { key: 'detector', label: 'Running the AI-image detector' },
-  { key: 'verdict', label: 'Weighing the evidence' },
+// Each step has its own orb (lib/orbs.ts has the whole set); hashing draws MetaProof's fingerprint.
+const STEPS: { key: string; label: string; orb: OrbState; frame?: ModeFrame }[] = [
+  { key: 'upload', label: 'File received and hashed', orb: 'working', frame: fingerprint },
+  { key: 'metadata', label: 'Reading metadata', orb: 'searching' },
+  { key: 'structure', label: 'Inspecting the file structure', orb: 'shaping' },
+  { key: 'c2pa', label: 'Checking Content Credentials', orb: 'connecting' },
+  { key: 'watermark', label: 'Looking for invisible watermarks', orb: 'listening' },
+  { key: 'detector', label: 'Running the AI-image detector', orb: 'solving' },
+  { key: 'verdict', label: 'Weighing the evidence', orb: 'weaving' },
 ]
 
 function Progress({ job, filename, preview }: { job: Job | null; filename?: string; preview?: string }) {
@@ -94,14 +97,23 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
 
   const steps = STEPS.map((step, i) => ({ ...step, state: i < active ? 'done' : i === active && !waiting ? 'active' : 'todo' }))
   const done = steps.filter((x) => x.state === 'done').length
+  // What the orb shows: reaching the server, waiting in the queue, or the step under way.
+  const now: { label: string; orb: OrbState; frame?: ModeFrame } = !job
+    ? { label: 'Connecting…', orb: 'connecting' }
+    : waiting
+      ? { label: 'Waiting in the queue…', orb: 'breathing' }
+      : { ...STEPS[active], label: `${STEPS[active].label}…` }
+  useOrbFavicon(now.orb)
 
   return (
     <div>
       <PageHeader title="Reading the evidence" subtitle="Six checks run on the file, then the evidence is weighed." />
 
-      <div className="grid gap-4 lg:grid-cols-12">
+      {/* One column on phones, set explicitly: an implicit column would grow to the caption's
+          unwrapped width and push both panels off the side of the screen. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* The upload, whole, over a blurred copy of itself. */}
-        <figure className="panel flex flex-col rounded-[28px] p-2.5 max-lg:order-2 lg:col-span-7">
+        <figure className="panel flex min-w-0 flex-col rounded-[28px] p-2.5 max-lg:order-2 lg:col-span-7">
           <div className="relative grid min-h-[clamp(200px,52vw,380px)] flex-1 place-items-center overflow-hidden rounded-[20px] bg-[var(--frame-bg)]">
             {preview ? (
               <>
@@ -109,7 +121,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
                 <img src={preview} alt="The image being analyzed" className="absolute inset-0 size-full object-contain" />
               </>
             ) : (
-              <ThinkingOrb size={44} className="text-faint" />
+              <ThinkingOrb state={now.orb} frame={now.frame} size={64} />
             )}
           </div>
           <figcaption className="flex min-w-0 items-center gap-2 px-2.5 pt-3 pb-1.5 text-[13px] text-faint">
@@ -119,7 +131,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
           </figcaption>
         </figure>
 
-        <section className="panel flex flex-col rounded-[28px] p-5 lg:col-span-5" aria-label="Progress">
+        <section className="panel flex min-w-0 flex-col rounded-[28px] p-5 lg:col-span-5" aria-label="Progress">
           <PanelTitle
             title={waiting ? 'In queue' : 'Analyzing'}
             status={
@@ -140,12 +152,8 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
             />
           </div>
 
-          {/* Says what is happening now; the rows below only change their state. */}
-          <ThinkingPill
-            className="mt-5 w-full"
-            variant={job && !waiting ? 'dots' : 'lines'}
-            label={!job ? 'Connecting…' : waiting ? 'Waiting in the queue…' : `${STEPS[active].label}…`}
-          />
+          {/* Says what is happening now, with that step's orb; the rows below only change their state. */}
+          <ThinkingPill className="mt-5 w-full" state={now.orb} frame={now.frame} label={now.label} />
           <ol className="mt-3 flex flex-col">
             {steps.map((step) => (
               <li key={step.key} className="flex items-center gap-3 py-[7px] text-[14px]">

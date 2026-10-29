@@ -1,9 +1,11 @@
-import { ClipboardPaste, FileImage, LoaderCircle, Upload, X } from 'lucide-react'
+import { ClipboardPaste, FileImage, Upload, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { formatBytes } from '../lib/format'
+import { fingerprint } from '../lib/orbs'
 import { ACCEPTED, MAX_MB, imageFromClipboard, rejectReason, useUpload } from '../lib/upload'
+import { ThinkingOrb } from './ThinkingOrb'
 import { FileName } from './ui'
 
 // Touch screens have no drag and drop, so the zone words itself as a picker there.
@@ -126,7 +128,19 @@ export function UploadPanel({
           {title}
         </p>
         <span className={`orb mt-5 size-[112px] transition-transform duration-300 sm:size-[124px] ${dragging ? 'orb-live scale-105' : busy ? 'orb-live' : ''}`} aria-hidden>
-          {busy ? <LoaderCircle className="size-8 animate-spin" strokeWidth={1.6} /> : <Upload className="size-9" strokeWidth={1.6} />}
+          {/* Uploading, the working orb in dark ink on the lime; once every byte is sent, the server
+              fingerprints the file, so the orb turns into MetaProof's fingerprint. */}
+          {state.kind === 'uploading' ? (
+            <ThinkingOrb
+              state="working"
+              frame={state.progress >= 1 ? fingerprint : undefined}
+              size={64}
+              on="light"
+              color="#1d2309"
+            />
+          ) : (
+            <Upload className="size-9" strokeWidth={1.6} />
+          )}
         </span>
         <p className="mt-6 max-w-[38ch] text-[14px] leading-relaxed text-faint">
           For the clearest verdict, upload the original file rather than a screenshot. JPEG, PNG, WebP, TIFF or HEIC, up

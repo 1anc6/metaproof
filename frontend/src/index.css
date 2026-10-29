@@ -999,8 +999,27 @@
   }
   .no-print,
   .backdrop,
-  .frame-glass {
+  .frame-glass,
+  [data-sonner-toaster],
+  .thinking-orb-gravity-cursor {
     display: none !important;
+  }
+  /* Printing without background graphics (the default, and the only way on a phone), Chrome paints
+     anything that has a background in solid white. Each card's rim of light is a gradient on a
+     ::before laid over the whole card, so it printed as a white sheet over the card's words, and
+     "Save as PDF" came out as empty boxes. On paper the cards' border does the rim's job. */
+  .panel::before,
+  .glass::before,
+  .rail::before,
+  .lens {
+    display: none !important;
+  }
+  /* Nothing mid-animation: a card that rises into view must not print at its first, clear frame. */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
   .panel,
   .raise,
@@ -1011,6 +1030,17 @@
     box-shadow: none !important;
     border: 1px solid #d4d4d8;
     backdrop-filter: none !important;
+  }
+  /* A card, a finding or a table row stays on one page where it fits. */
+  .panel,
+  li,
+  tr {
+    break-inside: avoid;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
   }
   .print-dark {
     color: #000 !important;

@@ -116,7 +116,7 @@ export function ErrorLevel({ job }: { job: Job }) {
       ) : (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           {state.kind === 'working' ? (
-            <ThinkingPill label="Computing error levels…" />
+            <ThinkingPill state="composing" label="Computing error levels…" />
           ) : preview ? (
             <button type="button" onClick={takePreview} className="btn-ghost btn-sm">
               <ScanEye className="size-4" strokeWidth={1.7} /> Show error levels

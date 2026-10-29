@@ -5,6 +5,10 @@ glass panels over drifting colour glows, gradient cards; ink, champagne gold and
 responsive from
 phone to desktop.
 
+Whatever MetaProof is busy with shows as a [Thinking Orb](https://libraries.dev/orbs) (`thinking-orbs`, MIT):
+each analysis step has its own, hashing draws MetaProof's own fingerprint frame (`src/lib/orbs.ts`), and the
+playground in Settings tunes every orb at once (speed, colour, dots, engine knobs, cursor gravity).
+
 ```bash
 npm install
 npm run dev        # http://localhost:5173, forwards /api to the local backend on :8000

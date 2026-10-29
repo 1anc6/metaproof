@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockApi, skipWelcome } from './mock-api'
+import { job, JOB_ID, mockApi, seedHistory, SHA, skipWelcome } from './mock-api'
 
 test.beforeEach(async ({ page }) => {
   await mockApi(page)
@@ -60,6 +60,32 @@ test('phones and tablets: a floating tab bar names the current screen, with New 
   }
 })
 
+test('phones: no screen is wider than the phone, down to 320px', async ({ page }) => {
+  await seedHistory(page)
+  // an analysis under way: the screen that ran off the side of phones
+  await page.route(`**/api/analyses/${JOB_ID}`, (route) =>
+    route.fulfill({ json: { ...job, status: 'running', verdict: null, current_step: 'watermark' } }),
+  )
+  const screens: [string, string][] = [
+    ['/', 'Your images'],
+    ['/new', 'For the clearest verdict'],
+    [`/analysis/${JOB_ID}`, 'Looking for invisible watermarks…'],
+    [`/report/${SHA}`, 'Key findings'],
+    ['/history', 'holiday.jpg'],
+    ['/method', 'What the orbs mean'],
+    ['/settings', 'Thinking orbs'],
+  ]
+  for (const width of [320, 360, 390]) {
+    await page.setViewportSize({ width, height: 800 })
+    for (const [path, text] of screens) {
+      await page.goto(path)
+      await expect(page.getByText(text).first()).toBeVisible()
+      const wide = await page.evaluate(() => document.documentElement.scrollWidth)
+      expect(wide, `${path} at ${width}px`).toBeLessThanOrEqual(width)
+    }
+  }
+})
+
 test('phones: choosing a tab moves the pill and the name to it', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
@@ -94,11 +120,3 @@ test('phones: the overview opens with the period, search, the images and the ver
   await expect(page.getByRole('region', { name: 'Verdicts' })).toBeInViewport()
 })
 
-test('no horizontal scrolling on a small phone', async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 740 })
-  for (const path of ['/', '/new', '/history', '/method', '/settings']) {
-    await page.goto(path)
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
-    expect(overflow, path).toBeLessThanOrEqual(0)
-  }
-})

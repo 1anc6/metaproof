@@ -9,6 +9,7 @@ import { useHistory, type HistoryEntry } from '../lib/history'
 import { setPref, usePrefs, type Period } from '../lib/prefs'
 import { tally, useHistorySummaries, type Summaries } from '../lib/summaries'
 import { VERDICTS } from '../lib/verdicts'
+import { OrbText } from '../components/ThinkingOrb'
 import { FileName, Switch, Thumb, VerdictDot } from '../components/ui'
 
 type Data = Summaries['data']
@@ -264,7 +265,9 @@ function VerdictDial({
           <h2 id="dial-title" className="card-title">
             Verdicts
           </h2>
-          <p className="label mt-0.5">{waiting ? 'Loading verdicts…' : known ? `${known} ${plural(known, 'verdict')} ${span}` : `No verdicts ${span}`}</p>
+          <p className="label mt-0.5">
+            {waiting ? <OrbText state="searching">Loading verdicts…</OrbText> : known ? `${known} ${plural(known, 'verdict')} ${span}` : `No verdicts ${span}`}
+          </p>
         </div>
         <Link to={`/history?filter=${mode}`} className="icon-btn size-10" aria-label={`Open ${v.short} in History`} title={`${v.short} in History`}>
           <ArrowUpRight className="size-[18px]" strokeWidth={1.7} />
@@ -396,7 +399,7 @@ function Latest({ done, data, span, waiting, example, now }: { done: HistoryEntr
               {waiting ? <span className="skeleton block h-10 w-48" /> : example ? (v?.short ?? 'Example') : `Nothing ${span}`}
             </p>
             <p className="mt-2.5 text-[13.5px] text-muted">
-              {example ? 'A FLUX image the detector never saw' : waiting ? 'Loading verdicts…' : 'Analyze an image to see its verdict here.'}
+              {example ? 'A FLUX image the detector never saw' : waiting ? <OrbText state="searching">Loading verdicts…</OrbText> : 'Analyze an image to see its verdict here.'}
             </p>
           </div>
           <Link to={example ? DEMO_REPORT_PATH : '/new'} className="btn-ghost btn-sm shrink-0 max-[420px]:hidden">
