@@ -6,10 +6,10 @@ export interface VerdictStyle {
   summary: string
   /** Tailwind text colour class */
   text: string
-  /** CSS colour for bars and glows */
+  /** CSS colour for text-sized marks: the verdict's title, bars */
   color: string
-  /** Gradient card class for the verdict hero */
-  mesh: string
+  /** The brighter colour of its dot */
+  dot: string
 }
 
 export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
@@ -19,7 +19,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     summary: 'Strong provenance evidence points to an unedited original.',
     text: 'text-authentic',
     color: 'var(--color-authentic)',
-    mesh: 'mesh-teal',
+    dot: 'var(--color-dot-authentic)',
   },
   edited: {
     title: 'Edited',
@@ -27,7 +27,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     summary: 'The evidence shows this file was changed after it was created.',
     text: 'text-edited',
     color: 'var(--color-edited)',
-    mesh: 'mesh-copper',
+    dot: 'var(--color-dot-edited)',
   },
   likely_ai_generated: {
     title: 'Likely AI-generated',
@@ -35,7 +35,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     summary: 'The evidence points to an image made by a generative AI tool.',
     text: 'text-ai',
     color: 'var(--color-ai)',
-    mesh: 'mesh-garnet',
+    dot: 'var(--color-dot-ai)',
   },
   inconclusive: {
     title: 'Inconclusive',
@@ -44,7 +44,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
       'There is not enough evidence to decide. That is common: most images carry no provenance data.',
     text: 'text-neutral',
     color: 'var(--color-neutral)',
-    mesh: 'mesh-graphite',
+    dot: 'var(--color-dot-neutral)',
   },
 }
 
@@ -54,11 +54,11 @@ export const PENDING: Record<Exclude<JobStatus, 'done'>, { title: string; text: 
   failed: { title: 'Failed', text: 'text-ai' },
 }
 
-export const SIGNALS: Record<Signal, { label: string; color: string }> = {
-  authentic: { label: 'Supports authentic', color: 'var(--color-authentic)' },
-  edited: { label: 'Suggests editing', color: 'var(--color-edited)' },
-  ai: { label: 'Suggests AI', color: 'var(--color-ai)' },
-  neutral: { label: 'Neutral', color: 'var(--color-neutral)' },
+export const SIGNALS: Record<Signal, { label: string; color: string; dot: string }> = {
+  authentic: { label: 'Supports authentic', color: 'var(--color-authentic)', dot: 'var(--color-dot-authentic)' },
+  edited: { label: 'Suggests editing', color: 'var(--color-edited)', dot: 'var(--color-dot-edited)' },
+  ai: { label: 'Suggests AI', color: 'var(--color-ai)', dot: 'var(--color-dot-ai)' },
+  neutral: { label: 'Neutral', color: 'var(--color-neutral)', dot: 'var(--color-dot-neutral)' },
 }
 
 export const STRENGTH_LABEL: Record<Strength, string> = {
@@ -69,7 +69,7 @@ export const STRENGTH_LABEL: Record<Strength, string> = {
 }
 
 const LEAN_LABEL = { authentic: 'real', edited: 'edited', ai: 'AI-generated' } as const
-const LEAN_COLOR = { authentic: 'var(--color-authentic)', edited: 'var(--color-edited)', ai: 'var(--color-ai)' } as const
+const LEAN_COLOR = { authentic: 'var(--color-dot-authentic)', edited: 'var(--color-dot-edited)', ai: 'var(--color-dot-ai)' } as const
 
 /**
  * For an inconclusive verdict, which way the evidence tilts (if any). The engine still said
@@ -80,9 +80,4 @@ export function leaning(scores: Record<'authentic' | 'edited' | 'ai', number>) {
   const [top, second] = ranked
   if (scores[top] <= 0 || scores[top] === scores[second]) return null
   return { key: top, label: LEAN_LABEL[top], color: LEAN_COLOR[top] }
-}
-
-/** The cream card's light takes the verdict's hue: a class from index.css. */
-export function toneOf(verdict: VerdictLabel | null | undefined) {
-  return verdict === 'likely_ai_generated' ? 'tone-ai' : verdict === 'edited' ? 'tone-edited' : verdict === 'likely_authentic' ? 'tone-authentic' : ''
 }

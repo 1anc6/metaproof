@@ -36,16 +36,27 @@ export function Report() {
 
 export function ReportSkeleton() {
   return (
-    <div className="flex flex-col gap-6" aria-busy>
-      <div className="panel flex flex-col gap-6 rounded-xl p-4 sm:flex-row sm:p-8">
-        <div className="skeleton aspect-square w-full max-w-[200px] rounded-xl" />
-        <div className="flex flex-1 flex-col gap-3 pt-2">
-          <div className="skeleton h-3 w-20" />
-          <div className="skeleton h-10 w-2/3" />
+    <div className="flex flex-col gap-4" aria-busy>
+      <div className="skeleton h-9 w-56" />
+      <div className="grid gap-4 lg:grid-cols-12">
+        <div className="panel min-h-[clamp(240px,56vw,400px)] rounded-[28px] p-2.5 lg:col-span-5">
+          <div className="size-full rounded-[20px] bg-[var(--frame-bg)]" />
+        </div>
+        <div className="panel flex flex-col gap-4 rounded-[28px] p-6 lg:col-span-7">
+          <div className="flex items-center gap-3.5">
+            <div className="skeleton size-12" />
+            <div className="flex flex-1 flex-col gap-2">
+              <div className="skeleton h-3 w-16" />
+              <div className="skeleton h-8 w-2/3" />
+            </div>
+          </div>
+          <div className="skeleton mt-2 h-2 w-full" />
           <div className="skeleton h-4 w-full max-w-md" />
+          <div className="skeleton h-4 w-3/4 max-w-sm" />
+          <div className="well mt-2 h-16 rounded-[18px]" />
         </div>
       </div>
-      <div className="panel h-56 rounded-xl" />
+      <div className="panel h-56 rounded-[28px]" />
     </div>
   )
 }

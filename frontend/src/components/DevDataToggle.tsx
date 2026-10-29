@@ -9,7 +9,7 @@ export function DevDataToggle() {
       role="radiogroup"
       aria-label="Dev data"
       // Plain chrome, deliberately outside the design system; sits above the phone tab bar.
-      className="fixed bottom-[92px] left-1/2 z-[200] lg:top-[84px] lg:bottom-auto flex -translate-x-1/2 gap-0.5 rounded-full bg-neutral-300 p-0.5 font-[system-ui] text-[12px] text-neutral-800 opacity-60 hover:opacity-100"
+      className="fixed bottom-[96px] left-1/2 z-[200] flex -translate-x-1/2 gap-0.5 lg:bottom-3 lg:left-auto lg:right-3 lg:translate-x-0 rounded-full bg-neutral-300 p-0.5 font-[system-ui] text-[12px] text-neutral-800 opacity-60 hover:opacity-100"
     >
       {DEV_DATA_MODES.map((m) => (
         <button

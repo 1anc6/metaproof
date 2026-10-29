@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
 import { ReportView } from '../components/ReportView'
-import { ErrorPanel, FileName, Figure } from '../components/ui'
+import { ErrorPanel, FileName, Gauge, PageHeader, PanelTitle } from '../components/ui'
 import { ThinkingOrb, ThinkingPill } from '../components/ThinkingOrb'
 import { ReportSkeleton } from './Report'
 import { previewFor } from '../lib/preview'
@@ -96,71 +96,79 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
   const done = steps.filter((x) => x.state === 'done').length
 
   return (
-    <div className="mx-auto max-w-5xl pt-2 sm:pt-4">
-      <header className="animate-rise mb-5 sm:mb-6">
-        <h1 className="display text-[38px] leading-none sm:text-[48px]">Reading the evidence</h1>
-        <p className="mt-2 text-[15px] text-muted">Six checks run on the file, then the evidence is weighed.</p>
-      </header>
+    <div>
+      <PageHeader title="Reading the evidence" subtitle="Six checks run on the file, then the evidence is weighed." />
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
-        {/* The upload, whole, with a thin bar that fills as the checks finish. */}
-        <figure className="panel rounded-xl p-2 max-lg:order-2">
-          <div className="relative grid h-[clamp(180px,50vw,320px)] place-items-center overflow-hidden rounded-lg bg-[#161614]">
+      <div className="grid gap-4 lg:grid-cols-12">
+        {/* The upload, whole, over a blurred copy of itself. */}
+        <figure className="panel flex flex-col rounded-[28px] p-2.5 max-lg:order-2 lg:col-span-7">
+          <div className="relative grid min-h-[clamp(200px,52vw,380px)] flex-1 place-items-center overflow-hidden rounded-[20px] bg-[var(--frame-bg)]">
             {preview ? (
               <>
                 <img src={preview} alt="" aria-hidden className="absolute inset-0 size-full scale-125 object-cover opacity-50 blur-2xl" />
                 <img src={preview} alt="The image being analyzed" className="absolute inset-0 size-full object-contain" />
               </>
             ) : (
-              <ThinkingOrb size={36} className="text-white" />
+              <ThinkingOrb size={44} className="text-faint" />
             )}
           </div>
-          <div className="mx-1 mt-2 h-1 overflow-hidden rounded-full bg-line" aria-hidden>
-            <div className="h-full rounded-full bg-ink transition-[width] duration-700 ease-(--ease-out)" style={{ width: `${Math.max(3, pct)}%` }} />
-          </div>
-          <figcaption className="px-1 pt-2 pb-1 text-[12px] text-faint">Fingerprinted with SHA-256 · six checks · the file is deleted after</figcaption>
+          <figcaption className="flex min-w-0 items-center gap-2 px-2.5 pt-3 pb-1.5 text-[13px] text-faint">
+            {filename && <FileName name={filename} className="max-w-[55%] font-medium text-ink" />}
+            {filename && <span aria-hidden>·</span>}
+            <span className="truncate">Fingerprinted with SHA-256 · deleted after the checks</span>
+          </figcaption>
         </figure>
 
-        <section className="cream flex flex-col rounded-xl p-4 sm:p-5" aria-label="Progress">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <p className="eyebrow">{waiting ? 'In queue' : 'Analyzing'}</p>
-            <span className="status">
-              <span className="animate-blink size-2 rounded-full bg-ink" aria-hidden /> Active
-            </span>
+        <section className="panel flex flex-col rounded-[28px] p-5 lg:col-span-5" aria-label="Progress">
+          <PanelTitle
+            title={waiting ? 'In queue' : 'Analyzing'}
+            status={
+              <span className="chip">
+                <span className="animate-blink size-1.5 rounded-full bg-primary" aria-hidden /> Live
+              </span>
+            }
+          />
+          <div aria-live="polite">
+            <Gauge
+              value={pct / 100}
+              figure={pct}
+              unit="%"
+              caption={`${done} of ${STEPS.length} steps done`}
+              colors={['#1463f3', '#6aa5ff']}
+              label={`${pct}% done, ${done} of ${STEPS.length} steps`}
+              className="mx-auto mt-4 w-full max-w-[280px]"
+            />
           </div>
-          {filename && <FileName name={filename} className="mt-1 text-[14px] text-faint" />}
 
-          <div className="mt-4 grid grid-cols-2 gap-4" aria-live="polite">
-            <Figure label="Progress" value={pct} unit="%" size="sm" />
-            <Figure label="Steps done" value={done} unit={`/ ${STEPS.length}`} size="sm" />
-          </div>
-
-          {/* Says what is happening now; the rows below only swap their values. */}
+          {/* Says what is happening now; the rows below only change their state. */}
           <ThinkingPill
-            className="mt-4 w-full justify-start"
+            className="mt-5 w-full"
             variant={job && !waiting ? 'dots' : 'lines'}
             label={!job ? 'Connecting…' : waiting ? 'Waiting in the queue…' : `${STEPS[active].label}…`}
           />
-          <dl className="mt-3">
+          <ol className="mt-3 flex flex-col">
             {steps.map((step) => (
-              <div key={step.key} className="flex items-center gap-3 py-2 text-[15px]">
+              <li key={step.key} className="flex items-center gap-3 py-[7px] text-[14px]">
                 <span
-                  className={`grid size-6 shrink-0 place-items-center rounded-full ${
-                    step.state === 'done' ? 'bg-ink text-on-primary' : step.state === 'active' ? 'bg-raised text-ink ring-1 ring-ink' : 'bg-raised text-faint'
+                  className={`grid size-[22px] shrink-0 place-items-center rounded-full ${
+                    step.state === 'done'
+                      ? 'bg-primary text-white'
+                      : step.state === 'active'
+                        ? 'raise text-primary ring-2 ring-primary/35'
+                        : 'well text-faint'
                   }`}
                   aria-hidden
                 >
-                  {step.state === 'done' ? <Check className="animate-pop size-3.5" strokeWidth={2.5} /> : <span className="size-1.5 rounded-full bg-current" />}
+                  {step.state === 'done' ? <Check className="animate-pop size-3" strokeWidth={3} /> : <span className="size-1.5 rounded-full bg-current" />}
                 </span>
-                <dt className={step.state === 'todo' ? 'text-faint' : 'text-ink'}>{step.label}</dt>
-                <span className="leader" aria-hidden />
-                <dd className={step.state === 'todo' ? 'text-faint' : 'text-ink'}>
+                <span className={`min-w-0 flex-1 ${step.state === 'todo' ? 'text-faint' : 'text-ink'}`}>{step.label}</span>
+                <span className={`text-[13px] ${step.state === 'active' ? 'font-medium text-accent' : 'text-faint'}`}>
                   {step.state === 'done' ? 'Done' : step.state === 'active' ? 'Running' : 'Waiting'}
-                </dd>
-              </div>
+                </span>
+              </li>
             ))}
-          </dl>
-          <p className="mt-3 text-[13px] text-faint">
+          </ol>
+          <p className="mt-auto pt-3 text-[13px] text-faint">
             {job ? 'This usually takes a few seconds.' : 'Connecting to the server… it may be waking up.'}
           </p>
         </section>
