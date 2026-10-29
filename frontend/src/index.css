@@ -403,15 +403,119 @@
     transform: scale(0.97);
   }
   @media (hover: hover) {
-    .rail-item:hover {
+    .rail-item:not(.is-on):hover {
       color: var(--color-ink);
       background: var(--btn-bg);
     }
   }
   .rail-item.is-on {
     color: var(--color-ink);
-    background: var(--rail-on);
-    box-shadow: var(--rail-on-shadow);
+  }
+
+  /* The liquid-glass selection (lib/lens.ts): one lens under the chosen item of a bar or the rail.
+     At rest it is the pill; lifted, it clears into glass with a bright rim and coloured fringes at
+     its edges, the way a lens splits light, and grows and stretches as it travels. */
+  .lens {
+    position: absolute;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .lens[data-hidden='true'] {
+    opacity: 0;
+  }
+  .lens[data-axis='x'] {
+    top: 6px;
+    bottom: 6px;
+    left: 0;
+    width: var(--size, 0px);
+    transform: translateX(var(--at, 0px));
+  }
+  .lens[data-axis='y'] {
+    top: 0;
+    right: 0;
+    left: 0;
+    height: var(--size, 0px);
+    transform: translateY(var(--at, 0px));
+  }
+  .lens > span {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: var(--lens-bg);
+    box-shadow:
+      inset 0 0 0 1px transparent,
+      inset 0 1px 1px transparent,
+      inset 4px 0 6px -3px transparent,
+      inset -4px 0 6px -3px transparent,
+      var(--lens-shadow);
+    -webkit-backdrop-filter: saturate(1) brightness(1);
+    backdrop-filter: saturate(1) brightness(1);
+    transform: scale(var(--sx, 1), var(--sy, 1));
+    transition:
+      background-color 240ms ease,
+      box-shadow 240ms ease,
+      backdrop-filter 240ms ease;
+  }
+  .lens.is-lifted > span {
+    background-color: rgb(255 255 255 / 0.07);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.6),
+      inset 0 1px 1px rgb(255 255 255 / 0.95),
+      inset 4px 0 6px -3px rgb(130 210 255 / 0.65),
+      inset -4px 0 6px -3px rgb(255 140 205 / 0.6),
+      0 14px 28px -12px rgb(0 0 0 / 0.55);
+    -webkit-backdrop-filter: saturate(1.8) brightness(1.15);
+    backdrop-filter: saturate(1.8) brightness(1.15);
+  }
+  .dock-bar {
+    --lens-bg: var(--tab-pill);
+    --lens-shadow: 0 8px 18px -8px rgb(0 0 0 / 0.45);
+    /* a press and drag carries the lens, so no text selection or link preview gets in the way */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .rail {
+    --lens-bg: var(--rail-on);
+    --lens-shadow: 0 10px 22px -12px rgb(0 0 0 / 0.5);
+  }
+
+  /* The + menu (AddMenu): it grows out of the button, so its corner is the button's. */
+  .add-menu {
+    transform-origin: 100% 100%;
+  }
+  .add-menu-tint {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--color-primary);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .add-menu-items {
+    transform-origin: 100% 100%;
+  }
+  .add-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 50px;
+    padding: 0 10px;
+    border-radius: 18px;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: left;
+    color: var(--color-ink);
+    transition: background-color 150ms ease;
+  }
+  .add-menu-item:active {
+    background: var(--btn-hover);
+  }
+  @media (hover: hover) {
+    .add-menu-item:hover {
+      background: var(--btn-bg);
+    }
   }
   /* the names fade in once the rail has room for them, and out before it closes */
   .rail-label {
@@ -725,21 +829,20 @@
   .tab:active {
     transform: scale(0.96);
   }
+  /* dark on the white pill once the lens has landed under it; white while it is lifted away */
   .tab.is-on {
     color: var(--tab-on-ink);
-  }
-  .tab-pill {
-    background: var(--tab-pill);
-    box-shadow: var(--tab-pill-shadow);
-    opacity: 0;
-    transform: scale(0.88);
     transition:
-      opacity 220ms ease,
-      transform 380ms var(--ease-drawer);
+      flex-grow 380ms var(--ease-drawer),
+      color 200ms ease 120ms,
+      transform 140ms var(--ease-out);
   }
-  .tab.is-on .tab-pill {
-    opacity: 1;
-    transform: scale(1);
+  .lens-lifted .tab.is-on {
+    color: var(--color-ink);
+    transition:
+      flex-grow 380ms var(--ease-drawer),
+      color 120ms ease,
+      transform 140ms var(--ease-out);
   }
   .tab-label {
     max-width: 0;

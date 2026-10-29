@@ -1,10 +1,12 @@
-import { History, House, ImagePlus, Lightbulb, Moon, PanelLeftClose, PanelLeftOpen, Plus, Settings, Sun, X } from 'lucide-react'
+import { History, House, ImagePlus, Lightbulb, Moon, PanelLeftClose, PanelLeftOpen, Settings, Sun, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Toaster } from 'sonner'
 import { useServerStatus, type ServerState } from '../lib/hooks'
+import { useLens } from '../lib/lens'
 import { setPref, usePrefs } from '../lib/prefs'
 import { useThemeSync } from '../lib/theme'
+import { AddMenu } from './AddMenu'
 import { SummariesProvider } from './SummariesProvider'
 import { Logo, Mark, ThemeToggle } from './ui'
 
@@ -15,6 +17,13 @@ const NAV = [
   { to: '/method', label: 'Method', icon: Lightbulb },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
+
+/** The current screen's place in `items`, or -1. An analysis belongs to the history it was opened from. */
+function current(items: { to: string }[], pathname: string) {
+  return items.findIndex(({ to }) =>
+    to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`) || (to === '/history' && pathname.startsWith('/analysis/')),
+  )
+}
 
 const desktop = typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)') : null
 function useDesktop() {
@@ -171,6 +180,9 @@ export function ServerBadge({ compact = false }: { compact?: boolean }) {
  * names stay in the page while it is closed, so every icon keeps its name for screen readers.
  */
 function Rail({ theme, open }: { theme: 'light' | 'dark'; open: boolean }) {
+  const nav = useRef<HTMLElement>(null)
+  const lens = useRef<HTMLSpanElement>(null)
+  useLens(nav, lens, current(NAV, useLocation().pathname), 'y')
   const next = theme === 'dark' ? 'light' : 'dark'
   const ThemeIcon = theme === 'dark' ? Sun : Moon
   const Toggle = open ? PanelLeftClose : PanelLeftOpen
@@ -184,7 +196,10 @@ function Rail({ theme, open }: { theme: 'light' | 'dark'; open: boolean }) {
             MetaProof
           </span>
         </Link>
-        <nav aria-label="Main" className="mt-5 flex flex-col gap-2">
+        <nav ref={nav} aria-label="Main" className="relative mt-5 flex flex-col gap-2">
+          <span ref={lens} className="lens rounded-[20px]" data-axis="y" aria-hidden>
+            <span />
+          </span>
           {NAV.map((item) => (
             <RailLink key={item.to} {...item} open={open} />
           ))}
@@ -212,6 +227,7 @@ function RailLink({ to, label, icon: Icon, end, hint, open }: (typeof NAV)[numbe
     <NavLink
       to={to}
       end={end}
+      data-lens-item
       title={open ? (hint ? `${label} (${hint})` : undefined) : hint ? `${label} (${hint})` : label}
       className={({ isActive }) => `rail-item ${isActive || inHistory ? 'is-on' : ''}`}
     >
@@ -265,56 +281,100 @@ const releaseAfterTap = (e: React.MouseEvent<HTMLElement>) => {
 }
 
 /**
- * The navigation on phones and tablets, after the floating tab bar reference: a glass capsule of
- * four screens where the current one opens into a white pill with its name and the others show
- * only their icon, and beside it, floating on its own, the lime button that starts a new analysis.
+ * The navigation on phones and tablets, after the floating tab bar and iOS references: a glass
+ * capsule of four screens where the current one opens out to its name, under a lens of glass that
+ * travels between them (press and drag along the bar to carry it, as on iOS), and beside it the
+ * lime + that opens into a menu for a new analysis.
  */
 function Dock() {
   const tabs = NAV.filter((n) => n.to !== '/new')
+  const navigate = useNavigate()
+  const active = current(tabs, useLocation().pathname)
+  const bar = useRef<HTMLDivElement>(null)
+  const lensEl = useRef<HTMLSpanElement>(null)
+  const lens = useLens(bar, lensEl, active)
+  // A press lifts the lens; moving the finger carries it, and letting go opens the tab under it.
+  const press = useRef<{ id: number; x: number; carried: boolean } | null>(null)
+  const swallowClick = useRef(false)
+
   return (
     <nav
       className="no-print fixed inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2.5 pr-[max(16px,env(safe-area-inset-right))] pb-[calc(12px+env(safe-area-inset-bottom))] pl-[max(16px,env(safe-area-inset-left))] min-[400px]:gap-3 lg:hidden"
       aria-label="Main"
     >
-      <div className="glass dock-bar flex h-16 w-full max-w-[360px] min-w-0 items-center gap-1 rounded-full p-1.5">
-        {tabs.map((item) => (
-          <Tab key={item.to} {...item} />
+      <div
+        ref={bar}
+        className="glass dock-bar relative flex h-16 w-full max-w-[360px] min-w-0 touch-none items-center gap-1 rounded-full p-1.5"
+        onPointerDown={(e) => {
+          if (e.button !== 0) return
+          swallowClick.current = false
+          press.current = { id: e.pointerId, x: e.clientX, carried: false }
+          lens.lift()
+        }}
+        onPointerMove={(e) => {
+          const p = press.current
+          if (!p || p.id !== e.pointerId) return
+          if (!p.carried) {
+            if (Math.abs(e.clientX - p.x) < 8) return
+            p.carried = true
+            e.currentTarget.setPointerCapture(e.pointerId)
+          }
+          lens.follow(e.clientX)
+        }}
+        onPointerUp={(e) => {
+          const p = press.current
+          press.current = null
+          if (!p || p.id !== e.pointerId) return
+          if (!p.carried) {
+            // a tap: the link navigates; a tap on the current screen just sets the lens down
+            if (!(e.target as Element).closest?.('[data-lens-item]:not(.is-on)')) lens.home()
+            return
+          }
+          swallowClick.current = true
+          const over = lens.drop()
+          if (over >= 0 && over !== active) navigate(tabs[over].to)
+          else lens.home()
+        }}
+        onPointerCancel={() => {
+          press.current = null
+          lens.home()
+        }}
+        onClickCapture={(e) => {
+          if (!swallowClick.current) return
+          swallowClick.current = false
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+      >
+        <span ref={lensEl} className="lens rounded-full" data-axis="x" aria-hidden>
+          <span />
+        </span>
+        {tabs.map((item, i) => (
+          <Tab key={item.to} {...item} on={i === active} />
         ))}
       </div>
-      <NavLink
-        to="/new"
-        aria-label="New analysis"
-        title="New analysis (N)"
-        onClick={releaseAfterTap}
-        className="fab size-[58px] shrink-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ring)] min-[400px]:size-16"
-      >
-        <Plus className="size-7" strokeWidth={1.9} aria-hidden />
-      </NavLink>
+      <AddMenu />
     </nav>
   )
 }
 
 /**
- * One screen in the bar. The current one grows to make room for its name on a white pill; the
- * others shrink to their icon, which keeps its name for screen readers and as a tooltip. Width,
- * pill and name all move on transitions, so a quick second tap retargets mid-flight.
+ * One screen in the bar. The current one grows to make room for its name; the others shrink to
+ * their icon, which keeps its name for screen readers and as a tooltip. The lens supplies the pill.
  */
-function Tab({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
-  // An analysis belongs to the history it was opened from.
-  const inHistory = useLocation().pathname.startsWith('/analysis/') && to === '/history'
+function Tab({ to, label, icon: Icon, end, on }: (typeof NAV)[number] & { on: boolean }) {
   return (
     <NavLink
       to={to}
       end={end}
       onClick={releaseAfterTap}
       title={label}
-      className={({ isActive }) =>
-        `tab group relative flex h-full min-w-11 basis-0 items-center justify-center rounded-full outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] ${
-          isActive || inHistory ? 'is-on grow-[2.5]' : 'grow'
-        }`
-      }
+      data-lens-item
+      draggable={false}
+      className={`tab group relative flex h-full min-w-11 basis-0 items-center justify-center rounded-full outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] ${
+        on ? 'is-on grow-[2.5]' : 'grow'
+      }`}
     >
-      <span className="tab-pill absolute inset-0 rounded-full" aria-hidden />
       <span className="relative flex min-w-0 items-center">
         <Icon className="tab-icon size-[22px] shrink-0" strokeWidth={1.7} aria-hidden />
         <span className="tab-label overflow-hidden text-[14.5px] font-semibold whitespace-nowrap">{label}</span>

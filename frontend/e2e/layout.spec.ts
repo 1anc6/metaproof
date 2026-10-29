@@ -40,7 +40,7 @@ test('phones and tablets: a floating tab bar names the current screen, with New 
     await page.setViewportSize({ width, height: 844 })
     await page.goto('/')
     const nav = page.getByRole('navigation', { name: 'Main' })
-    await expect(nav.getByRole('link')).toHaveCount(5) // four screens and the + button
+    await expect(nav.getByRole('link')).toHaveCount(4) // four screens; the + is a button that opens a menu
     // only the current screen shows its name; the others keep theirs for screen readers
     const current = nav.getByRole('link', { name: 'Overview' })
     await expect(current).toHaveAttribute('aria-current', 'page')
@@ -48,7 +48,7 @@ test('phones and tablets: a floating tab bar names the current screen, with New 
     await expect(nav.getByRole('link', { name: 'Settings' })).toBeVisible()
     // the + floats to the right of the bar, and the pair sits centred with equal margins
     const bar = (await nav.locator('.dock-bar').boundingBox())!
-    const plus = (await nav.getByRole('link', { name: 'New analysis' }).boundingBox())!
+    const plus = (await nav.getByRole('button', { name: 'New analysis' }).boundingBox())!
     expect(plus.x).toBeGreaterThan(bar.x + bar.width)
     expect(Math.abs(bar.x - (width - plus.x - plus.width))).toBeLessThanOrEqual(1)
     // every tab is big enough to hit with a thumb
