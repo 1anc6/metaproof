@@ -81,6 +81,21 @@ export function useUpload(initial: UploadState = { kind: 'idle' }) {
   return { state, start, cancel, fail, clear }
 }
 
+// A file picked away from the upload page (the phone bar's + menu), left for that page to start.
+let handed: File | null = null
+
+/** Leaves a file for New analysis, which starts it when it opens. */
+export function handOver(file: File) {
+  handed = file
+}
+
+/** The file left by handOver, once. */
+export function takeHandedFile() {
+  const file = handed
+  handed = null
+  return file
+}
+
 /** The first image on the clipboard, read where the browser allows it. Throws if it may not read. */
 export async function imageFromClipboard(): Promise<File | null> {
   for (const item of await navigator.clipboard.read()) {

@@ -1,3 +1,4 @@
+import { CircleCheck, CircleHelp, PenLine, Sparkles, type LucideIcon } from 'lucide-react'
 import type { JobStatus, Signal, Strength, VerdictLabel } from './api'
 
 export interface VerdictStyle {
@@ -10,6 +11,8 @@ export interface VerdictStyle {
   color: string
   /** The brighter colour of its dot */
   dot: string
+  /** A shape for the verdict, so it never rests on colour alone */
+  icon: LucideIcon
 }
 
 export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
@@ -20,6 +23,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     text: 'text-authentic',
     color: 'var(--color-authentic)',
     dot: 'var(--color-dot-authentic)',
+    icon: CircleCheck,
   },
   edited: {
     title: 'Edited',
@@ -28,6 +32,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     text: 'text-edited',
     color: 'var(--color-edited)',
     dot: 'var(--color-dot-edited)',
+    icon: PenLine,
   },
   likely_ai_generated: {
     title: 'Likely AI-generated',
@@ -36,6 +41,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     text: 'text-ai',
     color: 'var(--color-ai)',
     dot: 'var(--color-dot-ai)',
+    icon: Sparkles,
   },
   inconclusive: {
     title: 'Inconclusive',
@@ -45,6 +51,7 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     text: 'text-neutral',
     color: 'var(--color-neutral)',
     dot: 'var(--color-dot-neutral)',
+    icon: CircleHelp,
   },
 }
 

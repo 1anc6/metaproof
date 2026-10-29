@@ -1,19 +1,9 @@
-import { CircleCheck, CircleHelp, PenLine, Sparkles, type LucideIcon } from 'lucide-react'
 import type { VerdictLabel } from '../lib/api'
 import { VERDICTS } from '../lib/verdicts'
 
-/** A shape for each verdict, so the result never rests on colour alone. */
-const ICONS: Record<VerdictLabel, LucideIcon> = {
-  likely_authentic: CircleCheck,
-  inconclusive: CircleHelp,
-  edited: PenLine,
-  likely_ai_generated: Sparkles,
-}
-
 /** The verdict's icon on a pale disc of its colour. */
 export function VerdictGlyph({ label, className = 'size-10' }: { label: VerdictLabel; className?: string }) {
-  const Icon = ICONS[label]
-  const { color, dot } = VERDICTS[label]
+  const { color, dot, icon: Icon } = VERDICTS[label]
   return (
     <span
       className={`grid shrink-0 place-items-center rounded-full ${className}`}

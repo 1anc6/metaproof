@@ -4,7 +4,7 @@ import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
 import { setPref, usePrefs } from '../lib/prefs'
 import { PENDING, SIGNALS, VERDICTS } from '../lib/verdicts'
 
-/** A viewfinder: four corner brackets around a blue point of focus. */
+/** A viewfinder: four corner brackets around a lime point of focus. */
 export function Mark({ className = 'size-6' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
@@ -367,30 +367,11 @@ export function ThemeToggle({ resolved, className = 'size-10' }: { resolved: 'li
   )
 }
 
-/** A switch shaped as a pill: white when off, pale blue with a blue word when on. */
-export function Chip({
-  icon: Icon,
-  label,
-  checked,
-  onChange,
-}: {
-  icon?: LucideIcon
-  label: string
-  checked: boolean
-  onChange: (next: boolean) => void
-}) {
+/** The reference's toggle: a lime track with a white knob when on. Named by `label`. */
+export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (next: boolean) => void; label: string }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition ${
-        checked ? 'bg-accent-soft text-accent shadow-[inset_0_0_0_1px_var(--color-highlight)]' : 'chip !h-8 !px-3 text-muted hover:text-ink'
-      }`}
-    >
-      {Icon && <Icon className="size-[15px]" strokeWidth={1.7} />}
-      {label}
+    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className="switch">
+      <span aria-hidden />
     </button>
   )
 }

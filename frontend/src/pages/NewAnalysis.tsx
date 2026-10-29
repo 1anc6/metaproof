@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useServerStatus } from '../lib/hooks'
 import { takeSharedImage } from '../lib/share'
-import { useUpload } from '../lib/upload'
+import { takeHandedFile, useUpload } from '../lib/upload'
 import { PageHeader } from '../components/ui'
 import { FileFacts } from '../components/FileFacts'
 import { UploadPanel } from '../components/UploadPanel'
@@ -30,6 +30,12 @@ export function NewAnalysis() {
       file ? start(file) : fail('The shared image could not be found. Share it again, or choose it here.'),
     )
   }, [params, setParams, start, fail])
+
+  // Picked from the phone bar's + menu: analyze it straight away.
+  useEffect(() => {
+    const file = takeHandedFile()
+    if (file) start(file)
+  }, [start])
 
   const server = useServerStatus()
 

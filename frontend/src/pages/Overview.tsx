@@ -1,78 +1,131 @@
-import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, EyeOff, Filter, MoreHorizontal, Plus, Search } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowRight, ArrowUpRight, ChevronRight, CircleCheck, Image as ImageIcon, Plus, Search, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api, type Job, type VerdictLabel } from '../lib/api'
 import { DEMO_SHA } from '../lib/checks'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { formatWhen } from '../lib/format'
 import { useHistory, type HistoryEntry } from '../lib/history'
-import { setPref, usePrefs } from '../lib/prefs'
-import { FOLDERS, tally, useHistorySummaries, type Summaries } from '../lib/summaries'
-import { removeWithUndo } from '../lib/undo'
-import { PENDING, VERDICTS } from '../lib/verdicts'
-import { Chip, FileName, Thumb } from '../components/ui'
+import { setPref, usePrefs, type Period } from '../lib/prefs'
+import { tally, useHistorySummaries, type Summaries } from '../lib/summaries'
+import { VERDICTS } from '../lib/verdicts'
+import { FileName, Switch, Thumb, VerdictDot } from '../components/ui'
 
 type Data = Summaries['data']
 
 const isFlagged = (label: VerdictLabel | null | undefined) => label === 'edited' || label === 'likely_ai_generated'
+const plural = (n: number, one: string, many = `${one}s`) => (n === 1 ? one : many)
+
+const PERIODS: { key: Period; label: string; span: string }[] = [
+  { key: 'all', label: 'All time', span: 'so far' },
+  { key: 'month', label: 'This month', span: 'this month' },
+  { key: 'week', label: 'This week', span: 'this week' },
+]
+
+const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+
+/** Midnight on this week's Monday, or on the 1st of this month; nothing for all time. */
+function periodStart(period: Period, now: Date): Date | null {
+  if (period === 'month') return new Date(now.getFullYear(), now.getMonth(), 1)
+  if (period === 'week') {
+    const monday = midnight(now)
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    return monday
+  }
+  return null
+}
 
 /**
- * The overview, in liquid glass after the activity-dashboard reference: a greeting with search, the
- * verdicts as a cluster of glass bubbles sized by count, the month's analysis days on smoked glass,
- * the share of flagged images on a dial, the latest verdict on a slider, and the recent analyses.
- * Uploading lives on its own screen; here everything is about what has been found.
+ * The overview, after the smart-home reference: the period as large words across the top (it
+ * scopes every card below), then two columns of glass. On the left, the images checked and the
+ * verdicts on a dial, where the reference has its members and thermostat; on the right, the
+ * latest verdict with the ones before it on a line, the last flagged and last authentic images,
+ * and the analyses over time as bars, where it has the weather, the doors and the energy chart.
  */
 export function Overview() {
   const history = useHistory()
   const { data, loading } = useHistorySummaries()
-  const prefs = usePrefs()
-  const t = tally(history, data)
-  const latest = history.find((e) => data[e.jobId]?.status === 'done' && data[e.jobId]?.label)
-  const recent = (prefs.onlyFlagged ? history.filter((e) => isFlagged(data[e.jobId]?.label)) : history).slice(0, 4)
+  const { period, blurPreviews: blur } = usePrefs()
+  const [now] = useState(() => new Date())
+  const entries = useMemo(() => {
+    const start = periodStart(period, now)
+    return start ? history.filter((e) => new Date(e.uploadedAt) >= start) : history
+  }, [history, period, now])
+  const t = tally(entries, data)
+  const span = PERIODS.find((p) => p.key === period)!.span
+  const done = entries.filter((e) => data[e.jobId]?.status === 'done' && data[e.jobId]?.label)
+  const firstVisit = history.length === 0
+  const example = useExample(firstVisit)
+  const waiting = loading && entries.length > 0
 
   return (
     <div>
-      <Greeting known={t.known} flagged={t.flagged} empty={history.length === 0} />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        <VerdictBubbles counts={t.counts} known={t.known} total={history.length} loading={loading && history.length > 0} className="md:col-span-12 xl:col-span-7" />
-        <AnalysisDays history={history} data={data} className="md:col-span-6 xl:col-span-5" />
-        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:col-span-6 md:flex md:flex-col xl:col-span-5">
-          <FlaggedDial flagged={t.flagged} known={t.known} />
-          <LatestVerdict entry={latest} label={latest ? data[latest.jobId].label : null} blur={prefs.blurPreviews} />
+      <h1 className="sr-only">Overview</h1>
+      <Header period={period} />
+      <div className="grid grid-cols-1 gap-4 @3xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Images entries={entries} blur={blur} span={span} firstVisit={firstVisit} />
+          <VerdictDial counts={t.counts} known={t.known} span={span} waiting={waiting} className="flex-1" />
         </div>
-        <Recent
-          entries={recent}
-          data={data}
-          loading={loading}
-          blur={prefs.blurPreviews}
-          onlyFlagged={prefs.onlyFlagged}
-          empty={history.length === 0}
-          className="md:col-span-12 xl:col-span-7"
-        />
+        <div className="flex min-w-0 flex-col gap-4">
+          <Latest done={done} data={data} span={span} waiting={waiting} example={example} now={now} />
+          <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+            <Spotlight
+              kind="flagged"
+              entry={done.find((e) => isFlagged(data[e.jobId].label))}
+              data={data}
+              blur={blur}
+              span={span}
+              example={example}
+            />
+            <Spotlight kind="authentic" entry={done.find((e) => data[e.jobId].label === 'likely_authentic')} data={data} blur={blur} span={span} />
+          </div>
+          <Activity entries={entries} data={data} period={period} now={now} className="flex-1" />
+        </div>
       </div>
     </div>
   )
 }
 
-/** "Good evening": the time of day, the finding in one line, and search beside it. */
-function Greeting({ known, flagged, empty }: { known: number; flagged: number; empty: boolean }) {
-  const [hour] = useState(() => new Date().getHours())
-  const hello = hour >= 5 && hour < 12 ? 'Good morning' : hour >= 12 && hour < 18 ? 'Good afternoon' : 'Good evening'
-  const line = empty
-    ? 'Analyze your first image to see where it came from, and whether it was changed.'
-    : known === 0
-      ? 'Your first verdict is on its way.'
-      : `${known} ${known === 1 ? 'verdict' : 'verdicts'} so far, ${flagged} flagged as edited or AI-generated.`
+/** Before anything is analyzed here, the stored example report stands in for the latest verdict. */
+function useExample(wanted: boolean) {
+  const [job, setJob] = useState<Job | null>(null)
+  useEffect(() => {
+    if (!wanted) return
+    let cancelled = false
+    api
+      .report(DEMO_SHA)
+      .then((j) => !cancelled && setJob(j))
+      .catch(() => {}) // the cards still open the example; they just show no verdict
+    return () => {
+      cancelled = true
+    }
+  }, [wanted])
+  return wanted ? job : null
+}
+
+/** The period as large words, the chosen one bright, like the reference's rooms; search beside it. */
+function Header({ period }: { period: Period }) {
   return (
-    <header className="mb-5 flex flex-col gap-4 lg:mb-7 lg:flex-row lg:items-center lg:justify-between">
-      <div className="min-w-0">
-        <h1 className="text-[28px] leading-tight font-semibold tracking-[-0.02em] sm:text-[32px]">{hello}</h1>
-        <p className="mt-1 text-[15px] text-muted">{line}</p>
+    <header className="mb-5 flex flex-col gap-4 @3xl:mb-6 @3xl:flex-row @3xl:items-center @3xl:justify-between">
+      <div role="group" aria-label="Period" className="-m-1 flex items-baseline gap-x-4 overflow-x-auto p-1 [scrollbar-width:none] @lg:gap-x-6 @5xl:gap-x-8">
+        {PERIODS.map((p) => (
+          <button
+            key={p.key}
+            type="button"
+            aria-pressed={period === p.key}
+            onClick={() => setPref('period', p.key)}
+            className={`shrink-0 rounded-lg text-[22px] leading-tight font-medium tracking-[-0.02em] whitespace-nowrap transition-colors @lg:text-[26px] @5xl:text-[28px] ${
+              period === p.key ? 'text-ink' : 'text-[var(--tab-dim)] hover:text-muted'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
       <div className="flex items-center gap-2.5">
-        <SearchPill className="min-w-0 flex-1 lg:w-[300px] lg:flex-none" />
-        <Link to="/new" className="btn-primary hidden lg:inline-flex">
+        <SearchPill className="min-w-0 flex-1 @3xl:w-[220px] @3xl:flex-none @5xl:w-[260px]" />
+        <Link to="/new" className="btn-primary max-lg:hidden">
           <Plus className="size-4" strokeWidth={2.4} /> New analysis
         </Link>
       </div>
@@ -116,630 +169,695 @@ function SearchPill({ className = '' }: { className?: string }) {
   )
 }
 
-/** Each verdict's bubble: a glass sphere in its colour, lit from the top left. The neutral one is
- *  set in the stylesheet so it can lighten on dark glass. */
-const BUBBLE: Record<VerdictLabel, { fill: string; deep: string; ink: string; glow: string }> = {
-  likely_ai_generated: { fill: '#f6735f', deep: '#e2432e', ink: '#ffffff', glow: 'rgb(238 78 56 / 0.5)' },
-  edited: { fill: '#f9d35e', deep: '#f2aa26', ink: '#3a2900', glow: 'rgb(242 170 38 / 0.5)' },
-  likely_authentic: { fill: '#68d8a2', deep: '#24a467', ink: '#04301a', glow: 'rgb(36 164 103 / 0.42)' },
-  inconclusive: { fill: 'var(--bubble-neutral)', deep: 'var(--bubble-neutral-deep)', ink: '#ffffff', glow: 'rgb(20 18 24 / 0.32)' },
+/** The images checked in the period as a row of overlapping circles, like the reference's members,
+ *  with + for a new analysis and the switch that blurs every preview. */
+function Images({ entries, blur, span, firstVisit }: { entries: HistoryEntry[]; blur: boolean; span: string; firstVisit: boolean }) {
+  const shown = entries.slice(0, 4)
+  const more = entries.length - shown.length
+  return (
+    <section aria-labelledby="images-title" className="panel rounded-[28px] p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="images-title" className="card-title">
+            Your images
+          </h2>
+          <p className="label mt-0.5">
+            {entries.length > 0
+              ? `${entries.length} ${plural(entries.length, 'image')} checked ${span}`
+              : firstVisit
+                ? 'Nothing checked yet'
+                : `Nothing checked ${span}`}
+          </p>
+        </div>
+        <Link to="/new" className="icon-btn size-10" aria-label="New analysis" title="New analysis (N)">
+          <Plus className="size-5" strokeWidth={1.7} />
+        </Link>
+      </div>
+      <div className="mt-5 flex items-center justify-between gap-4">
+        <ul className="flex min-w-0 items-center">
+          {shown.map((e, i) => (
+            <li key={e.jobId} className={i > 0 ? '-ml-2.5' : ''}>
+              <Link
+                to={`/analysis/${e.jobId}`}
+                aria-label={`Open ${e.filename}`}
+                title={e.filename}
+                className="block rounded-full shadow-[0_0_0_2px_rgb(255_255_255/0.55)] transition-transform duration-200 hover:-translate-y-0.5"
+              >
+                <Thumb sha={e.sha256} blur={blur} className="size-11 rounded-full" />
+              </Link>
+            </li>
+          ))}
+          {more > 0 && (
+            <li className="-ml-2.5">
+              <Link
+                to="/history"
+                aria-label={`${more} more in History`}
+                className="grid size-11 place-items-center rounded-full bg-[var(--knob-fill)] text-[13px] font-semibold shadow-[0_0_0_2px_rgb(255_255_255/0.55)]"
+              >
+                +{more}
+              </Link>
+            </li>
+          )}
+          {shown.length === 0 &&
+            [0, 1, 2].map((i) => (
+              <li key={i} className={`size-11 rounded-full border-[1.5px] border-dashed border-[var(--zone-edge)] ${i > 0 ? 'ml-1.5' : ''}`} aria-hidden />
+            ))}
+        </ul>
+        <label className="flex shrink-0 items-center gap-2.5 text-[13px] text-muted">
+          Blur
+          <Switch checked={blur} onChange={(v) => setPref('blurPreviews', v)} label="Blur previews" />
+        </label>
+      </div>
+    </section>
+  )
 }
 
-/** The verdicts as bubbles whose areas follow their counts, with a legend that opens History filtered. */
-function VerdictBubbles({
+const MODES: VerdictLabel[] = ['likely_ai_generated', 'edited', 'likely_authentic', 'inconclusive']
+
+/**
+ * The verdicts on a dial, after the reference's thermostat: the share of the period's verdicts
+ * that landed on one outcome, its arc in that outcome's colour, and a row of round buttons below
+ * (the reference's modes) to choose which outcome the dial shows.
+ */
+function VerdictDial({
   counts,
   known,
-  total,
-  loading,
+  span,
+  waiting,
   className = '',
 }: {
   counts: Record<VerdictLabel, number>
   known: number
-  total: number
-  loading: boolean
+  span: string
+  waiting: boolean
   className?: string
 }) {
+  const [mode, setMode] = useState<VerdictLabel>('likely_ai_generated')
+  const v = VERDICTS[mode]
+  const count = counts[mode]
+  const share = known ? count / known : 0
+  const pct = Math.round(share * 100)
   return (
-    <section aria-label="Your analyses" className={`panel flex flex-col rounded-[30px] p-5 sm:p-6 ${className}`}>
-      <div className="flex items-start justify-between gap-4">
+    <section aria-labelledby="dial-title" className={`panel flex flex-col rounded-[28px] p-5 sm:p-6 ${className}`}>
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[17px] font-semibold tracking-[-0.01em]">What your images showed</h2>
-          <p className="label mt-0.5">
-            {total === 0
-              ? 'Nothing analyzed on this device yet'
-              : `${known} ${known === 1 ? 'verdict' : 'verdicts'} from ${total} ${total === 1 ? 'analysis' : 'analyses'} on this device`}
-          </p>
+          <h2 id="dial-title" className="card-title">
+            Verdicts
+          </h2>
+          <p className="label mt-0.5">{waiting ? 'Loading verdicts…' : known ? `${known} ${plural(known, 'verdict')} ${span}` : `No verdicts ${span}`}</p>
         </div>
-        <Link to="/history" className="icon-btn size-9 rounded-[12px]" aria-label="Open history">
-          <ArrowUpRight className="size-4" strokeWidth={1.8} />
+        <Link to={`/history?filter=${mode}`} className="icon-btn size-10" aria-label={`Open ${v.short} in History`} title={`${v.short} in History`}>
+          <ArrowUpRight className="size-[18px]" strokeWidth={1.7} />
         </Link>
       </div>
 
-      <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:grid-cols-[minmax(0,210px)_minmax(0,1fr)] sm:items-center">
-        <ul className="grid grid-cols-2 gap-1 max-sm:order-2 sm:grid-cols-1">
-          {FOLDERS.map((label) => (
-            <li key={label}>
-              <Link to={`/history?filter=${label}`} className="flex items-center gap-2.5 rounded-[14px] px-2 py-2 transition hover:bg-[var(--row-bg)] sm:gap-3 sm:px-2.5">
-                <span
-                  className="h-2.5 w-5 shrink-0 rounded-full shadow-[inset_0_1px_0_rgb(255_255_255/0.5)] sm:w-7"
-                  style={{ background: `linear-gradient(90deg, ${BUBBLE[label].fill}, ${BUBBLE[label].deep})` }}
-                  aria-hidden
-                />
-                <span className="min-w-0 flex-1 truncate text-[13.5px] text-muted">{VERDICTS[label].short}</span>
-                <span className="text-[14px] font-semibold tabular-nums">{loading ? '–' : counts[label]}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <Bubbles counts={counts} empty={total === 0} />
+      <div className="flex flex-1 items-center justify-center py-6 @5xl:py-8">
+        <Dial
+          share={share}
+          color={v.dot}
+          figure={known && !waiting ? String(pct) : '–'}
+          name={v.short}
+          detail={known && !waiting ? `${count} of ${known}` : ''}
+          label={known ? `${pct}% ${v.short}: ${count} of ${known} ${plural(known, 'verdict')} ${span}` : `No verdicts ${span}`}
+        />
+      </div>
+
+      <p className="label mb-3">Show on the dial</p>
+      <div role="group" aria-label="Verdict on the dial" className="flex items-start justify-between gap-2">
+        {MODES.map((m) => {
+          const { short, icon: Icon } = VERDICTS[m]
+          const on = m === mode
+          return (
+            <button key={m} type="button" aria-pressed={on} onClick={() => setMode(m)} className="group flex min-w-0 flex-col items-center gap-2 rounded-[18px] outline-offset-4">
+              <span
+                className={`grid size-[52px] place-items-center rounded-full transition duration-200 group-active:scale-95 ${
+                  on ? 'bg-white text-on-light shadow-[0_10px_22px_-12px_rgb(0_0_0/0.6)]' : 'bg-[var(--btn-bg)] text-ink shadow-[var(--btn-edge)] group-hover:bg-[var(--btn-hover)]'
+                }`}
+              >
+                <Icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
+              </span>
+              <span className="flex flex-col items-center leading-tight">
+                <span className={`text-[12.5px] font-medium whitespace-nowrap ${on ? 'text-ink' : 'text-muted'}`}>{short}</span>
+                <span className="mt-0.5 text-[12px] text-faint tabular-nums">{waiting ? '–' : counts[m]}</span>
+              </span>
+            </button>
+          )
+        })}
       </div>
     </section>
   )
 }
 
-type Placed = { label: VerdictLabel; count: number; x: number; y: number; r: number }
-
-// Where the smaller bubbles sit around the largest, in degrees with y pointing down, and how far
-// they overlap it: the second to its left, the third above that, the fourth below on the right.
-const ANGLE = [0, 160, 218, 32]
-const NEAR = [0, 0.78, 0.84, 0.86]
-
-/** Lays the bubbles out around the largest, then scales and centres the cluster in a w × h box. */
-function cluster(items: { label: VerdictLabel; count: number }[], w: number, h: number): Placed[] {
-  const max = Math.max(...items.map((i) => i.count))
-  const sized = [...items].sort((a, b) => b.count - a.count).map((i) => ({ ...i, r: 100 * Math.max(0.42, Math.sqrt(i.count / max)) }))
-  const pts = sized.map((b, i) => {
-    if (i === 0) return { ...b, x: 0, y: 0 }
-    const a = (ANGLE[i] * Math.PI) / 180
-    const d = (sized[0].r + b.r) * NEAR[i]
-    return { ...b, x: d * Math.cos(a), y: d * Math.sin(a) }
-  })
-  const minX = Math.min(...pts.map((p) => p.x - p.r))
-  const maxX = Math.max(...pts.map((p) => p.x + p.r))
-  const minY = Math.min(...pts.map((p) => p.y - p.r))
-  const maxY = Math.max(...pts.map((p) => p.y + p.r))
-  const pad = 14
-  const s = Math.min((w - 2 * pad) / (maxX - minX), (h - 2 * pad) / (maxY - minY))
-  const ox = (w - (maxX - minX) * s) / 2 - minX * s
-  const oy = (h - (maxY - minY) * s) / 2 - minY * s
-  return pts.map((p) => ({ ...p, x: p.x * s + ox, y: p.y * s + oy, r: p.r * s }))
-}
-
-/** The outline cluster shown before there is anything to count. */
-const GHOST: { label: VerdictLabel; count: number }[] = [
-  { label: 'inconclusive', count: 5 },
-  { label: 'likely_ai_generated', count: 2 },
-  { label: 'edited', count: 1 },
-]
-
-function Bubbles({ counts, empty }: { counts: Record<VerdictLabel, number>; empty: boolean }) {
-  const box = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
-  useEffect(() => {
-    const el = box.current
-    if (!el) return
-    const observer = new ResizeObserver(([entry]) => setSize({ w: entry.contentRect.width, h: entry.contentRect.height }))
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  const items = FOLDERS.map((label) => ({ label, count: counts[label] })).filter((i) => i.count > 0)
-  const ghost = items.length === 0
-  const placed = size ? cluster(ghost ? GHOST : items, size.w, size.h) : []
-
+/** A ring with ticks, the share drawn as an arc from the top clockwise, and a knob where it ends. */
+function Dial({ share, color, figure, name, detail, label }: { share: number; color: string; figure: string; name: string; detail: string; label: string }) {
+  const C = 120
+  const R = 100
   return (
-    <div ref={box} className="relative h-[220px] sm:h-full sm:min-h-[250px]" aria-hidden>
-      {placed.map((b, i) =>
-        ghost ? (
-          <div
-            key={b.label}
-            className="absolute grid place-items-center rounded-full border-[1.5px] border-dashed border-[var(--zone-edge)] bg-[var(--row-bg)] text-center"
-            style={{ left: b.x - b.r, top: b.y - b.r, width: b.r * 2, height: b.r * 2 }}
-          >
-            {i === 0 && <span className="px-4 text-[13px] leading-snug text-faint">{empty ? 'Your verdicts will gather here' : 'Waiting for verdicts'}</span>}
-          </div>
-        ) : (
-          <div
-            key={b.label}
-            title={`${VERDICTS[b.label].short}: ${b.count}`}
-            className="absolute grid place-items-center rounded-full text-center"
-            style={{
-              left: b.x - b.r,
-              top: b.y - b.r,
-              width: b.r * 2,
-              height: b.r * 2,
-              zIndex: i + 1,
-              color: BUBBLE[b.label].ink,
-              background: `radial-gradient(circle at 34% 26%, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0) 40%), radial-gradient(circle at 50% 62%, ${BUBBLE[b.label].fill} 0%, ${BUBBLE[b.label].deep} 100%)`,
-              boxShadow: `inset 0 -10px 24px rgb(0 0 0 / 0.12), inset 0 2px 3px rgb(255 255 255 / 0.6), 0 24px 44px -16px ${BUBBLE[b.label].glow}`,
-              opacity: i === 0 ? 1 : 0.93,
-            }}
-          >
-            <span>
-              <span className="block leading-none font-semibold tabular-nums" style={{ fontSize: Math.max(15, Math.min(34, b.r * 0.4)) }}>
-                {b.count}
-              </span>
-              {b.r >= 46 && <span className="mt-1 block text-[12px] font-medium opacity-80">{VERDICTS[b.label].short}</span>}
-            </span>
-          </div>
-        ),
-      )}
+    <div className="relative aspect-square w-full max-w-[240px] @md:max-w-[300px] @5xl:max-w-[372px]" role="img" aria-label={label}>
+      <svg viewBox="0 0 240 240" className="size-full overflow-visible" aria-hidden>
+        <circle cx={C} cy={C} r={114} fill="rgb(255 255 255 / 0.035)" />
+        <circle cx={C} cy={C} r={R} fill="none" stroke="var(--track-bg)" strokeWidth={16} />
+        {Array.from({ length: 60 }, (_, i) => {
+          const a = ((i * 6 - 90) * Math.PI) / 180
+          const inner = i % 5 === 0 ? 72 : 75
+          return (
+            <line
+              key={i}
+              x1={C + inner * Math.cos(a)}
+              y1={C + inner * Math.sin(a)}
+              x2={C + 81 * Math.cos(a)}
+              y2={C + 81 * Math.sin(a)}
+              stroke="rgb(255 255 255 / 0.32)"
+              strokeWidth={1.4}
+              strokeLinecap="round"
+            />
+          )
+        })}
+        <g transform={`rotate(-90 ${C} ${C})`}>
+          <circle
+            cx={C}
+            cy={C}
+            r={R}
+            fill="none"
+            stroke={color}
+            strokeWidth={8}
+            strokeLinecap="round"
+            pathLength={1}
+            strokeDasharray={`${share} 1`}
+            className="dial-arc animate-draw"
+            style={{ strokeDashoffset: 0, opacity: share > 0 ? 1 : 0 }}
+          />
+        </g>
+        <g className="dial-knob" style={{ transform: `rotate(${share * 360}deg)` }}>
+          <circle cx={C} cy={C - R} r={11} fill="var(--knob-fill)" stroke={color} strokeWidth={4} />
+        </g>
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center" aria-hidden>
+        <span>
+          <span className="block text-[54px] leading-none font-normal tracking-[-0.045em]">
+            {figure}
+            {figure !== '–' && <span className="ml-0.5 align-top text-[24px] text-faint">%</span>}
+          </span>
+          <span className="mt-2 block text-[14px] text-muted">{name}</span>
+          {detail && <span className="mt-0.5 block text-[12.5px] text-faint tabular-nums">{detail}</span>}
+        </span>
+      </div>
     </div>
   )
 }
 
-const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1)
-
-// Monday first, named in the reader's language (1 January 2024 was a Monday).
-const WEEKDAYS = Array.from({ length: 7 }, (_, i) => {
-  const d = new Date(2024, 0, 1 + i)
-  return { short: d.toLocaleDateString(undefined, { weekday: 'narrow' }), long: d.toLocaleDateString(undefined, { weekday: 'long' }) }
-})
+/** "14:05", "Yesterday", "Tue" or "12 Oct": when, in as few characters as will do. */
+function shortWhen(iso: string, now: Date) {
+  const d = new Date(iso)
+  const days = Math.round((midnight(now).getTime() - midnight(d).getTime()) / 86_400_000)
+  if (days === 0) return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return d.toLocaleDateString(undefined, { weekday: 'short' })
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+}
 
 /**
- * The month's analysis days on smoked glass, like the reference's training calendar: a white day had
- * analyses, a coral day had at least one flagged image, and today wears a yellow ring.
+ * The latest verdict in large type, like the reference's temperature, with the file and when it
+ * was analyzed under it; below, the last few verdicts as points on a line (higher is closer to
+ * AI-generated) over a row naming each, the way the reference forecasts the next hours.
  */
-function AnalysisDays({ history, data, className = '' }: { history: HistoryEntry[]; data: Data; className?: string }) {
-  const [today] = useState(() => new Date())
-  const thisMonth = startOfMonth(today)
-  const [month, setMonth] = useState(thisMonth)
-
-  const days = useMemo(() => {
-    const map = new Map<string, { count: number; flagged: number }>()
-    for (const e of history) {
-      const key = dayKey(new Date(e.uploadedAt))
-      const day = map.get(key) ?? { count: 0, flagged: 0 }
-      day.count += 1
-      if (isFlagged(data[e.jobId]?.label)) day.flagged += 1
-      map.set(key, day)
-    }
-    return map
-  }, [history, data])
-
-  // Back as far as the oldest analysis kept here (the list is newest first).
-  const oldest = history.length ? startOfMonth(new Date(history[history.length - 1].uploadedAt)) : thisMonth
-  const canBack = month > oldest
-  const canForward = month < thisMonth
-  const step = (by: number) => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + by, 1))
-
-  const lead = (month.getDay() + 6) % 7
-  const length = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
-  const cells: (number | null)[] = [...Array<null>(lead).fill(null), ...Array.from({ length }, (_, i) => i + 1)]
-  while (cells.length % 7) cells.push(null)
-  const weeks = Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7))
-
-  let analyses = 0
-  let active = 0
-  for (let d = 1; d <= length; d++) {
-    const day = days.get(dayKey(new Date(month.getFullYear(), month.getMonth(), d)))
-    if (day) {
-      analyses += day.count
-      active += 1
-    }
+function Latest({ done, data, span, waiting, example, now }: { done: HistoryEntry[]; data: Data; span: string; waiting: boolean; example: Job | null; now: Date }) {
+  const latest = done[0]
+  if (!latest) {
+    const v = example?.verdict ? VERDICTS[example.verdict.label] : null
+    return (
+      <section aria-labelledby="latest-title" className="panel @container flex flex-col rounded-[28px] p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="latest-title" className="label">
+              {example ? 'Example report' : 'Latest analysis'}
+            </h2>
+            <p className="mt-1.5 text-[38px] leading-none font-normal tracking-[-0.035em] @lg:text-[48px]">
+              {waiting ? <span className="skeleton block h-10 w-48" /> : example ? (v?.short ?? 'Example') : `Nothing ${span}`}
+            </p>
+            <p className="mt-2.5 text-[13.5px] text-muted">
+              {example ? 'A FLUX image the detector never saw' : waiting ? 'Loading verdicts…' : 'Analyze an image to see its verdict here.'}
+            </p>
+          </div>
+          <Link to={example ? DEMO_REPORT_PATH : '/new'} className="btn-ghost btn-sm shrink-0 max-[420px]:hidden">
+            {example ? 'Open example' : 'Analyze'} <ArrowUpRight className="size-4" strokeWidth={1.8} />
+          </Link>
+        </div>
+        <div className="mt-6 flex h-[76px] items-center justify-center rounded-[18px] border-[1.5px] border-dashed border-[var(--zone-edge)] px-4 text-center text-[13px] text-faint">
+          Your verdicts will line up here, newest on the right.
+        </div>
+      </section>
+    )
   }
-  const name = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
+  const label = data[latest.jobId].label!
+  const trail = done.slice(0, 5).reverse()
   return (
-    <section className={`smoke flex flex-col rounded-[30px] p-5 sm:p-6 ${className}`} aria-labelledby="days-title">
-      <div className="relative flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-[10.5rem] flex-1">
-          <h2 id="days-title" className="text-[17px] font-semibold tracking-[-0.01em]">
-            Your analysis days
+    <section aria-labelledby="latest-title" className="panel @container flex flex-col overflow-hidden rounded-[28px] p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="latest-title" className="label">
+            Latest analysis
           </h2>
-          <p className="mt-0.5 text-[13px] text-white/60">
-            {analyses === 0 ? 'Nothing analyzed this month' : `${analyses} ${analyses === 1 ? 'analysis' : 'analyses'} on ${active} ${active === 1 ? 'day' : 'days'}`}
+          <p className="mt-1.5 flex items-center gap-3 text-[38px] leading-none font-normal tracking-[-0.035em] @lg:text-[48px]">
+            <VerdictDot label={label} className="size-3 @lg:size-3.5" />
+            {VERDICTS[label].short}
+          </p>
+          <p className="mt-2.5 flex min-w-0 items-center gap-1.5 text-[13.5px] text-muted">
+            <ImageIcon className="size-4 shrink-0" strokeWidth={1.6} aria-hidden />
+            <FileName name={latest.filename} />
+            <span aria-hidden>·</span>
+            <span className="shrink-0">{formatWhen(latest.uploadedAt)}</span>
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={() => step(-1)}
-            disabled={!canBack}
-            aria-label="Previous month"
-            className="grid size-8 place-items-center rounded-full bg-white/8 transition hover:bg-white/15 disabled:opacity-30"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <span className="min-w-[7.5rem] text-center text-[13px] font-medium" aria-live="polite">
-            {name}
-          </span>
-          <button
-            type="button"
-            onClick={() => step(1)}
-            disabled={!canForward}
-            aria-label="Next month"
-            className="grid size-8 place-items-center rounded-full bg-white/8 transition hover:bg-white/15 disabled:opacity-30"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
-      </div>
-
-      <table className="relative mt-4 w-full table-fixed border-separate border-spacing-y-1 text-center">
-        <caption className="sr-only">Days with analyses in {name}</caption>
-        <thead>
-          <tr>
-            {WEEKDAYS.map((w, i) => (
-              <th key={i} scope="col" abbr={w.long} className="pb-1.5 text-[12px] font-medium text-white/45">
-                {w.short}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {weeks.map((week, i) => (
-            <tr key={i}>
-              {week.map((d, j) => {
-                if (!d) return <td key={j} />
-                const date = new Date(month.getFullYear(), month.getMonth(), d)
-                const day = days.get(dayKey(date))
-                const isToday = dayKey(date) === dayKey(today)
-                const words = day ? `${day.count} ${day.count === 1 ? 'analysis' : 'analyses'}${day.flagged ? `, ${day.flagged} flagged` : ''}` : ''
-                return (
-                  <td key={j}>
-                    <span
-                      title={words || undefined}
-                      className={`mx-auto grid size-8 place-items-center rounded-full text-[13px] tabular-nums sm:size-9 ${
-                        day?.flagged
-                          ? 'bg-[#f4644e] font-semibold text-white shadow-[0_8px_18px_-8px_rgb(244_100_78/0.9),inset_0_1px_0_rgb(255_255_255/0.35)]'
-                          : day
-                            ? 'bg-white/90 font-semibold text-[#17161a] shadow-[inset_0_-2px_4px_rgb(0_0_0/0.08)]'
-                            : date > today
-                              ? 'text-white/30'
-                              : 'text-white/75'
-                      } ${isToday ? 'outline-2 outline-offset-2 outline-[#f7c948]' : ''}`}
-                    >
-                      {d}
-                      {(words || isToday) && <span className="sr-only">{[isToday && 'today', words].filter(Boolean).join(': ')}</span>}
-                    </span>
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <ul className="relative mt-auto flex flex-wrap gap-x-4 gap-y-1.5 pt-3 text-[12px] text-white/65">
-        <li className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full outline-2 outline-[#f7c948]" aria-hidden /> Today
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-white/90" aria-hidden /> Analyzed
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-[#f4644e]" aria-hidden /> Flagged
-        </li>
-      </ul>
-    </section>
-  )
-}
-
-/** The share of verdicts that were flagged, on a ticked dial like the reference's step goal. */
-function FlaggedDial({ flagged, known }: { flagged: number; known: number }) {
-  const share = known ? flagged / known : 0
-  const pct = Math.round(share * 100)
-  // the tag sits where the arc ends, starting from the top and running clockwise
-  const angle = ((-90 + share * 360) * Math.PI) / 180
-  const tag = { left: 66 + 50 * Math.cos(angle), top: 66 + 50 * Math.sin(angle) }
-  return (
-    <section className="panel flex flex-1 items-center gap-3 rounded-[28px] p-5" aria-labelledby="flagged-title">
-      <div className="flex min-w-0 flex-1 flex-col self-stretch">
-        <h2 id="flagged-title" className="card-title">
-          Flagged images
-        </h2>
-        <p className="label mt-0.5">Edited or likely AI-generated</p>
-        <Link to="/history?filter=flagged" className="group mt-auto inline-flex items-center gap-2 pt-5 text-[14px] font-medium">
-          See flagged
-          <span className="orb-solid size-7 transition-transform group-hover:translate-x-0.5">
-            <ArrowRight className="size-3.5" strokeWidth={2.2} />
-          </span>
+        <Link to={`/analysis/${latest.jobId}`} className="btn-ghost btn-sm shrink-0 max-[420px]:hidden">
+          Open report <ArrowUpRight className="size-4" strokeWidth={1.8} />
         </Link>
       </div>
-      <div className="relative size-[132px] shrink-0" role="img" aria-label={known ? `${pct}% of verdicts flagged, ${flagged} of ${known}` : 'No verdicts yet'}>
-        <svg viewBox="0 0 132 132" className="size-full -rotate-90" aria-hidden>
-          <defs>
-            <linearGradient id="dial-arc" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#f7c948" />
-              <stop offset="1" stopColor="#f4644e" />
-            </linearGradient>
-          </defs>
-          {Array.from({ length: 60 }, (_, i) => {
-            const a = (i * 6 * Math.PI) / 180
-            return (
-              <line
-                key={i}
-                x1={66 + 59 * Math.cos(a)}
-                y1={66 + 59 * Math.sin(a)}
-                x2={66 + 64 * Math.cos(a)}
-                y2={66 + 64 * Math.sin(a)}
-                stroke="var(--color-line-strong)"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-              />
-            )
-          })}
-          <circle cx="66" cy="66" r="50" fill="none" stroke="var(--track-bg)" strokeWidth="9" />
-          {share > 0 && (
-            <circle
-              cx="66"
-              cy="66"
-              r="50"
-              fill="none"
-              stroke="url(#dial-arc)"
-              strokeWidth="9"
-              strokeLinecap="round"
-              pathLength={1}
-              strokeDasharray={`${share} 1`}
-              className="animate-draw"
-              style={{ strokeDashoffset: 0 }}
-            />
-          )}
-        </svg>
-        <div className="absolute inset-0 grid place-items-center text-center" aria-hidden>
-          <span>
-            <span className="block text-[11.5px] text-faint">Flagged</span>
-            <span className="block text-[26px] leading-none font-semibold tabular-nums">
-              {known ? pct : '–'}
-              {known > 0 && <span className="text-[14px] font-medium text-faint">%</span>}
-            </span>
-          </span>
-        </div>
-        {known > 0 && (
-          <span className="raise absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap tabular-nums" style={tag} aria-hidden>
-            {flagged} of {known}
-          </span>
-        )}
-      </div>
+      <Trail items={trail} data={data} now={now} />
     </section>
   )
 }
 
-// Where each verdict sits on the slider: the middle of its quarter of the scale.
-const AT: Record<VerdictLabel, number> = { likely_authentic: 12.5, inconclusive: 37.5, edited: 62.5, likely_ai_generated: 87.5 }
+// Where each verdict sits on the line, from the top: AI-generated highest, authentic lowest.
+const LEVEL: Record<VerdictLabel, number> = { likely_ai_generated: 0.14, edited: 0.38, inconclusive: 0.62, likely_authentic: 0.86 }
+const TRAIL_H = 76
 
-/**
- * The latest verdict on a slider from authentic to AI-generated, like the reference's plan bar.
- * Before anything is analyzed here, the stored example report stands in, and says so.
- */
-function LatestVerdict({ entry, label, blur }: { entry?: HistoryEntry; label: VerdictLabel | null; blur: boolean }) {
-  const [example, setExample] = useState<Job | null>(null)
-  useEffect(() => {
-    if (entry) return
-    let cancelled = false
-    api
-      .report(DEMO_SHA)
-      .then((j) => !cancelled && setExample(j))
-      .catch(() => {}) // the card still opens the example; it just shows no verdict
-    return () => {
-      cancelled = true
+/** A smooth path through the points that never overshoots them (monotone cubic). */
+function smoothPath(pts: { x: number; y: number }[]) {
+  const n = pts.length
+  const slope = pts.slice(0, -1).map((p, i) => (pts[i + 1].y - p.y) / (pts[i + 1].x - p.x))
+  const tangent = pts.map((_, i) => (i === 0 ? slope[0] : i === n - 1 ? slope[n - 2] : slope[i - 1] * slope[i] <= 0 ? 0 : (slope[i - 1] + slope[i]) / 2))
+  for (let i = 0; i < n - 1; i++) {
+    if (slope[i] === 0) {
+      tangent[i] = 0
+      tangent[i + 1] = 0
+      continue
     }
-  }, [entry])
-  const shown = entry ? label : (example?.verdict?.label ?? null)
-  const v = shown ? VERDICTS[shown] : null
-  const at = shown ? AT[shown] : null
+    const a = tangent[i] / slope[i]
+    const b = tangent[i + 1] / slope[i]
+    if (a * a + b * b > 9) {
+      const k = 3 / Math.hypot(a, b)
+      tangent[i] = k * a * slope[i]
+      tangent[i + 1] = k * b * slope[i]
+    }
+  }
+  let d = `M${pts[0].x},${pts[0].y}`
+  for (let i = 0; i < n - 1; i++) {
+    const h = (pts[i + 1].x - pts[i].x) / 3
+    d += ` C${pts[i].x + h},${pts[i].y + h * tangent[i]} ${pts[i + 1].x - h},${pts[i + 1].y - h * tangent[i + 1]} ${pts[i + 1].x},${pts[i + 1].y}`
+  }
+  return d
+}
+
+function Trail({ items, data, now }: { items: HistoryEntry[]; data: Data; now: Date }) {
+  const n = items.length
+  const pts = items.map((e, i) => ({ x: ((i + 0.5) / n) * 100, y: LEVEL[data[e.jobId].label!] * TRAIL_H }))
+  // run the line on past the first and last points to the card's edges, as the reference does
+  const path = smoothPath([{ x: -12, y: pts[0].y }, ...pts, { x: 112, y: pts[n - 1].y }])
   return (
-    <Link
-      to={entry ? `/analysis/${entry.jobId}` : DEMO_REPORT_PATH}
-      aria-label={`${entry ? 'Latest analysis' : 'Example report'}${v ? `: ${v.title}` : ''}. Open the report`}
-      className="panel group flex flex-1 flex-col rounded-[28px] p-5"
-    >
-      <span className="flex items-start gap-3">
-        <Thumb sha={entry?.sha256 ?? DEMO_SHA} blur={blur && !!entry} className="size-11 shrink-0 rounded-[14px]" />
-        <span className="min-w-0 flex-1">
-          <span className="card-title block">{entry ? 'Latest analysis' : 'Example report'}</span>
-          <span className="label mt-0.5 flex min-w-0 gap-1">
-            {entry ? (
-              <>
-                <FileName name={entry.filename} />
-                <span aria-hidden>·</span>
-                <span className="shrink-0">{formatWhen(entry.uploadedAt)}</span>
-              </>
-            ) : (
-              <span className="truncate">A FLUX image the detector never saw</span>
-            )}
-          </span>
-        </span>
-        <span className="shrink-0 text-right">
-          <span className="block text-[19px] leading-none font-semibold tracking-[-0.01em]" style={{ color: v?.color }}>
-            {v?.short ?? '–'}
-          </span>
-          <span className="label mt-1 block">Verdict</span>
-        </span>
-      </span>
-      <span className="mt-auto block pt-10" aria-hidden>
-        <span className="relative block h-2.5">
-          {/* the scale: dotted where the verdict has not reached, solid up to it */}
-          <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,var(--color-line-strong)_1.3px,transparent_1.7px)] bg-[length:9px_100%] bg-repeat-x" />
-          {at !== null && v && (
-            <>
-              <span className="animate-grow absolute inset-y-0 left-0 origin-left rounded-full bg-ink" style={{ width: `${at}%` }} />
-              <span className="absolute top-1/2 size-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-ink bg-[var(--raise-bg)]" style={{ left: `${at}%` }} />
-              <span className="absolute -top-9 -translate-x-1/2 rounded-full bg-ink px-2.5 py-1 text-[11.5px] font-semibold whitespace-nowrap text-canvas" style={{ left: `${at}%` }}>
-                {v.short}
-              </span>
-            </>
-          )}
-        </span>
-        <span className="mt-2.5 flex justify-between text-[12.5px] font-medium text-muted">
-          <span>Authentic</span>
-          <span>AI-generated</span>
-        </span>
-      </span>
-    </Link>
+    <div className="mt-5">
+      <p className="label">
+        {n === 1 ? 'Your first verdict' : `Your last ${n} verdicts`}, higher is closer to AI-generated
+      </p>
+      <div className="relative mt-2" style={{ height: TRAIL_H }} aria-hidden>
+        <svg viewBox={`0 0 100 ${TRAIL_H}`} preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible">
+          <path d={path} fill="none" stroke="rgb(255 255 255 / 0.8)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {pts.map((p, i) => {
+          const last = i === n - 1
+          const dot = VERDICTS[data[items[i].jobId].label!].dot
+          return (
+            <span
+              key={items[i].jobId}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${last ? 'size-4 bg-white' : 'size-2.5'}`}
+              style={{
+                left: `${p.x}%`,
+                top: p.y,
+                background: last ? undefined : dot,
+                boxShadow: last ? `inset 0 0 0 4px ${dot}, 0 0 0 2px var(--knob-fill)` : '0 0 0 2px var(--knob-fill)',
+              }}
+            />
+          )
+        })}
+      </div>
+      <ol className="mt-3 grid" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+        {items.map((e, i) => {
+          const { short, dot, icon: Icon } = VERDICTS[data[e.jobId].label!]
+          return (
+            <li key={e.jobId} className="min-w-0">
+              <Link to={`/analysis/${e.jobId}`} className="flex flex-col items-center gap-1 rounded-[14px] px-1 py-1.5 text-center transition-colors hover:bg-[var(--row-bg)]">
+                <span className="flex max-w-full items-center gap-1.5">
+                  <Icon className="size-4 shrink-0" style={{ color: dot }} strokeWidth={1.9} aria-hidden />
+                  <span className="sr-only">{e.filename}: </span>
+                  <span className={`truncate text-[13px] font-medium @max-[40rem]:sr-only ${i === n - 1 ? 'text-ink' : 'text-muted'}`}>{short}</span>
+                </span>
+                <span className="text-[12px] whitespace-nowrap text-faint">{shortWhen(e.uploadedAt, now)}</span>
+              </Link>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
   )
 }
 
-/** Four bars, one per place on the scale, with the verdict's own lit in its colour. */
-function Segments({ label, busy }: { label: VerdictLabel | null; busy: boolean }) {
+/**
+ * The last flagged and the last authentic image, after the reference's door cards: the state in
+ * small type, the name in two lines, the picture on the right, and a slide-to-open pill.
+ */
+function Spotlight({
+  kind,
+  entry,
+  data,
+  blur,
+  span,
+  example = null,
+}: {
+  kind: 'flagged' | 'authentic'
+  entry?: HistoryEntry
+  data: Data
+  blur: boolean
+  span: string
+  example?: Job | null
+}) {
+  const words: [string, string] = kind === 'flagged' ? ['Last', 'flagged'] : ['Last', 'authentic']
+  if (entry) {
+    const label = data[entry.jobId].label!
+    const v = VERDICTS[label]
+    return (
+      <SpotCard
+        to={`/analysis/${entry.jobId}`}
+        name={`${words.join(' ')}: ${v.short}, ${entry.filename}. Open the report`}
+        status={
+          <>
+            <VerdictDot label={label} /> {v.short}
+          </>
+        }
+        words={words}
+        picture={<Thumb sha={entry.sha256} blur={blur} className="size-full" />}
+      />
+    )
+  }
+  if (kind === 'flagged' && example) {
+    const label = example.verdict?.label
+    return (
+      <SpotCard
+        to={DEMO_REPORT_PATH}
+        name={`Example report${label ? `: ${VERDICTS[label].short}` : ''}. Open it`}
+        status={label ? <><VerdictDot label={label} /> {VERDICTS[label].short}</> : 'An example'}
+        words={['Example', 'report']}
+        picture={<Thumb sha={DEMO_SHA} className="size-full" />}
+      />
+    )
+  }
+  if (kind === 'authentic') {
+    return (
+      <SpotCard
+        to="/method"
+        name={`${words.join(' ')}: none ${span}. How verdicts are reached`}
+        status={`None ${span}`}
+        words={words}
+        note="Authentic needs proof, such as Content Credentials."
+        picture={<Placeholder icon={CircleCheck} />}
+      />
+    )
+  }
   return (
-    <span className="flex shrink-0 gap-[3px]" aria-hidden>
-      {(['likely_authentic', 'inconclusive', 'edited', 'likely_ai_generated'] as const).map((key) => (
-        <span
-          key={key}
-          className={`h-4 w-2.5 rounded-[3px] ${busy ? 'animate-pulse' : ''}`}
-          style={{ background: key === label ? VERDICTS[key].dot : 'var(--track-bg)' }}
-        />
-      ))}
+    <div className="panel relative flex min-h-[200px] overflow-hidden rounded-[28px] p-5">
+      <span className="relative flex min-w-0 flex-1 flex-col pr-[46%]">
+        <span className="text-[12.5px] text-muted">Nothing flagged {span}</span>
+        <span className="mt-1.5 text-[22px] leading-[1.15] font-medium tracking-[-0.015em]">
+          {words[0]}
+          <br />
+          {words[1]}
+        </span>
+        <span className="mt-auto text-[13px] text-faint">No image was edited or AI-generated.</span>
+      </span>
+      <span className="absolute top-4 right-4 bottom-4 w-[36%] overflow-hidden rounded-[20px]">
+        <Placeholder icon={ShieldCheck} />
+      </span>
+    </div>
+  )
+}
+
+function Placeholder({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <span className="grid size-full place-items-center rounded-[20px] border-[1.5px] border-dashed border-[var(--zone-edge)] text-faint" aria-hidden>
+      <Icon className="size-7" strokeWidth={1.4} />
     </span>
   )
 }
 
-/** The last few analyses as glass rows, like the reference's habit list, with the blur and only-flagged switches. */
-function Recent({
-  entries,
-  data,
-  loading,
-  blur,
-  onlyFlagged,
-  empty,
-  className = '',
+function SpotCard({
+  to,
+  name,
+  status,
+  words,
+  note,
+  picture,
 }: {
-  entries: HistoryEntry[]
-  data: Data
-  loading: boolean
-  blur: boolean
-  onlyFlagged: boolean
-  empty: boolean
-  className?: string
+  to: string
+  name: string
+  status: ReactNode
+  words: [string, string]
+  note?: string
+  picture: ReactNode
 }) {
   return (
-    <section className={`panel flex flex-col rounded-[30px] p-4 sm:p-5 ${className}`}>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-1">
-        <h2 className="mr-auto text-[17px] font-semibold tracking-[-0.01em]">Recent analyses</h2>
-        {!empty && (
-          <>
-            <div className="order-3 flex basis-full flex-wrap items-center gap-2 sm:order-none sm:basis-auto">
-              <Chip icon={EyeOff} label="Blur previews" checked={blur} onChange={(v) => setPref('blurPreviews', v)} />
-              <Chip icon={Filter} label="Only flagged" checked={onlyFlagged} onChange={(v) => setPref('onlyFlagged', v)} />
-            </div>
-            <Link to="/history" className="group inline-flex items-center gap-2 text-[13.5px] font-medium whitespace-nowrap">
-              See all
-              <span className="grid size-7 place-items-center rounded-full bg-ink text-canvas transition-transform group-hover:translate-x-0.5">
-                <ArrowRight className="size-3.5" strokeWidth={2.2} />
-              </span>
-            </Link>
-          </>
-        )}
-      </div>
-
-      {empty ? (
-        <div className="row-glass mt-4 flex flex-1 flex-col items-start justify-center gap-3 rounded-[20px] p-5 sm:flex-row sm:items-center">
-          <p className="min-w-0 flex-1 text-[14.5px] text-muted">Nothing analyzed on this device yet. Each image you check lands here, with its verdict.</p>
-          <Link to="/new" className="btn-primary">
-            <Plus className="size-4" strokeWidth={2.4} /> Analyze an image
-          </Link>
-        </div>
-      ) : entries.length === 0 ? (
-        <p className="px-1 pt-4 pb-2 text-[14px] text-muted">{loading ? 'Loading verdicts…' : 'Nothing edited or AI-generated among your analyses.'}</p>
-      ) : (
-        <ul className="mt-4 flex flex-1 flex-col gap-2">
-          {entries.map((entry) => (
-            <RecentRow key={entry.jobId} entry={entry} data={data} blur={blur} />
-          ))}
-          {/* fewer than four: the rest of the card says where the next ones will go */}
-          {entries.length < 4 && !onlyFlagged && (
-            <li className="flex min-h-14 flex-1 items-center justify-center rounded-[18px] border-[1.5px] border-dashed border-[var(--zone-edge)] px-4 text-center text-[13px] text-faint">
-              <span>
-                Your next analyses will line up here.{' '}
-                <Link to="/new" className="font-medium text-accent hover:underline">
-                  Analyze another
-                </Link>
-              </span>
-            </li>
-          )}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-function RecentRow({ entry, data, blur }: { entry: HistoryEntry; data: Data; blur: boolean }) {
-  const s = data[entry.jobId]
-  const label = s?.status === 'done' ? s.label : null
-  const word = !s ? '…' : label ? VERDICTS[label].short : PENDING[s.status === 'done' ? 'queued' : s.status].title
-  return (
-    <li className="relative">
-      <Link
-        to={`/analysis/${entry.jobId}`}
-        className="row-glass grid grid-cols-1 items-center gap-x-4 gap-y-1.5 rounded-[18px] py-2.5 pr-14 pl-2.5 transition hover:bg-[var(--raise-bg)] md:grid-cols-[minmax(0,1fr)_auto]"
-      >
-        <span className="flex min-w-0 items-center gap-3">
-          <Thumb sha={entry.sha256} blur={blur} className="size-10 shrink-0 rounded-full" />
-          <span className="min-w-0">
-            <FileName name={entry.filename} className="text-[14px] font-semibold" />
-            <span className="block truncate text-[12.5px] text-faint">
-              {formatWhen(entry.uploadedAt)}
-              {s?.width ? ` · ${s.width}×${s.height}` : ''}
+    <Link to={to} aria-label={name} className="panel group relative flex min-h-[200px] overflow-hidden rounded-[28px] p-5">
+      <span className="relative flex min-w-0 flex-1 flex-col pr-[46%]">
+        <span className="flex items-center gap-1.5 text-[12.5px] text-muted">{status}</span>
+        <span className="mt-1.5 text-[22px] leading-[1.15] font-medium tracking-[-0.015em]">
+          {words[0]}
+          <br />
+          {words[1]}
+        </span>
+        {note && <span className="mt-2 text-[12.5px] leading-snug text-faint">{note}</span>}
+        {/* the reference's slide-to-unlock: on hover the white knob runs to the end of its track. Its
+            carrier is the track's width less the knob's, so moving the carrier by its own width
+            lands the knob at the end on any card. */}
+        <span className="relative mt-auto block h-11 w-full max-w-[118px] shrink-0 rounded-full bg-[var(--btn-bg)] shadow-[var(--btn-edge)]" aria-hidden>
+          <span className="absolute top-1 right-10 bottom-1 left-1 transition-transform duration-300 ease-(--ease-drawer) group-hover:translate-x-full">
+            <span className="grid size-9 place-items-center rounded-full bg-white text-on-light shadow-[0_4px_10px_-4px_rgb(0_0_0/0.5)]">
+              <ArrowRight className="size-4" strokeWidth={2.2} />
             </span>
           </span>
+          <span className="absolute inset-y-0 left-12 flex items-center text-ink transition-opacity duration-200 group-hover:opacity-0">
+            <ChevronRight className="-mr-1.5 size-4 opacity-80" strokeWidth={2} />
+            <ChevronRight className="-mr-1.5 size-4 opacity-50" strokeWidth={2} />
+            <ChevronRight className="size-4 opacity-25" strokeWidth={2} />
+          </span>
         </span>
-        <span className="flex items-center gap-2.5 pl-[52px] md:pl-0">
-          <span className="text-[12.5px] text-faint">Verdict</span>
-          <Segments label={label} busy={!!s && (s.status === 'queued' || s.status === 'running')} />
-          <span className={`w-[92px] truncate text-[13px] font-medium ${s?.status === 'failed' ? 'text-ai' : ''}`}>{word}</span>
-        </span>
-      </Link>
-      <RowMenu entry={entry} />
-    </li>
+      </span>
+      <span className="absolute top-4 right-4 bottom-4 w-[36%] overflow-hidden rounded-[20px] shadow-[0_14px_28px_-16px_rgb(0_0_0/0.7)]">{picture}</span>
+    </Link>
   )
 }
 
-/** "⋯" on a row: open the report, or take the analysis off this device's list. */
-function RowMenu({ entry }: { entry: HistoryEntry }) {
-  const [open, setOpen] = useState(false)
-  const box = useRef<HTMLDivElement>(null)
-  const trigger = useRef<HTMLButtonElement>(null)
-  const id = `row-menu-${entry.jobId}`
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: PointerEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false)
+type Bucket = { label: string; long: string; count: number; flagged: number; future: boolean }
+
+/** The period cut into bars: this week by day, this month by week, all time by month. */
+function bucketize(entries: HistoryEntry[], data: Data, period: Period, now: Date) {
+  const list: Bucket[] = []
+  let place: (d: Date) => number
+  let current: number
+  let unit: string
+  if (period === 'week') {
+    const monday = periodStart('week', now)!
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+      list.push({
+        label: d.toLocaleDateString(undefined, { weekday: 'short' }),
+        long: d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }),
+        count: 0,
+        flagged: 0,
+        future: d > now,
+      })
     }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      setOpen(false)
-      trigger.current?.focus()
+    place = (d) => Math.round((midnight(d).getTime() - monday.getTime()) / 86_400_000)
+    current = (now.getDay() + 6) % 7
+    unit = 'per day'
+  } else if (period === 'month') {
+    const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const month = now.toLocaleDateString(undefined, { month: 'long' })
+    for (let from = 1; from <= days; from += 7) {
+      const to = Math.min(from + 6, days)
+      list.push({ label: `${from}–${to}`, long: `${month} ${from}–${to}`, count: 0, flagged: 0, future: from > now.getDate() })
     }
-    document.addEventListener('pointerdown', onDown)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('keydown', onKey)
+    place = (d) => Math.floor((d.getDate() - 1) / 7)
+    current = Math.floor((now.getDate() - 1) / 7)
+    unit = 'per week'
+  } else {
+    // back to the oldest analysis kept, at least six months and at most twelve
+    const oldest = entries.length ? new Date(entries[entries.length - 1].uploadedAt) : now
+    const back = Math.min(11, Math.max(5, (now.getFullYear() - oldest.getFullYear()) * 12 + now.getMonth() - oldest.getMonth()))
+    const first = new Date(now.getFullYear(), now.getMonth() - back, 1)
+    for (let i = 0; i <= back; i++) {
+      const d = new Date(first.getFullYear(), first.getMonth() + i, 1)
+      list.push({
+        label: d.toLocaleDateString(undefined, { month: 'short' }),
+        long: d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+        count: 0,
+        flagged: 0,
+        future: false,
+      })
     }
-  }, [open])
+    place = (d) => (d.getFullYear() - first.getFullYear()) * 12 + d.getMonth() - first.getMonth()
+    current = back
+    unit = 'per month'
+  }
+  for (const e of entries) {
+    const b = list[place(new Date(e.uploadedAt))]
+    if (!b) continue
+    b.count += 1
+    if (isFlagged(data[e.jobId]?.label)) b.flagged += 1
+  }
+  return { list, current, unit }
+}
+
+/** Round the axis up to a clean top with at most four steps, and never less than 0–4. */
+function axis(max: number) {
+  const step = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500].find((s) => Math.ceil(max / s) <= 4) ?? 1000
+  const n = Math.max(Math.ceil(max / step), step === 1 ? 4 : 1)
+  return { top: n * step, ticks: Array.from({ length: n + 1 }, (_, i) => i * step) }
+}
+
+/**
+ * The analyses over the period as bars, after the reference's energy chart: muted glass columns
+ * with the one in focus in lime and its count in a bubble above it. The current day, week or month
+ * is in focus until another is pointed at, tapped or reached with the arrow keys. A table carries
+ * the same numbers for screen readers.
+ */
+function Activity({ entries, data, period, now, className = '' }: { entries: HistoryEntry[]; data: Data; period: Period; now: Date; className?: string }) {
+  const { list, current, unit } = useMemo(() => bucketize(entries, data, period, now), [entries, data, period, now])
+  const [picked, setPicked] = useState<{ period: Period; at: number } | null>(null)
+  const at = picked?.period === period ? Math.min(picked.at, list.length - 1) : current
+  const shown = list[at]
+  const { top, ticks } = axis(Math.max(...list.map((b) => b.count)))
+  const total = list.reduce((n, b) => n + b.count, 0)
+  const flagged = list.reduce((n, b) => n + b.flagged, 0)
+  const pick = (i: number) => setPicked({ period, at: i })
+
+  const onKey = (e: KeyboardEvent) => {
+    const to = e.key === 'ArrowRight' ? at + 1 : e.key === 'ArrowLeft' ? at - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? list.length - 1 : null
+    if (to === null) return
+    e.preventDefault()
+    pick(Math.max(0, Math.min(list.length - 1, to)))
+  }
+
   return (
-    <div ref={box} className="absolute top-1/2 right-2 z-10 -translate-y-1/2">
-      <button
-        ref={trigger}
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label={`More for ${entry.filename}`}
-        aria-controls={id}
-        aria-expanded={open}
-        className="grid size-9 place-items-center rounded-full text-faint transition hover:bg-[var(--raise-bg)] hover:text-ink"
-      >
-        <MoreHorizontal className="size-[18px]" />
-      </button>
-      {open && (
-        <div id={id} className="glass animate-pop absolute top-full right-0 z-20 mt-1.5 w-52 origin-top-right rounded-[18px] p-1.5">
-          <Link to={`/analysis/${entry.jobId}`} className="relative flex h-10 items-center rounded-[12px] px-3 text-[14px] hover:bg-[var(--raise-bg)]">
-            Open the report
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false)
-              removeWithUndo(entry.jobId, entry.filename)
-            }}
-            className="relative flex h-10 w-full items-center rounded-[12px] px-3 text-left text-[14px] text-ai hover:bg-[var(--raise-bg)]"
-          >
-            Remove from history
-          </button>
+    <section aria-labelledby="activity-title" className={`panel @container flex flex-col rounded-[28px] p-5 sm:p-6 ${className}`}>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <h2 id="activity-title" className="card-title">
+            Analyses {unit}
+          </h2>
+          <p className="label mt-0.5" aria-live="polite">
+            {shown.long}: {shown.count} {plural(shown.count, 'analysis', 'analyses')}
+            {shown.flagged > 0 && `, ${shown.flagged} flagged`}
+          </p>
         </div>
-      )}
-    </div>
+        <p className="flex items-baseline gap-2">
+          <span className="text-[28px] leading-none tracking-[-0.03em]">{total}</span>
+          <span className="label">
+            in all, {flagged} flagged
+          </span>
+        </p>
+      </div>
+
+      <div className="mt-5 grid min-h-[190px] flex-1 grid-cols-[auto_minmax(0,1fr)] grid-rows-[minmax(150px,1fr)_auto] gap-x-3 gap-y-2">
+        <div className="relative w-6 text-right text-[12px] text-faint tabular-nums" aria-hidden>
+          {ticks.map((t) => (
+            <span key={t} className="absolute right-0 translate-y-1/2 leading-none" style={{ bottom: `${(t / top) * 100}%` }}>
+              {t}
+            </span>
+          ))}
+        </div>
+        <div
+          role="group"
+          tabIndex={0}
+          aria-label={`Analyses ${unit}. Use the left and right arrow keys to read each bar.`}
+          onKeyDown={onKey}
+          onPointerLeave={(e) => e.pointerType === 'mouse' && setPicked(null)}
+          className="relative rounded-[10px] outline-offset-4"
+        >
+          {ticks.map((t) => (
+            <span key={t} className="absolute inset-x-0 h-px bg-[var(--color-line)]" style={{ bottom: `${(t / top) * 100}%` }} aria-hidden />
+          ))}
+          <div className="absolute inset-0 flex items-end gap-1.5" aria-hidden>
+            {list.map((b, i) => {
+              const h = (b.count / top) * 100
+              const on = i === at
+              return (
+                <div
+                  key={i}
+                  className="relative flex h-full min-w-0 flex-1 items-end justify-center"
+                  onPointerEnter={(e) => e.pointerType === 'mouse' && pick(i)}
+                  onClick={() => pick(i)}
+                >
+                  {!b.future && (
+                    <span
+                      className={`animate-lift block w-full max-w-[34px] origin-bottom rounded-[10px] transition-[height,background-color] duration-500 ease-(--ease-out) ${on ? 'bg-primary' : 'bg-[var(--bar-bg)]'}`}
+                      style={{ height: `max(${h}%, 4px)`, animationDelay: `${i * 40}ms` }}
+                    />
+                  )}
+                  {on && !b.future && (
+                    <span
+                      className="raise absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2.5 py-1 text-[12.5px] font-semibold tabular-nums"
+                      style={{ bottom: `calc(max(${h}%, 4px) + 8px)` }}
+                    >
+                      {b.count}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          {total === 0 && (
+            <p className="absolute inset-x-0 top-1/3 text-center text-[13px] text-faint" aria-hidden>
+              No analyses {PERIODS.find((p) => p.key === period)!.span}
+            </p>
+          )}
+        </div>
+        <span aria-hidden />
+        <div className="flex gap-1.5 text-[12px] text-faint" aria-hidden>
+          {list.map((b, i) => (
+            <span
+              key={i}
+              className={`min-w-0 flex-1 text-center whitespace-nowrap ${i === at ? 'text-ink' : ''} ${b.future ? 'opacity-60' : ''} ${
+                list.length > 7 && i % 2 !== (list.length - 1) % 2 && i !== at ? '@max-xl:invisible' : ''
+              }`}
+            >
+              {b.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <table className="sr-only">
+        <caption>Analyses {unit}</caption>
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col" className="text-right">
+              Analyses
+            </th>
+            <th scope="col" className="text-right">
+              Flagged
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((b, i) => (
+            <tr key={i}>
+              <th scope="row">{b.long}</th>
+              <td className="text-right tabular-nums">{b.count}</td>
+              <td className="text-right tabular-nums">{b.flagged}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   )
 }
