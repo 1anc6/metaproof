@@ -12,21 +12,27 @@ test('logo reads "MetaProof"', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'MetaProof' }).first()).toBeVisible()
 })
 
-test('desktop: the sidebar runs the height of the window, and the content sits centred beside it', async ({ page }) => {
+test("desktop: the rail runs the height of the glass window, and opens out to the screens' names", async ({ page }) => {
   for (const width of [1280, 1920]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/')
     await page.locator('main section').first().waitFor()
-    const side = await page.locator('aside').boundingBox()
-    const main = await page.locator('main').boundingBox()
-    expect(side && main).toBeTruthy()
-    expect(side!.y).toBe(0)
-    expect(side!.height).toBe(900)
-    // the same gap from the sidebar on the left as from the window's edge on the right
-    const left = main!.x - (side!.x + side!.width)
-    const right = width - (main!.x + main!.width)
-    expect(Math.abs(left - right)).toBeLessThanOrEqual(1)
+    // inside the window's glass: 16px of room round the window, 16px of glass round the rail
+    const rail = (await page.locator('aside .rail').boundingBox())!
+    expect(rail.y).toBe(32)
+    expect(rail.height).toBe(900 - 64)
+    expect(rail.width).toBe(88)
   }
+
+  await page.getByRole('button', { name: 'Expand sidebar' }).click()
+  await expect.poll(async () => (await page.locator('aside .rail').boundingBox())!.width).toBe(236)
+  await expect(page.getByRole('navigation', { name: 'Main' }).getByText('History')).toBeVisible()
+  // remembered, and [ closes it again
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible()
+  await page.locator('body').press('[')
+  await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible()
+  await expect.poll(async () => (await page.locator('aside .rail').boundingBox())!.width).toBe(88)
 })
 
 test('phones and tablets: a floating tab bar names the current screen, with New analysis floating beside it', async ({ page }) => {
@@ -79,12 +85,13 @@ test('desktop: the navigation sits in the sidebar, and nothing floats over the p
   }
 })
 
-test('phones: the overview opens with the greeting, search and the verdicts above the fold', async ({ page }) => {
+test('phones: the overview opens with the period, search, the images and the verdicts above the fold', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
+  await expect(page.getByRole('group', { name: 'Period' })).toBeInViewport()
   await expect(page.getByRole('searchbox', { name: 'Search history' })).toBeInViewport()
-  await expect(page.getByRole('region', { name: 'Your analyses' })).toBeInViewport()
+  await expect(page.getByRole('region', { name: 'Your images' })).toBeInViewport()
+  await expect(page.getByRole('region', { name: 'Verdicts' })).toBeInViewport()
 })
 
 test('no horizontal scrolling on a small phone', async ({ page }) => {

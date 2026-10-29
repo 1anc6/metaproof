@@ -134,7 +134,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
               figure={pct}
               unit="%"
               caption={`${done} of ${STEPS.length} steps done`}
-              colors={['#1463f3', '#6aa5ff']}
+              colors={['#9fbd40', 'var(--color-primary)']}
               label={`${pct}% done, ${done} of ${STEPS.length} steps`}
               className="mx-auto mt-4 w-full max-w-[280px]"
             />
@@ -152,7 +152,7 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
                 <span
                   className={`grid size-[22px] shrink-0 place-items-center rounded-full ${
                     step.state === 'done'
-                      ? 'bg-primary text-white'
+                      ? 'bg-primary text-on-primary'
                       : step.state === 'active'
                         ? 'raise text-primary ring-2 ring-primary/35'
                         : 'well text-faint'

@@ -1,17 +1,18 @@
-import { BookOpen, History, ImageUp, LayoutGrid, Plus, Settings, X } from 'lucide-react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { History, House, ImagePlus, Lightbulb, Moon, PanelLeftClose, PanelLeftOpen, Plus, Settings, Sun, X } from 'lucide-react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Toaster } from 'sonner'
 import { useServerStatus, type ServerState } from '../lib/hooks'
+import { setPref, usePrefs } from '../lib/prefs'
 import { useThemeSync } from '../lib/theme'
 import { SummariesProvider } from './SummariesProvider'
-import { Logo, ThemeToggle } from './ui'
+import { Logo, Mark, ThemeToggle } from './ui'
 
 const NAV = [
-  { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
-  { to: '/new', label: 'New analysis', icon: ImageUp, hint: 'N' },
+  { to: '/', label: 'Overview', icon: House, end: true },
+  { to: '/new', label: 'New analysis', icon: ImagePlus, hint: 'N' },
   { to: '/history', label: 'History', icon: History },
-  { to: '/method', label: 'Method', icon: BookOpen },
+  { to: '/method', label: 'Method', icon: Lightbulb },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -31,16 +32,18 @@ const searchField = () =>
   [document.getElementById('global-search'), document.getElementById('history-search')].find((el) => el?.offsetParent) ?? null
 
 /**
- * The frame of every screen, in liquid glass: four slow pools of colour lie under everything, and
- * the glass in front of them blurs and tints them. On a desktop a glass sidebar holds the name and
- * the screens; phones and tablets get a slim top bar and a floating glass bar along the bottom with
- * a blue button for a new analysis in its middle.
+ * The frame of every screen, after the smart-home reference: a grainy room lies under everything,
+ * and one large pane of frosted glass in front of it holds the page. On a desktop the pane floats
+ * inside the window with the room round its edge, and a rail of icons runs down its left side,
+ * opening out to the screens' names on request. Phones and tablets get the glass edge to edge, a
+ * slim top bar, and a floating tab bar along the bottom with a lime button for a new analysis.
  */
 export function Shell() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const theme = useThemeSync()
   const isDesktop = useDesktop()
+  const { railOpen } = usePrefs()
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
@@ -48,7 +51,7 @@ export function Shell() {
   const [shortcuts, setShortcuts] = useState(false)
 
   // Keyboard shortcuts, unless the keystroke is meant for a text field: N starts a new analysis,
-  // / searches the history, ? lists the shortcuts, Escape closes that list.
+  // / searches the history, [ opens or closes the rail, ? lists the shortcuts, Escape closes that list.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
@@ -56,6 +59,7 @@ export function Shell() {
       if (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return
       if (e.key === 'Escape') setShortcuts(false)
       else if (e.key === '?') setShortcuts((open) => !open)
+      else if (e.key === '[') setPref('railOpen', !railOpen)
       else if (e.key === '/') {
         e.preventDefault()
         setShortcuts(false)
@@ -69,14 +73,14 @@ export function Shell() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate])
+  }, [navigate, railOpen])
 
   useSheen()
 
   return (
     <SummariesProvider>
-      <div className="min-h-dvh lg:flex">
-        <div className="ambient" aria-hidden>
+      <div className="min-h-dvh lg:p-4 print:p-0">
+        <div className="backdrop" aria-hidden>
           <span />
           <span />
           <span />
@@ -85,22 +89,25 @@ export function Shell() {
         <a href="#main" className="btn-primary fixed top-3 left-3 z-[60] -translate-y-20 focus-visible:translate-y-0">
           Skip to content
         </a>
-        {/* One navigation at a time, so its server check and its links exist once. */}
-        {isDesktop && <Sidebar theme={theme} />}
-        <div className="min-w-0 flex-1">
-          {!isDesktop && <TopBar theme={theme} />}
-          <main
-            id="main"
-            tabIndex={-1}
-            className="mx-auto w-full max-w-[1200px] px-4 pt-2 pb-[calc(112px+env(safe-area-inset-bottom))] outline-none sm:px-6 lg:px-8 lg:pt-9 lg:pb-16"
-          >
-            <Outlet />
-          </main>
+        <div className="relative lg:grid lg:min-h-[calc(100dvh-32px)] lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5 lg:rounded-[40px] lg:p-4 print:block print:p-0">
+          <div className="frame-glass" aria-hidden />
+          {/* One navigation at a time, so its server check and its links exist once. */}
+          {isDesktop && <Rail theme={theme} open={railOpen} />}
+          <div className="min-w-0">
+            {!isDesktop && <TopBar theme={theme} />}
+            <main
+              id="main"
+              tabIndex={-1}
+              className="@container mx-auto w-full max-w-[1320px] px-4 pt-2 pb-[calc(112px+env(safe-area-inset-bottom))] outline-none sm:px-6 lg:px-2 lg:pt-3 lg:pb-3"
+            >
+              <Outlet />
+            </main>
+          </div>
         </div>
         {!isDesktop && <Dock />}
         {shortcuts && <Shortcuts onClose={() => setShortcuts(false)} />}
         {/* Bottom centre, clear of the phone bar. */}
-        <Toaster theme={theme} position="bottom-center" offset={{ bottom: isDesktop ? 24 : 100 }} mobileOffset={{ bottom: 100 }} />
+        <Toaster theme="dark" position="bottom-center" offset={{ bottom: isDesktop ? 32 : 100 }} mobileOffset={{ bottom: 100 }} />
       </div>
     </SummariesProvider>
   )
@@ -158,59 +165,77 @@ export function ServerBadge({ compact = false }: { compact?: boolean }) {
 }
 
 /**
- * The sidebar: a glass panel the full height of the window, inset from its edges. The name, a large
- * light line saying what the tool is for, the screens with the chosen one on a bright pill, and the
- * server and theme at the foot.
+ * The rail, after the reference's left panel: a column of glass with the screens as icons, the
+ * chosen one on a lighter tile. Opened out, it shows their names; the server's state, the theme
+ * and the switch that opens it sit at its foot, where the reference keeps its power button. The
+ * names stay in the page while it is closed, so every icon keeps its name for screen readers.
  */
-function Sidebar({ theme }: { theme: 'light' | 'dark' }) {
-  const main = NAV.filter((n) => n.to !== '/settings')
-  const settings = NAV.find((n) => n.to === '/settings')!
+function Rail({ theme, open }: { theme: 'light' | 'dark'; open: boolean }) {
+  const next = theme === 'dark' ? 'light' : 'dark'
+  const ThemeIcon = theme === 'dark' ? Sun : Moon
+  const Toggle = open ? PanelLeftClose : PanelLeftOpen
+  const toggle = open ? 'Collapse sidebar' : 'Expand sidebar'
   return (
-    <aside className="no-print sticky top-0 hidden h-dvh shrink-0 p-3 lg:block">
-      <div className="glass flex h-full w-[240px] flex-col rounded-[30px] px-4 pt-6 pb-4">
-        <NavLink to="/" className="self-start rounded-full px-1">
-          <Logo />
-        </NavLink>
-        <p className="display mt-8 px-1 text-[27px] leading-[1.12] text-ink">
-          Image
-          <br />
-          authenticity
-        </p>
-        <nav aria-label="Main" className="mt-7 flex flex-1 flex-col gap-1">
-          {main.map((item) => (
-            <SideLink key={item.to} {...item} />
+    <aside className="no-print sticky top-8 h-[calc(100dvh-64px)] self-start">
+      <div className="rail flex h-full flex-col rounded-[30px] p-3" data-open={open}>
+        <Link to="/" aria-label="MetaProof" title={open ? undefined : 'MetaProof, overview'} className="rail-item !px-[19px] !text-ink hover:!bg-transparent">
+          <Mark className="size-[26px] shrink-0" />
+          <span translate="no" className="rail-label !text-[17px] !font-semibold tracking-[-0.015em]">
+            MetaProof
+          </span>
+        </Link>
+        <nav aria-label="Main" className="mt-5 flex flex-col gap-2">
+          {NAV.map((item) => (
+            <RailLink key={item.to} {...item} open={open} />
           ))}
-          <div className="mt-auto pt-4">
-            <SideLink {...settings} />
-          </div>
         </nav>
-        <div className="mt-2 flex items-center justify-between gap-2 pl-3">
-          <ServerBadge />
-          <ThemeToggle resolved={theme} className="size-9" />
+        <div className="mt-auto flex flex-col gap-2">
+          <ServerLine open={open} />
+          <button type="button" onClick={() => setPref('theme', next)} aria-label={`Switch to ${next} theme`} title={open ? undefined : `Switch to ${next} theme`} className="rail-item">
+            <ThemeIcon className="size-6 shrink-0" strokeWidth={1.6} aria-hidden />
+            <span className="rail-label">{next === 'dark' ? 'Dark theme' : 'Light theme'}</span>
+          </button>
+          <button type="button" onClick={() => setPref('railOpen', !open)} aria-label={toggle} title={`${toggle} ([)`} className="rail-item">
+            <Toggle className="size-6 shrink-0" strokeWidth={1.6} aria-hidden />
+            <span className="rail-label">Collapse</span>
+          </button>
         </div>
       </div>
     </aside>
   )
 }
 
-function SideLink({ to, label, icon: Icon, end, hint }: (typeof NAV)[number]) {
+function RailLink({ to, label, icon: Icon, end, hint, open }: (typeof NAV)[number] & { open: boolean }) {
   // An analysis belongs to the history it was opened from.
   const inHistory = useLocation().pathname.startsWith('/analysis/') && to === '/history'
   return (
     <NavLink
       to={to}
       end={end}
-      title={hint ? `${label} (${hint})` : undefined}
-      className={({ isActive }) =>
-        `flex h-10 items-center gap-3 rounded-[14px] px-3 text-[14px] transition ${
-          isActive || inHistory ? 'raise font-medium text-ink' : 'text-muted hover:bg-[var(--btn-bg)] hover:text-ink'
-        }`
-      }
+      title={open ? (hint ? `${label} (${hint})` : undefined) : hint ? `${label} (${hint})` : label}
+      className={({ isActive }) => `rail-item ${isActive || inHistory ? 'is-on' : ''}`}
     >
-      <Icon className="size-[18px] shrink-0" strokeWidth={1.6} aria-hidden />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {hint && <kbd className="kbd" aria-hidden>{hint}</kbd>}
+      <Icon className="size-6 shrink-0" strokeWidth={1.6} aria-hidden />
+      <span className="rail-label min-w-0 flex-1">{label}</span>
+      {hint && (
+        <kbd className="kbd rail-label" aria-hidden>
+          {hint}
+        </kbd>
+      )}
     </NavLink>
+  )
+}
+
+/** The server's state as a dot, with its words beside it once the rail is open. */
+function ServerLine({ open }: { open: boolean }) {
+  const s = SERVER_LABEL[useServerStatus()]
+  return (
+    <p className="flex h-11 items-center gap-3.5 overflow-hidden px-5 whitespace-nowrap" title={open ? undefined : s.text}>
+      <span className="grid size-6 shrink-0 place-items-center" aria-hidden>
+        <span className={`size-2.5 rounded-full ${s.dot}`} />
+      </span>
+      <span className="rail-label !text-[13.5px] !font-normal text-muted">{s.text}</span>
+    </p>
   )
 }
 
@@ -219,9 +244,9 @@ function TopBar({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <header className="no-print relative z-30 px-4 pt-[env(safe-area-inset-top)] sm:px-6 lg:hidden">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3">
-        <NavLink to="/" className="rounded-full">
+        <Link to="/" className="rounded-full">
           <Logo />
-        </NavLink>
+        </Link>
         <div className="flex items-center gap-2">
           <span className="chip h-10 px-3.5 max-[379px]:w-10 max-[379px]:justify-center max-[379px]:px-0">
             <ServerBadge compact />
@@ -242,7 +267,7 @@ const releaseAfterTap = (e: React.MouseEvent<HTMLElement>) => {
 /**
  * The navigation on phones and tablets, after the floating tab bar reference: a glass capsule of
  * four screens where the current one opens into a white pill with its name and the others show
- * only their icon, and beside it, floating on its own, the blue button that starts a new analysis.
+ * only their icon, and beside it, floating on its own, the lime button that starts a new analysis.
  */
 function Dock() {
   const tabs = NAV.filter((n) => n.to !== '/new')
@@ -261,9 +286,9 @@ function Dock() {
         aria-label="New analysis"
         title="New analysis (N)"
         onClick={releaseAfterTap}
-        className="fab size-[58px] shrink-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary min-[400px]:size-16"
+        className="fab size-[58px] shrink-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ring)] min-[400px]:size-16"
       >
-        <Plus className="size-7" strokeWidth={1.8} aria-hidden />
+        <Plus className="size-7" strokeWidth={1.9} aria-hidden />
       </NavLink>
     </nav>
   )
@@ -284,7 +309,7 @@ function Tab({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
       onClick={releaseAfterTap}
       title={label}
       className={({ isActive }) =>
-        `tab group relative flex h-full min-w-11 basis-0 items-center justify-center rounded-full outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        `tab group relative flex h-full min-w-11 basis-0 items-center justify-center rounded-full outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] ${
           isActive || inHistory ? 'is-on grow-[2.5]' : 'grow'
         }`
       }
@@ -301,6 +326,7 @@ function Tab({ to, label, icon: Icon, end }: (typeof NAV)[number]) {
 const SHORTCUTS = [
   ['N', 'New analysis'],
   ['/', 'Search your history'],
+  ['[', 'Open or close the sidebar'],
   ['?', 'Show or hide this list'],
   ['Esc', 'Close this list'],
 ] as const
