@@ -796,6 +796,10 @@
   .orb-live::before {
     animation: breathe 2.4s ease-in-out infinite;
   }
+  /* The LIVE badge (metal-fx's MetalBadge) sets its word in Inter inline; MetaProof's is Figtree. */
+  .metal-badge span[aria-label] {
+    font-family: var(--font-sans) !important;
+  }
   /* A solid lime disc. */
   .orb-solid {
     position: relative;

@@ -1,10 +1,10 @@
 import { Pause, Play } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { getGravityStatus, GRAVITY_DEFAULTS, resetGravity, type OrbSize, type OrbState } from 'thinking-orbs'
 import { dotCount, KNOBS, ORB_GUIDE, SHAPES, TINTS, tunedValue } from '../lib/orbs'
 import { setOrbPrefs, usePrefs, type OrbPrefs } from '../lib/prefs'
+import { Row, Segmented, Slider, SwitchRow } from './Controls'
 import { ThinkingOrb } from './ThinkingOrb'
-import { Switch } from './ui'
 
 const SIZES: OrbSize[] = [64, 32, 20]
 const times = (v: number) => `${Number(v.toFixed(2))}×`
@@ -36,12 +36,12 @@ export function OrbPlayground() {
           <ThinkingOrb state={choice.state} frame={choice.frame} size={size} on="auto" label={choice.label} />
           <span className="text-[14px] font-medium">{choice.label}</span>
         </div>
-        <div className="mt-2.5 flex items-center justify-between gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
           {/* pauses every orb in the app, not just this one */}
           <button
             type="button"
             onClick={() => setOrbPrefs({ animate: !o.animate })}
-            aria-pressed={!o.animate}
+            aria-label={o.animate ? 'Pause the orbs' : 'Play the orbs'}
             title={o.animate ? 'Hold every orb still' : 'Set the orbs moving again'}
             className="btn-ghost btn-sm"
           >
@@ -113,77 +113,6 @@ export function OrbPlayground() {
   )
 }
 
-/** A setting: its name over its control. */
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div role="group" aria-label={label}>
-      <p className="mb-2 text-[13.5px] text-muted">{label}</p>
-      {children}
-    </div>
-  )
-}
-
-function Segmented<T>({ label, options, value, onChange }: { label: string; options: { value: T; name: string }[]; value: T; onChange: (v: T) => void }) {
-  return (
-    <div role="radiogroup" aria-label={label} className="track inline-flex shrink-0 gap-0.5 rounded-full p-1">
-      {options.map((opt) => (
-        <button
-          key={opt.name}
-          type="button"
-          role="radio"
-          aria-checked={value === opt.value}
-          onClick={() => onChange(opt.value)}
-          className={`h-8 rounded-full px-3 text-[13px] whitespace-nowrap transition ${value === opt.value ? 'selected font-medium' : 'text-muted hover:text-ink'}`}
-        >
-          {opt.name}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-/** A range with its name and value above it, full width so a thumb can work it. */
-function Slider({
-  label,
-  note,
-  value,
-  min,
-  max,
-  step,
-  show,
-  onChange,
-}: {
-  label: string
-  note?: string
-  value: number
-  min: number
-  max: number
-  step: number
-  show: (v: number) => string
-  onChange: (v: number) => void
-}) {
-  return (
-    <label className="block">
-      <span className="flex items-baseline justify-between gap-3 text-[13.5px]">
-        <span className="text-muted">{label}</span>
-        <span className="text-ink tabular-nums">{show(value)}</span>
-      </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        aria-label={label}
-        aria-valuetext={show(value)}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1.5 block w-full accent-primary"
-      />
-      {note && <span className="mt-1 block text-[12.5px] text-faint">{note}</span>}
-    </label>
-  )
-}
-
 /** The swatches, then any colour of your own. */
 function Tints({ tint }: { tint: string }) {
   const own = !TINTS.some((t) => t.value === tint)
@@ -245,15 +174,12 @@ function Gravity({ o }: { o: OrbPrefs }) {
   const note = useGravityNote(o.gravity)
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[13.5px] text-muted">Cursor gravity</p>
-          <p className="mt-0.5 text-[12.5px] leading-snug text-faint">
-            {o.gravity ? note.text : 'The orbs pull your pointer in. MetaProof draws a copy of it while it bends.'}
-          </p>
-        </div>
-        <Switch checked={o.gravity} onChange={(gravity) => setOrbPrefs({ gravity })} label="Cursor gravity" />
-      </div>
+      <SwitchRow
+        label="Cursor gravity"
+        note={o.gravity ? note.text : 'The orbs pull your pointer in. MetaProof draws a copy of it while it bends.'}
+        checked={o.gravity}
+        onChange={(gravity) => setOrbPrefs({ gravity })}
+      />
       {o.gravity && note.rearm && (
         <button type="button" onClick={resetGravity} className="btn-ghost btn-sm self-start">
           Turn it back on

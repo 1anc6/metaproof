@@ -6,7 +6,8 @@ import { formatWhen } from '../lib/format'
 import { useHistory, type HistoryEntry } from '../lib/history'
 import { clearWithUndo } from '../lib/undo'
 import { promptInstall, useInstallState } from '../lib/install'
-import { setOrbPrefs } from '../lib/prefs'
+import { setMetalPrefs, setOrbPrefs } from '../lib/prefs'
+import { MetalPlayground } from '../components/MetalPlayground'
 import { OrbPlayground } from '../components/OrbPlayground'
 import { ServerBadge } from '../components/Shell'
 import { GithubMark, PageHeader, ThemeSwitch } from '../components/ui'
@@ -38,7 +39,7 @@ export function Settings() {
         <Card
           title="Thinking orbs"
           action={
-            <button type="button" onClick={() => setOrbPrefs(null)} className="btn-ghost btn-sm">
+            <button type="button" onClick={() => setOrbPrefs(null)} aria-label="Reset the orbs" className="btn-ghost btn-sm">
               Reset
             </button>
           }
@@ -47,6 +48,20 @@ export function Settings() {
             The dotted orbs that show what MetaProof is doing. Tune them here and every orb in the app follows.
           </p>
           <OrbPlayground />
+        </Card>
+
+        <Card
+          title="Liquid metal"
+          action={
+            <button type="button" onClick={() => setMetalPrefs(null)} aria-label="Reset the metal" className="btn-ghost btn-sm">
+              Reset
+            </button>
+          }
+        >
+          <p className="mb-5 text-[14.5px] text-muted">
+            The chrome on the LIVE badge and round the ways to add a picture. Tune it here and all of it follows.
+          </p>
+          <MetalPlayground />
         </Card>
 
         <Card title="This device">
@@ -227,7 +242,8 @@ function InstallCard() {
   )
 }
 
-/** A settings card: its title, with an optional status on the right. */
+/** A settings card: its title, with an optional status on the right. Clipped sideways, so a halo
+ *  of liquid metal near its edge (the server's LIVE badge) never widens a phone's page. */
 function Card({
   title,
   action,
@@ -240,7 +256,7 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className={`panel rounded-[28px] p-5 sm:p-6 ${className}`}>
+    <section className={`panel overflow-x-clip rounded-[28px] p-5 sm:p-6 ${className}`}>
       <div className="mb-3 flex min-h-7 items-center justify-between gap-3">
         <h2 className="card-title">{title}</h2>
         {action}

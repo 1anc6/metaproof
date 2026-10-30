@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from 'react'
+import type { MetalFxPreset } from 'metal-fx'
 import type { ModeOpts, OrbState } from 'thinking-orbs'
 
 // Small per-browser switches: blurred previews, the overview's period, the rail's width, the
-// colour theme and how the thinking orbs look. Storage can be
+// colour theme, and how the thinking orbs and the liquid metal look. Storage can be
 // blocked (private mode), so the in-memory copy is the source of truth and storage is only a
 // best-effort mirror.
 export type ThemePref = 'system' | 'light' | 'dark'
@@ -30,6 +31,26 @@ export interface OrbPrefs {
   opts: Partial<Record<OrbState, ModeOpts>>
 }
 
+/** How the liquid metal looks: the LIVE badge and the rings on the ways to add a picture. */
+export interface MetalPrefs {
+  /** Off freezes the metal on its current frame. */
+  animate: boolean
+  preset: MetalFxPreset
+  /** How much metal shows, 0 to 1. */
+  strength: number
+  /** The wandering halo: on or off, and how bright, 0 to 1. */
+  glow: boolean
+  glowStrength: number
+  /** Zoom into the metal's pattern; larger shows bigger features. */
+  shaderScale: number
+  /** Neighbouring buttons and words catch a reflection of the ring. */
+  reflection: boolean
+  /** The pointer dents the ring as it passes. */
+  bend: boolean
+  /** The ring lights a copy of the pointer as it nears. */
+  cursorLight: boolean
+}
+
 export interface Prefs {
   blurPreviews: boolean
   period: Period
@@ -37,6 +58,7 @@ export interface Prefs {
   railOpen: boolean
   theme: ThemePref
   orbs: OrbPrefs
+  metal: MetalPrefs
 }
 
 const KEY = 'metaproof.prefs.v1'
@@ -52,7 +74,19 @@ export const ORB_DEFAULTS: OrbPrefs = {
   bend: 19,
   opts: {},
 }
-const DEFAULTS: Prefs = { blurPreviews: false, period: 'all', railOpen: false, theme: 'system', orbs: ORB_DEFAULTS }
+/** The library playground's own starting point: chromatic, 90%, full glow, 1.6×. */
+export const METAL_DEFAULTS: MetalPrefs = {
+  animate: true,
+  preset: 'chromatic',
+  strength: 0.9,
+  glow: true,
+  glowStrength: 1,
+  shaderScale: 1.6,
+  reflection: true,
+  bend: true,
+  cursorLight: false,
+}
+const DEFAULTS: Prefs = { blurPreviews: false, period: 'all', railOpen: false, theme: 'system', orbs: ORB_DEFAULTS, metal: METAL_DEFAULTS }
 const listeners = new Set<() => void>()
 let cache: Prefs | null = null
 
@@ -60,8 +94,8 @@ function read(): Prefs {
   if (cache) return cache
   try {
     const stored = JSON.parse(localStorage.getItem(KEY) ?? '{}')
-    // the orbs' settings arrive one at a time, so fill in any a stored copy predates
-    cache = { ...DEFAULTS, ...stored, orbs: { ...ORB_DEFAULTS, ...stored.orbs } }
+    // the orbs' and the metal's settings arrive one at a time, so fill in any a stored copy predates
+    cache = { ...DEFAULTS, ...stored, orbs: { ...ORB_DEFAULTS, ...stored.orbs }, metal: { ...METAL_DEFAULTS, ...stored.metal } }
   } catch {
     cache = { ...DEFAULTS }
   }
@@ -81,6 +115,11 @@ export function setPref<K extends keyof Prefs>(key: K, value: Prefs[K]) {
 /** Changes some of the orbs' settings; `null` puts them all back. */
 export function setOrbPrefs(patch: Partial<OrbPrefs> | null) {
   setPref('orbs', patch ? { ...read().orbs, ...patch } : ORB_DEFAULTS)
+}
+
+/** Changes some of the metal's settings; `null` puts them all back. */
+export function setMetalPrefs(patch: Partial<MetalPrefs> | null) {
+  setPref('metal', patch ? { ...read().metal, ...patch } : METAL_DEFAULTS)
 }
 
 export function usePrefs(): Prefs {

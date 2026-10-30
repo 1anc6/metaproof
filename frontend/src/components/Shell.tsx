@@ -5,10 +5,12 @@ import { Toaster } from 'sonner'
 import type { OrbState } from 'thinking-orbs'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { useLens } from '../lib/lens'
+import { useMetalSettings } from '../lib/metal'
 import { useOrbGravity } from '../lib/orbs'
 import { setPref, usePrefs } from '../lib/prefs'
 import { useThemeSync } from '../lib/theme'
 import { AddMenu } from './AddMenu'
+import { LiveBadge } from './Metal'
 import { SummariesProvider } from './SummariesProvider'
 import { ThinkingOrb } from './ThinkingOrb'
 import { Logo, Mark, ThemeToggle } from './ui'
@@ -89,6 +91,7 @@ export function Shell() {
 
   useSheen()
   useOrbGravity()
+  useMetalSettings()
 
   return (
     <SummariesProvider>
@@ -181,16 +184,27 @@ function ServerMark({ state, size }: { state: ServerState; size: string }) {
   )
 }
 
-/** `compact`: only the dot below 380px, where the words don't fit beside the name. */
-export function ServerBadge({ compact = false }: { compact?: boolean }) {
+/**
+ * Live, the server's state is LIVE on a pill of liquid metal; until then an orb or a dot and its
+ * words, on a glass chip when `chip`. `compact`: only the orb or dot below 380px, where the words
+ * don't fit beside the name.
+ */
+export function ServerBadge({ compact = false, chip = false }: { compact?: boolean; chip?: boolean }) {
   const state = useServerStatus()
   const s = SERVER_LABEL[state]
-  return (
+  if (state === 'online')
+    return (
+      <span title={s.text} className="flex">
+        <LiveBadge label={s.text} scale={chip ? 1.15 : 1} />
+      </span>
+    )
+  const badge = (
     <span className="flex items-center gap-2 text-[13px] text-muted" title={s.text}>
       <ServerMark state={state} size="size-2" />
       <span className={compact ? 'whitespace-nowrap max-[379px]:sr-only' : 'whitespace-nowrap'}>{s.text}</span>
     </span>
   )
+  return chip ? <span className="chip h-10 px-3.5 max-[379px]:w-10 max-[379px]:justify-center max-[379px]:px-0">{badge}</span> : badge
 }
 
 /**
@@ -262,15 +276,20 @@ function RailLink({ to, label, icon: Icon, end, hint, open }: (typeof NAV)[numbe
   )
 }
 
-/** The server's state as a dot, with its words beside it once the rail is open. */
+/** The server's state as an orb or a dot, or LIVE in metal, with its words beside it once the rail
+ *  is open. The badge is wider than an icon, so it hangs out either side of the icons' column. */
 function ServerLine({ open }: { open: boolean }) {
   const state = useServerStatus()
   const s = SERVER_LABEL[state]
   return (
     <p className="flex h-11 items-center gap-3.5 overflow-hidden px-5 whitespace-nowrap" title={open ? undefined : s.text}>
-      <span className="grid size-6 shrink-0 place-items-center">
-        <ServerMark state={state} size="size-2.5" />
-      </span>
+      {state === 'online' ? (
+        <LiveBadge label={null} className="-mx-[10.5px]" />
+      ) : (
+        <span className="grid size-6 shrink-0 place-items-center">
+          <ServerMark state={state} size="size-2.5" />
+        </span>
+      )}
       <span className="rail-label !text-[13.5px] !font-normal text-muted">{s.text}</span>
     </p>
   )
@@ -285,9 +304,7 @@ function TopBar({ theme }: { theme: 'light' | 'dark' }) {
           <Logo />
         </Link>
         <div className="flex items-center gap-2">
-          <span className="chip h-10 px-3.5 max-[379px]:w-10 max-[379px]:justify-center max-[379px]:px-0">
-            <ServerBadge compact />
-          </span>
+          <ServerBadge compact chip />
           <ThemeToggle resolved={theme} />
         </div>
       </div>
@@ -374,7 +391,8 @@ function Dock() {
           <Tab key={item.to} {...item} on={i === active} />
         ))}
       </div>
-      <AddMenu />
+      {/* the bar beside the + catches a glint of its metal ring */}
+      <AddMenu reflect={bar} />
     </nav>
   )
 }

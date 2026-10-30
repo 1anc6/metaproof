@@ -149,6 +149,17 @@ function OrbGuide() {
         </Link>
         .
       </p>
+      <p className="mt-2 text-[13px] text-faint">
+        The chrome on the LIVE badge and round the ways to add a picture is{' '}
+        <a href="https://libraries.dev/metal" target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
+          Liquid Metal by libraries.dev
+        </a>{' '}
+        (MIT licence), drawn with the liquid-metal shader from{' '}
+        <a href="https://github.com/paper-design/shaders" target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
+          Paper Shaders
+        </a>{' '}
+        (Apache 2.0 licence).
+      </p>
     </section>
   )
 }

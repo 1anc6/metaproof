@@ -1,10 +1,12 @@
 import { Check } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useMetalTextReflection } from 'metal-fx'
 import type { ModeFrame, OrbState } from 'thinking-orbs'
 import { api, ApiError, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
 import { fingerprint, useOrbFavicon } from '../lib/orbs'
+import { LiveBadge } from '../components/Metal'
 import { ReportView } from '../components/ReportView'
 import { ErrorPanel, FileName, Gauge, PageHeader, PanelTitle } from '../components/ui'
 import { ThinkingOrb, ThinkingPill } from '../components/ThinkingOrb'
@@ -104,6 +106,9 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
       ? { label: 'Waiting in the queue…', orb: 'breathing' }
       : { ...STEPS[active], label: `${STEPS[active].label}…` }
   useOrbFavicon(now.orb)
+  // the panel's name catches the LIVE badge's metal on its letters, as on libraries.dev/metal
+  const title = useRef<HTMLSpanElement>(null)
+  useMetalTextReflection(title)
 
   return (
     <div>
@@ -133,12 +138,8 @@ function Progress({ job, filename, preview }: { job: Job | null; filename?: stri
 
         <section className="panel flex min-w-0 flex-col rounded-[28px] p-5 lg:col-span-5" aria-label="Progress">
           <PanelTitle
-            title={waiting ? 'In queue' : 'Analyzing'}
-            status={
-              <span className="chip">
-                <span className="animate-blink size-1.5 rounded-full bg-primary" aria-hidden /> Live
-              </span>
-            }
+            title={<span ref={title}>{waiting ? 'In queue' : 'Analyzing'}</span>}
+            status={<LiveBadge label="Live" reflect={[{ ref: title, strength: 0.8 }]} />}
           />
           <div aria-live="polite">
             <Gauge
