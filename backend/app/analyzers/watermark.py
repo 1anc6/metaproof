@@ -47,7 +47,9 @@ MARKS = (
 
 
 HAAR = 0.7071067811865476  # pywt's Haar filter tap, 1/sqrt(2)
-STRIP = 256  # image rows per pass; a multiple of 8 keeps the block grid aligned
+# Image rows per pass. Few rows keep the numpy temporaries small; a multiple of 8 keeps the
+# block grid aligned.
+STRIP = 64
 
 
 def _u_channel(bgr: np.ndarray) -> np.ndarray:

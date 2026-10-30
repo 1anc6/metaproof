@@ -5,7 +5,7 @@ import pytest
 from PIL import Image, ImageDraw
 
 from app.analyzers.base import MediaInfo, Signal, Strength
-from app.analyzers.detector import DetectorAnalyzer, findings_for, preprocess, trim_borders
+from app.analyzers.detector import DetectorAnalyzer, findings_for, prepare, preprocess, trim_borders
 
 
 @pytest.mark.parametrize("size", [(1024, 1024), (1920, 1080), (257, 999), (100, 60)])
@@ -107,3 +107,28 @@ def test_trim_keeps_margin_without_text():
     canvas.paste(_photo(800, 600), (0, 120))
     out, trimmed = trim_borders(canvas)
     assert out.size == canvas.size and not any(trimmed.values())
+
+
+@pytest.mark.parametrize("captioned", [False, True], ids=["margin", "captioned"])
+@pytest.mark.parametrize("mode, fmt", [("RGB", None), ("RGBA", None), ("L", None), ("P", None),
+                                       ("RGB", "JPEG"), ("L", "JPEG"), ("RGBA", "PNG"),
+                                       ("P", "PNG")])
+def test_prepare_matches_converting_to_rgb_first(tmp_path, captioned, mode, fmt):
+    # trim_borders and standardize skip convert("RGB") on RGB images to save a full-size copy.
+    # The thresholds were calibrated on converting first, so every value must stay the same,
+    # for images in memory and for files opened lazily, the way the analyzer opens uploads.
+    img = Image.new("RGB", (800, 720), (255, 255, 255))
+    img.paste(_photo(800, 600), (0, 120))
+    if captioned:  # text in the band, so the border is cut and the crop path runs
+        draw = ImageDraw.Draw(img)
+        for x0 in (80, 280, 480):
+            draw.rectangle((x0, 40, x0 + 160, 80), fill=(20, 20, 20))
+    img = img.convert(mode)
+    if fmt is None:
+        got, want = prepare(img), prepare(img.convert("RGB"))
+    else:
+        path = tmp_path / f"upload.{fmt.lower()}"
+        img.save(path, fmt)
+        with Image.open(path) as a, Image.open(path) as b:
+            got, want = prepare(a), prepare(b.convert("RGB"))
+    assert np.array_equal(got[0], want[0]) and got[1] == want[1]

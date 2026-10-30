@@ -11,6 +11,8 @@ from typing import BinaryIO
 import filetype
 from PIL import Image
 
+from app.memory import big_image_lock
+
 CHUNK_BYTES = 1024 * 1024
 ALLOWED_TYPES = {
     "image/jpeg": ".jpg",
@@ -83,12 +85,13 @@ def _decode(path: Path, max_pixels: int) -> tuple[int, int, bytes]:
     """Fully decode once, so a broken or hostile file fails here and not inside an analyzer."""
     Image.MAX_IMAGE_PIXELS = max_pixels
     try:
-        with Image.open(path) as img:
+        with big_image_lock, Image.open(path) as img:
             width, height = img.size
             if width * height > max_pixels:
                 raise UploadRejected("Image dimensions are too large.")
             img.load()
-            thumb = img.convert("RGB")
+            # thumbnail() shrinks the image in place, so an RGB one needs no full-size copy.
+            thumb = img if img.mode == "RGB" else img.convert("RGB")
             thumb.thumbnail(THUMBNAIL_SIZE)
             buf = io.BytesIO()
             thumb.save(buf, format="WEBP", quality=75)

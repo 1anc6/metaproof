@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import engine as evidence
-from app import models, retention
+from app import memory, models, retention
 from app.analyzers import ANALYZERS
 from app.analyzers.base import Finding, MediaInfo
 from app.db import SessionLocal
@@ -122,6 +122,7 @@ def process_next_job() -> bool:
         finally:
             _delete_upload(job)
             session.commit()
+    memory.release_freed_memory()
     return True
 
 
@@ -141,7 +142,9 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
             ok=True, duration_ms=0, raw_output={},
         )
         try:
-            result = analyzer.run(media)
+            with memory.big_image_lock:  # an upload being decoded waits for it, not alongside
+                result = analyzer.run(media)
+                memory.release_freed_memory()  # before the next analyzer decodes the image again
             run.raw_output = result.raw
             run.findings = [
                 models.Finding(code=f.code, signal=f.signal.value, strength=f.strength.value,
