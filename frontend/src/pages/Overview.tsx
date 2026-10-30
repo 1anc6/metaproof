@@ -294,7 +294,7 @@ function VerdictDial({
             <button key={m} type="button" aria-pressed={on} onClick={() => setMode(m)} className="group flex min-w-0 flex-col items-center gap-2 rounded-[18px] outline-offset-4">
               <span
                 className={`grid size-[52px] place-items-center rounded-full transition duration-200 group-active:scale-95 ${
-                  on ? 'bg-white text-on-light shadow-[0_10px_22px_-12px_rgb(0_0_0/0.6)]' : 'bg-[var(--btn-bg)] text-ink shadow-[var(--btn-edge)] group-hover:bg-[var(--btn-hover)]'
+                  on ? 'bg-[var(--white-pill)] text-[var(--pill-ink)] shadow-[0_10px_22px_-12px_rgb(0_0_0/0.6)]' : 'bg-[var(--btn-bg)] text-ink shadow-[var(--btn-edge)] group-hover:bg-[var(--btn-hover)]'
                 }`}
               >
                 <Icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
@@ -330,7 +330,7 @@ function Dial({ share, color, figure, name, detail, label }: { share: number; co
               y1={C + inner * Math.sin(a)}
               x2={C + 81 * Math.cos(a)}
               y2={C + 81 * Math.sin(a)}
-              stroke="rgb(255 255 255 / 0.32)"
+              stroke="var(--dial-tick)"
               strokeWidth={1.4}
               strokeLinecap="round"
             />
@@ -485,7 +485,7 @@ function Trail({ items, data, now }: { items: HistoryEntry[]; data: Data; now: D
       </p>
       <div className="relative mt-2" style={{ height: TRAIL_H }} aria-hidden>
         <svg viewBox={`0 0 100 ${TRAIL_H}`} preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible">
-          <path d={path} fill="none" stroke="rgb(255 255 255 / 0.8)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={path} fill="none" stroke="var(--trail-line)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {pts.map((p, i) => {
           const last = i === n - 1
@@ -642,7 +642,7 @@ function SpotCard({
             lands the knob at the end on any card. */}
         <span className="relative mt-auto block h-11 w-full max-w-[118px] shrink-0 rounded-full bg-[var(--btn-bg)] shadow-[var(--btn-edge)]" aria-hidden>
           <span className="absolute top-1 right-10 bottom-1 left-1 transition-transform duration-300 ease-(--ease-drawer) group-hover:translate-x-full">
-            <span className="grid size-9 place-items-center rounded-full bg-white text-on-light shadow-[0_4px_10px_-4px_rgb(0_0_0/0.5)]">
+            <span className="grid size-9 place-items-center rounded-full bg-[var(--white-pill)] text-[var(--pill-ink)] shadow-[0_4px_10px_-4px_rgb(0_0_0/0.5)]">
               <ArrowRight className="size-4" strokeWidth={2.2} />
             </span>
           </span>

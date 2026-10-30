@@ -5,7 +5,7 @@ import { useLayoutEffect, useSyncExternalStore } from 'react'
 // it before first paint from the same stored preference, so there is no flash of the wrong theme.
 const dark = window.matchMedia('(prefers-color-scheme: dark)')
 
-const CANVAS = { light: '#5f5248', dark: '#0a0a0a' } as const
+const CANVAS = { light: '#f2eef1', dark: '#0a0a0a' } as const
 
 export function resolveTheme(pref: ThemePref): 'light' | 'dark' {
   return pref === 'system' ? (dark.matches ? 'dark' : 'light') : pref

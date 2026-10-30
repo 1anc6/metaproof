@@ -4,35 +4,35 @@
   --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Consolas, monospace;
 
-  /* Warm glass, after the smart-home reference: white type on translucent mocha cards inside one
-     large frosted window, over a grainy gradient. Dark is the same glass, smoked, over black with
-     streaks of light. Lime marks what is on or chosen; white pills do the acting; each verdict keeps
-     a bright dot beside its word. Text tones are white at set strengths, kept at 4.5:1 or more on
-     the cards. */
-  --color-canvas: #4a3f36;
-  --color-raised: rgb(255 255 255 / 0.08); /* wells, tracks, quiet fills */
-  --color-hover: rgb(255 255 255 / 0.08);
-  --color-line: rgb(255 255 255 / 0.12);
-  --color-line-strong: rgb(255 255 255 / 0.24);
-  --color-ink: #ffffff;
-  --color-muted: rgb(255 255 255 / 0.93);
-  --color-faint: rgb(255 255 255 / 0.87);
+  /* Frosted glass, after the smart-home reference. Light: dark type on white glass cards inside one
+     large frosted window, over a grainy rose-to-peach gradient. Dark: white type on smoked glass
+     over black with streaks of light. Lime marks what is on or chosen; a solid pill does the
+     acting; each verdict keeps a bright dot beside its word. Text tones are kept at 4.5:1 or more
+     on the cards. */
+  --color-canvas: #f6e4e0;
+  --color-raised: rgb(90 35 45 / 0.06); /* wells, tracks, quiet fills */
+  --color-hover: rgb(90 35 45 / 0.06);
+  --color-line: rgb(90 35 45 / 0.12);
+  --color-line-strong: rgb(90 35 45 / 0.24);
+  --color-ink: #2a1a1d;
+  --color-muted: rgb(42 26 29 / 0.84);
+  --color-faint: rgb(42 26 29 / 0.7);
   --color-primary: #b4d055; /* the lime: switched on, chosen, the bar in focus */
   --color-on-primary: #1d2309;
   --color-on-light: #2a221b; /* type on the white pills */
-  --color-accent: #e8f5b5; /* the lime as text: pale enough to read on the glass */
-  --color-accent-soft: rgb(180 208 85 / 0.2);
-  --color-highlight: rgb(180 208 85 / 0.34);
+  --color-accent: #4c6810; /* the lime as text: deep enough to read on the glass */
+  --color-accent-soft: rgb(180 208 85 / 0.26);
+  --color-highlight: rgb(180 208 85 / 0.4);
 
   /* Verdicts: a text tone that reads on the glass, and a bright dot. */
-  --color-authentic: #d6f7e5;
-  --color-edited: #ffeccb;
-  --color-ai: #ffe7e1;
-  --color-neutral: #efebe7;
-  --color-dot-authentic: #45dc8f;
-  --color-dot-edited: #ffb43c;
-  --color-dot-ai: #ff6e56;
-  --color-dot-neutral: #c3bbb2;
+  --color-authentic: #146b42;
+  --color-edited: #9a4a06;
+  --color-ai: #b8321a;
+  --color-neutral: #5d5254;
+  --color-dot-authentic: #2fc47b;
+  --color-dot-edited: #f7a227;
+  --color-dot-ai: #f45b40;
+  --color-dot-neutral: #ab9f9c;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -94,67 +94,81 @@
   from { transform: rotate(0deg); }
 }
 
-/* Surface recipes that differ by theme. Light (mocha) is the default; dark below. */
+/* Surface recipes that differ by theme. Light (rose glass) is the default; dark below. */
 :root {
-  /* the room behind the glass: a warm grainy gradient with a window's light and a streak of sun */
-  --bd-base: linear-gradient(162deg, #75614f 0%, #5a4a3d 42%, #3b3029 100%);
-  --bd-glow: rgb(238 214 184 / 0.2);
-  --bd-beam: rgb(246 226 196 / 0.34);
-  --bd-beam-2: rgb(236 208 172 / 0.16);
-  --bd-pool: rgb(156 104 82 / 0.42);
-  --grain: 0.26;
+  /* the room behind the glass: a grainy gradient, deep raspberry at the lower left warming through
+     coral and peach to cream at the right, under a pale sky, with a band of light rising across it */
+  --bd-base:
+    radial-gradient(60% 55% at 4% 92%, #c03c5a 0%, rgb(192 60 90 / 0) 100%),
+    radial-gradient(50% 42% at 0% 40%, #ef8088 0%, rgb(239 128 136 / 0) 100%),
+    radial-gradient(48% 46% at 48% 74%, #ee9a7c 0%, rgb(238 154 124 / 0) 100%),
+    radial-gradient(42% 38% at 76% 40%, #f7cf9d 0%, rgb(247 207 157 / 0) 100%),
+    radial-gradient(46% 42% at 100% 100%, #e9b7c9 0%, rgb(233 183 201 / 0) 100%),
+    linear-gradient(180deg, #f2f1f5 0%, #f8efea 26%, #f6dcc8 58%, #f0c4c2 100%);
+  --bd-glow: rgb(255 255 255 / 0.5);
+  --bd-beam: rgb(255 245 236 / 0.78);
+  --bd-beam-tilt: -17deg;
+  --bd-beam-2: rgb(255 255 255 / 0.55);
+  --bd-pool: rgb(236 178 206 / 0.4);
+  --grain: 0.16;
   /* the window: one large pane of frosted glass that holds the rail and the page */
-  --frame-bg: linear-gradient(170deg, rgb(96 84 74 / 0.82), rgb(86 75 66 / 0.84));
-  --frame-blur: blur(44px) saturate(1.15);
-  --frame-solid: #5d5148;
-  --frame-rim: inset 0 1px 0 rgb(255 255 255 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.07);
-  --frame-shadow: 0 2px 6px rgb(20 12 6 / 0.12), 0 40px 90px -36px rgb(20 12 6 / 0.7);
-  /* glass cards inside the window: a light wash, a bright rim (the ::before) and a soft shadow */
-  --panel-bg: linear-gradient(160deg, rgb(255 255 255 / 0.09) 0%, rgb(255 255 255 / 0.055) 100%);
-  --panel-solid: #6a5d52;
-  --panel-edge: linear-gradient(140deg, rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.08) 38%, rgb(255 255 255 / 0.03) 62%, rgb(255 255 255 / 0.2));
-  --panel-rim: inset 0 1px 0 rgb(255 255 255 / 0.12);
-  --panel-shadow: 0 1px 2px rgb(20 12 6 / 0.08), 0 22px 40px -26px rgb(20 12 6 / 0.55);
-  --sheen: rgb(255 255 255 / 0.07);
-  /* the rail: a column of the same glass, a little deeper */
-  --rail-bg: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.04));
-  --rail-on: rgb(255 255 255 / 0.15);
-  --rail-on-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 10px 22px -12px rgb(20 12 6 / 0.55);
+  --frame-bg: linear-gradient(170deg, rgb(255 255 255 / 0.26), rgb(255 248 246 / 0.2));
+  --frame-blur: blur(44px) saturate(1.2);
+  --frame-solid: #f8e9e5;
+  --frame-rim: inset 0 1px 0 rgb(255 255 255 / 0.85), inset 0 0 0 1px rgb(255 255 255 / 0.45);
+  --frame-shadow: 0 2px 6px rgb(120 40 55 / 0.08), 0 40px 90px -36px rgb(120 40 55 / 0.45);
+  /* glass cards inside the window: a white wash, a bright rim (the ::before) and a soft shadow */
+  --panel-bg: linear-gradient(160deg, rgb(255 255 255 / 0.66) 0%, rgb(255 255 255 / 0.48) 100%);
+  --panel-solid: #fff8f6;
+  --panel-edge: linear-gradient(140deg, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.45) 38%, rgb(255 255 255 / 0.25) 62%, rgb(255 255 255 / 0.75));
+  --panel-rim: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --panel-shadow: 0 1px 2px rgb(120 40 55 / 0.06), 0 22px 40px -26px rgb(120 40 55 / 0.35);
+  --sheen: rgb(255 255 255 / 0.5);
+  /* the rail: a column of the same glass */
+  --rail-bg: linear-gradient(180deg, rgb(255 255 255 / 0.56), rgb(255 255 255 / 0.4));
+  --rail-on: rgb(255 255 255 / 0.95);
+  --rail-on-shadow: inset 0 1px 0 #fff, 0 10px 22px -12px rgb(120 40 55 / 0.35);
   /* raised glass: the chosen item, a hovered row */
-  --raise-bg: rgb(255 255 255 / 0.16);
-  --raise-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 8px 18px -10px rgb(20 12 6 / 0.5);
-  --row-bg: rgb(255 255 255 / 0.06);
+  --raise-bg: rgb(255 255 255 / 0.8);
+  --raise-shadow: inset 0 1px 0 #fff, 0 8px 18px -10px rgb(120 40 55 / 0.3);
+  --row-bg: rgb(255 255 255 / 0.5);
   /* floating chrome over scrolling content: the phone bars, menus, dialogs */
-  --glass-bg: linear-gradient(160deg, rgb(116 102 90 / 0.8), rgb(88 77 68 / 0.78));
-  --glass-blur: blur(28px) saturate(1.3);
-  --glass-solid: #5f5349;
-  --toast-bg: #5f5349;
-  --btn-bg: rgb(255 255 255 / 0.13);
-  --btn-hover: rgb(255 255 255 / 0.21);
-  --btn-edge: inset 0 0 0 1px rgb(255 255 255 / 0.12);
-  --white-pill: #ffffff;
-  --white-pill-hover: #f0ede9;
-  --zone-edge: rgb(255 255 255 / 0.34);
-  --zone-bg: rgb(255 255 255 / 0.04);
+  --glass-bg: linear-gradient(160deg, rgb(255 250 248 / 0.8), rgb(255 243 240 / 0.74));
+  --glass-blur: blur(28px) saturate(1.4);
+  --glass-solid: #fff5f2;
+  --toast-bg: #fff8f6;
+  --btn-bg: rgb(255 255 255 / 0.62);
+  --btn-hover: rgb(255 255 255 / 0.92);
+  --btn-edge: inset 0 0 0 1px rgb(120 50 62 / 0.12);
+  /* the acting pill: dark on the light glass */
+  --white-pill: #2a1a1d;
+  --white-pill-hover: #462c31;
+  --pill-ink: #ffffff;
+  --zone-edge: rgb(120 50 62 / 0.3);
+  --zone-bg: rgb(255 255 255 / 0.32);
   --orb-face: radial-gradient(120% 120% at 50% 15%, #f1f9cf 0%, #c3dc6c 46%, #93b13b 100%);
-  --orb-rim: inset 0 2px 1px rgb(255 255 255 / 0.8), inset 0 -12px 26px rgb(60 80 10 / 0.25), 0 0 0 1px rgb(255 255 255 / 0.3);
-  --orb-glow: rgb(190 222 92 / 0.6);
-  --track-bg: rgb(255 255 255 / 0.12);
-  --bar-bg: rgb(255 255 255 / 0.2);
-  --switch-off: rgb(255 255 255 / 0.18);
-  --selected-bg: rgb(255 255 255 / 0.24);
-  --selected-ink: #ffffff;
-  --scrim: rgb(24 16 10 / 0.5);
-  --dock-rim: rgb(255 255 255 / 0.16);
-  --tab-pill: #ffffff;
-  --tab-pill-shadow: 0 1px 2px rgb(20 12 6 / 0.12), 0 8px 18px -8px rgb(20 12 6 / 0.45);
-  --tab-on-ink: #2a221b;
-  --tab-dim: rgb(255 255 255 / 0.62);
-  --ring: #ffffff;
-  --knob-fill: #66594f;
+  --orb-rim: inset 0 2px 1px rgb(255 255 255 / 0.8), inset 0 -12px 26px rgb(60 80 10 / 0.25), 0 0 0 1px rgb(255 255 255 / 0.5);
+  --orb-glow: rgb(170 205 70 / 0.55);
+  --track-bg: rgb(90 35 45 / 0.08);
+  --bar-bg: rgb(90 35 45 / 0.13);
+  --switch-off: rgb(90 35 45 / 0.16);
+  --selected-bg: #ffffff;
+  --selected-ink: #2a1a1d;
+  --scrim: rgb(70 25 35 / 0.3);
+  --dock-rim: rgb(255 255 255 / 0.75);
+  --tab-pill: #2a1a1d;
+  --tab-pill-shadow: 0 1px 2px rgb(70 25 35 / 0.15), 0 8px 18px -8px rgb(70 25 35 / 0.45);
+  --tab-on-ink: #ffffff;
+  --tab-dim: rgb(42 26 29 / 0.6);
+  --ring: #2a1a1d;
+  --knob-fill: #fff7f4;
+  --dial-tick: rgb(90 35 45 / 0.3);
+  --trail-line: rgb(42 26 29 / 0.7);
 }
 :root[data-theme='dark'] {
   --color-canvas: #050505;
+  --color-ink: #ffffff;
+  --color-on-light: #2a221b;
   --color-raised: rgb(255 255 255 / 0.06);
   --color-hover: rgb(255 255 255 / 0.06);
   --color-line: rgb(255 255 255 / 0.1);
@@ -178,10 +192,12 @@
   --bd-base: linear-gradient(170deg, #0d0d0d 0%, #060606 55%, #020202 100%);
   --bd-glow: rgb(255 255 255 / 0.24);
   --bd-beam: rgb(255 255 255 / 0.6);
+  --bd-beam-tilt: 23deg;
   --bd-beam-2: rgb(255 255 255 / 0.12);
   --bd-pool: rgb(255 255 255 / 0.05);
   --grain: 0.3;
   --frame-bg: linear-gradient(170deg, rgb(20 20 22 / 0.58), rgb(10 10 12 / 0.64));
+  --frame-blur: blur(44px) saturate(1.15);
   --frame-solid: #121214;
   --frame-rim: inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.05);
   --frame-shadow: 0 2px 6px rgb(0 0 0 / 0.3), 0 40px 90px -36px rgb(0 0 0 / 0.9);
@@ -198,12 +214,15 @@
   --raise-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 8px 18px -10px rgb(0 0 0 / 0.7);
   --row-bg: rgb(255 255 255 / 0.04);
   --glass-bg: linear-gradient(160deg, rgb(38 38 42 / 0.78), rgb(18 18 20 / 0.74));
+  --glass-blur: blur(28px) saturate(1.3);
   --glass-solid: #1c1c1f;
   --toast-bg: #1f1f22;
   --btn-bg: rgb(255 255 255 / 0.09);
   --btn-hover: rgb(255 255 255 / 0.15);
   --btn-edge: inset 0 0 0 1px rgb(255 255 255 / 0.09);
+  --white-pill: #ffffff;
   --white-pill-hover: #e9e9ec;
+  --pill-ink: var(--color-on-light);
   --zone-edge: rgb(255 255 255 / 0.24);
   --zone-bg: rgb(255 255 255 / 0.025);
   --orb-face: radial-gradient(120% 120% at 50% 15%, #eef8c8 0%, #bfdb63 46%, #86a42f 100%);
@@ -213,12 +232,17 @@
   --bar-bg: rgb(255 255 255 / 0.14);
   --switch-off: rgb(255 255 255 / 0.14);
   --selected-bg: rgb(255 255 255 / 0.16);
+  --selected-ink: #ffffff;
   --scrim: rgb(0 0 0 / 0.6);
   --dock-rim: rgb(255 255 255 / 0.1);
+  --tab-pill: #ffffff;
   --tab-pill-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 18px -8px rgb(0 0 0 / 0.7);
   --tab-on-ink: #0b0b0d;
   --tab-dim: rgb(255 255 255 / 0.5);
+  --ring: #ffffff;
   --knob-fill: #1a1a1d;
+  --dial-tick: rgb(255 255 255 / 0.32);
+  --trail-line: rgb(255 255 255 / 0.8);
 }
 
 /* The room: a fixed grainy gradient under everything. The spans are its light, the ::after its
@@ -244,13 +268,13 @@
   height: 52vmax;
   background: radial-gradient(closest-side, var(--bd-glow), transparent);
 }
-/* the long streak, falling to the right from the left edge */
+/* the long streak from the left edge: rising to the right in light, falling in dark */
 .backdrop > :nth-child(2) {
   top: 50%;
   left: -12vw;
   width: 84vw;
   height: 30vh;
-  transform: rotate(23deg);
+  transform: rotate(var(--bd-beam-tilt));
   background: radial-gradient(closest-side, var(--bd-beam), transparent);
 }
 /* a fainter streak across the top */
@@ -302,8 +326,11 @@
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     -webkit-tap-highlight-color: transparent;
+  }
+  html[data-theme='dark'] {
+    color-scheme: dark;
   }
   /* no double-tap-to-zoom wait on taps */
   a,
@@ -573,7 +600,7 @@
     border-radius: 9999px;
     font-size: 15px;
     font-weight: 600;
-    color: var(--color-on-light);
+    color: var(--pill-ink);
     white-space: nowrap;
     background: var(--white-pill);
     box-shadow:
@@ -932,7 +959,7 @@
 }
 [data-sonner-toast] [data-button] {
   background: var(--white-pill) !important;
-  color: var(--color-on-light) !important;
+  color: var(--pill-ink) !important;
   border-radius: 9999px !important;
   font-weight: 600;
 }
@@ -975,8 +1002,8 @@
   }
 }
 
-/* "Save as PDF" prints the report on white paper without the app chrome. Both themes set white
-   type on glass, so the text tones turn dark for paper. */
+/* "Save as PDF" prints the report on white paper without the app chrome. Dark sets white type on
+   glass, so the text tones turn dark for paper in both themes. */
 @media print {
   :root,
   :root[data-theme='dark'] {
