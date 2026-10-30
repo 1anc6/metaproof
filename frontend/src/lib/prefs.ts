@@ -1,9 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
 // Small per-browser switches: blurred previews, the overview's period, the rail's width and the
-// colour theme. Storage can be
-// blocked (private mode), so the in-memory copy is the source of truth and storage is only a
-// best-effort mirror.
+// colour theme. Storage can be blocked (private mode), so the in-memory copy is the source of
+// truth and storage is only a best-effort mirror.
 export type ThemePref = 'system' | 'light' | 'dark'
 /** How far back the overview counts. */
 export type Period = 'all' | 'month' | 'week'

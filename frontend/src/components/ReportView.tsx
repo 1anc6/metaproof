@@ -39,10 +39,11 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
       </nav>
 
       {/* The image beside its verdict: one outcome, its place on the scale, one sentence, three facts. */}
-      <section className="grid gap-4 lg:grid-cols-12">
-        <figure className="panel flex flex-col rounded-[28px] p-2.5 lg:col-span-5">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <figure className="panel flex min-w-0 flex-col rounded-[28px] p-2.5 lg:col-span-5">
           <div className="relative min-h-[clamp(190px,50vw,340px)] flex-1 overflow-hidden rounded-[20px] bg-[var(--frame-bg)]">
-            <Thumb sha={sha} className="!absolute inset-0 scale-125 !bg-transparent opacity-50 blur-2xl" />
+            {/* the blurred copy is glass's backdrop; on paper it would print as grey smudges */}
+            <Thumb sha={sha} className="!absolute inset-0 scale-125 !bg-transparent opacity-50 blur-2xl print:hidden" />
             <img
               src={api.thumbnailUrl(sha)}
               alt={filename ? `The analyzed image, ${filename}` : 'The analyzed image'}
@@ -192,17 +193,16 @@ function AnalysisDetails({ analyzers }: { analyzers: AnalyzerResult[] }) {
             {analyzers.map((a) => SHORT_NAME[a.analyzer] ?? a.analyzer).join(' · ')}
           </span>
         </span>
-        <span className="icon-btn size-9" aria-hidden>
+        <span className="icon-btn no-print size-9" aria-hidden>
           <ChevronDown className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
-      {open && (
-        <div id="analysis-details" className="animate-rise flex flex-col gap-2.5">
-          {analyzers.map((a) => (
-            <AnalyzerPanel key={a.analyzer} result={a} />
-          ))}
-        </div>
-      )}
+      {/* Always in the page, so a printed report or PDF carries every check, open or not. */}
+      <div id="analysis-details" className={`animate-rise flex-col gap-2.5 print:flex ${open ? 'flex' : 'hidden'}`}>
+        {analyzers.map((a) => (
+          <AnalyzerPanel key={a.analyzer} result={a} />
+        ))}
+      </div>
     </section>
   )
 }
@@ -782,8 +782,9 @@ function EvidenceChips({ job, verdict }: { job: Job; verdict: Verdict }) {
   if (!(source && verdict.label !== 'inconclusive') && !reading) return null
   return (
     <div className="mt-4 flex flex-wrap items-start gap-2">
+      {/* shrink lets a chip wrap its words on the narrowest phones instead of running off the card */}
       {source && verdict.label !== 'inconclusive' && (
-        <span className="chip h-auto min-h-8 gap-2 py-1.5 text-[13px] whitespace-normal">
+        <span className="chip h-auto min-h-8 min-w-0 shrink gap-2 py-1.5 text-[13px] whitespace-normal">
           <ShieldCheck className="size-4 shrink-0 text-accent" strokeWidth={1.8} />
           <span>
             <span className="text-muted">{settled ? 'Decided by ' : 'Mainly from '}</span>
@@ -792,7 +793,7 @@ function EvidenceChips({ job, verdict }: { job: Job; verdict: Verdict }) {
         </span>
       )}
       {reading && (
-        <span className="chip h-auto min-h-8 gap-2 py-1.5 text-[13px] whitespace-normal">
+        <span className="chip h-auto min-h-8 min-w-0 shrink gap-2 py-1.5 text-[13px] whitespace-normal">
           <Sparkles className="size-4 shrink-0 text-accent" strokeWidth={1.8} />
           <span>
             <span className="text-muted">Pixel detector: </span>

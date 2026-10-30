@@ -3,6 +3,7 @@ import { ImageOff, Monitor, Moon, Sun, type LucideIcon } from 'lucide-react'
 import { api, type JobStatus, type Signal, type VerdictLabel } from '../lib/api'
 import { setPref, usePrefs } from '../lib/prefs'
 import { PENDING, SIGNALS, VERDICTS } from '../lib/verdicts'
+import { OrbText } from './ThinkingOrb'
 
 /** A viewfinder: four corner brackets around a lime point of focus. */
 export function Mark({ className = 'size-6' }: { className?: string }) {
@@ -40,12 +41,18 @@ export function VerdictDot({ label, className = 'size-2' }: { label: VerdictLabe
 export function VerdictBadge({ label, status = 'done', pill = false }: { label: VerdictLabel | null; status?: JobStatus; pill?: boolean }) {
   const shell = pill ? 'chip' : 'inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium whitespace-nowrap'
   if (status !== 'done' || !label) {
-    const p = PENDING[status === 'done' ? 'queued' : status]
-    return (
+    const pending = status === 'done' ? 'queued' : status
+    const p = PENDING[pending]
+    // still going: the working orb while it runs, the breathing one while it waits its turn
+    return pending === 'failed' ? (
       <span className={`${shell} ${p.text}`}>
-        <span className={`size-1.5 rounded-full bg-current ${status === 'running' || status === 'queued' ? 'animate-pulse' : ''}`} />
+        <span className="size-1.5 rounded-full bg-current" />
         {p.title}
       </span>
+    ) : (
+      <OrbText state={pending === 'running' ? 'working' : 'breathing'} className={`${shell} ${p.text}`}>
+        {p.title}
+      </OrbText>
     )
   }
   const v = VERDICTS[label]
@@ -333,8 +340,14 @@ const THEMES = [
  */
 export function ThemeSwitch({ labels = false, stretch = false, className = '' }: { labels?: boolean; stretch?: boolean; className?: string }) {
   const { theme } = usePrefs()
+  // with labels it fills a phone's card, where the three words don't fit side by side at their own width
+  const fill = labels && !stretch
   return (
-    <div className={`track gap-0.5 rounded-full p-1 ${stretch ? 'flex w-full' : 'inline-flex'} ${className}`} role="radiogroup" aria-label="Colour theme">
+    <div
+      className={`track gap-0.5 rounded-full p-1 ${stretch ? 'flex w-full' : fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'} ${className}`}
+      role="radiogroup"
+      aria-label="Colour theme"
+    >
       {THEMES.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
@@ -345,7 +358,7 @@ export function ThemeSwitch({ labels = false, stretch = false, className = '' }:
           title={label}
           onClick={() => setPref('theme', value)}
           className={`flex h-9 items-center justify-center gap-1.5 rounded-full text-[13.5px] transition ${
-            stretch ? 'flex-1' : labels ? 'px-4' : 'w-9'
+            stretch ? 'flex-1' : fill ? 'flex-1 px-3 sm:flex-none sm:px-4' : 'w-9'
           } ${theme === value ? 'selected font-medium' : 'text-faint hover:text-ink'}`}
         >
           <Icon className="size-4" strokeWidth={1.6} />

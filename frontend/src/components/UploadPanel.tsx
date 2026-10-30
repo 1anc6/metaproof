@@ -1,4 +1,4 @@
-import { ClipboardPaste, FileImage, LoaderCircle, Upload, X } from 'lucide-react'
+import { ClipboardPaste, FileImage, Upload, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
@@ -12,7 +12,7 @@ const TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coar
 const typeOf = (file: File) => (file.type.split('/')[1] ?? 'image').replace('jpeg', 'jpg').toUpperCase()
 
 /**
- * The way in, after the upload card reference: a dashed drop zone with a glowing blue orb and a line
+ * The way in, after the upload card reference: a dashed drop zone with a glowing lime disc and a line
  * on what makes a good upload; once there is a file, a white row with its preview, size and time
  * left over a blue bar; then two equal buttons. Choose, drop or paste an image. On the workspace the
  * file waits for "Analyze image"; with `autoStart` (the upload page) it goes as soon as it is chosen.
@@ -104,7 +104,7 @@ export function UploadPanel({
 
   return (
     <section aria-label="Upload an image" className={`panel flex min-w-0 flex-col rounded-[32px] p-2.5 sm:p-3 ${className}`}>
-      {/* The drop zone: what to do, the orb, and what makes a good upload. The whole zone picks a file. */}
+      {/* The drop zone: what to do, the disc, and what makes a good upload. The whole zone picks a file. */}
       <div
         onClick={choose}
         onDragOver={(e) => {
@@ -125,8 +125,13 @@ export function UploadPanel({
         <p className="text-[17px] font-semibold tracking-[-0.01em]" aria-live="polite">
           {title}
         </p>
-        <span className={`orb mt-5 size-[112px] transition-transform duration-300 sm:size-[124px] ${dragging ? 'orb-live scale-105' : busy ? 'orb-live' : ''}`} aria-hidden>
-          {busy ? <LoaderCircle className="size-8 animate-spin" strokeWidth={1.6} /> : <Upload className="size-9" strokeWidth={1.6} />}
+        {/* The lime disc swells while a file is held over the zone, and its glow breathes then and
+            while uploading. */}
+        <span
+          className={`orb mt-5 size-[112px] transition-transform duration-300 sm:size-[124px] ${dragging ? 'scale-105' : ''} ${dragging || busy ? 'orb-live' : ''}`}
+          aria-hidden
+        >
+          <Upload className="size-10" strokeWidth={1.8} />
         </span>
         <p className="mt-6 max-w-[38ch] text-[14px] leading-relaxed text-faint">
           For the clearest verdict, upload the original file rather than a screenshot. JPEG, PNG, WebP, TIFF or HEIC, up
@@ -192,21 +197,22 @@ export function UploadPanel({
             <ClipboardPaste className="size-4" strokeWidth={1.6} /> Paste
           </button>
         )}
-        {picked && !busy ? (
-          <button type="button" onClick={() => start(picked)} className="btn-primary h-12">
-            Analyze image
-          </button>
-        ) : (
-          <button type="button" onClick={choose} disabled={busy} className="btn-primary h-12">
-            {busy ? (
-              'Uploading…'
-            ) : (
-              <>
-                <Upload className="size-4" strokeWidth={2} /> Choose image
-              </>
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={picked && !busy ? () => start(picked) : choose}
+          disabled={busy}
+          className="btn-primary h-12 w-full"
+        >
+          {picked && !busy ? (
+            'Analyze image'
+          ) : busy ? (
+            'Uploading…'
+          ) : (
+            <>
+              <Upload className="size-4" strokeWidth={2} /> Choose image
+            </>
+          )}
+        </button>
       </div>
       <p className="mt-3 mb-1 px-2 text-[13px] text-faint">
         {busy ? 'If the server was asleep, the first upload can take up to a minute. ' : 'The file is deleted after the analysis. '}

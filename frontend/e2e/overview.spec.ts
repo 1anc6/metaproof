@@ -34,6 +34,9 @@ test('the dial shows the share of each verdict, and opens History filtered to it
 
   await verdicts.getByRole('link', { name: 'Open Inconclusive in History' }).click()
   await expect(page).toHaveURL(/\/history\?filter=inconclusive$/)
+  // The address changes before the router has drawn History, and the overview's dial has an
+  // Inconclusive button and the file's name too: wait for History itself.
+  await expect(page.getByRole('heading', { level: 1, name: 'History' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Inconclusive', pressed: true })).toBeVisible()
   await expect(page.getByText('holiday.jpg')).toBeVisible()
 

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, type Job } from '../lib/api'
 import { useHistory } from '../lib/history'
 import { ReportView } from '../components/ReportView'
+import { ThinkingOrb } from '../components/ThinkingOrb'
 import { ErrorPanel } from '../components/ui'
 
 /** Shareable report: /report/<sha256> shows the latest finished analysis of that file. */
@@ -38,9 +39,12 @@ export function ReportSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-busy>
       <div className="skeleton h-9 w-56" />
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="panel min-h-[clamp(240px,56vw,400px)] rounded-[28px] p-2.5 lg:col-span-5">
-          <div className="size-full rounded-[20px] bg-[var(--frame-bg)]" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* where the picture will be, the composing orb lays the report out */}
+        <div className="panel flex min-h-[clamp(240px,56vw,400px)] rounded-[28px] p-2.5 lg:col-span-5">
+          <div className="grid flex-1 place-items-center rounded-[20px] bg-[var(--frame-bg)]">
+            <ThinkingOrb state="composing" size={64} label="Opening the report…" />
+          </div>
         </div>
         <div className="panel flex flex-col gap-4 rounded-[28px] p-6 lg:col-span-7">
           <div className="flex items-center gap-3.5">

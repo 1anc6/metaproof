@@ -1,9 +1,10 @@
 import { Camera, ClipboardPaste, Images, Plus, Sparkles, type LucideIcon } from 'lucide-react'
-import { useLayoutEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { ACCEPTED, handOver, imageFromClipboard } from '../lib/upload'
+import { MetalRing } from './Metal'
 
 // A file field opens the camera on phones and tablets; elsewhere it would only pick a file again.
 const touch = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches
@@ -31,14 +32,17 @@ const WHOLE = 'inset(0px 0px 0px 0px round 28px)'
  * The phone bar's +, after iOS's liquid glass. Pressed, the button swells and rises as a round lens
  * that opens out into the menu, its contents coming into focus as it settles; closing, the menu
  * shrinks back down into the button as a drop, and the button wobbles round again. A photo picked
- * here goes straight to New analysis, which starts it.
+ * here goes straight to New analysis, which starts it. A ring of liquid metal runs round the button;
+ * `reflect` (the tab bar beside it) catches its light.
  */
-export function AddMenu() {
+export function AddMenu({ reflect }: { reflect?: RefObject<HTMLElement | null> }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [stage, setStage] = useState<Stage>('closed')
   const [openedOn, setOpenedOn] = useState(pathname)
   const button = useRef<HTMLButtonElement>(null)
+  // the button inside its metal ring: the two swell, fade and wobble as one
+  const fab = useRef<HTMLDivElement | null>(null)
   const panel = useRef<HTMLDivElement>(null)
   const tint = useRef<HTMLSpanElement>(null)
   const items = useRef<HTMLDivElement>(null)
@@ -59,11 +63,12 @@ export function AddMenu() {
 
   useLayoutEffect(() => {
     const p = panel.current
-    const b = button.current
+    const b = fab.current ?? button.current
     if (!p || !b || stage === 'closed') return
     const w = p.offsetWidth
     const h = p.offsetHeight
-    const d = b.offsetWidth
+    // the button's own size: the metal bezel stands out round it, beyond the menu's corner
+    const d = button.current?.offsetWidth ?? b.offsetWidth
     const atButton = circle(w, h, d, w - d / 2, h - d / 2)
 
     if (stage === 'open') {
@@ -165,23 +170,26 @@ export function AddMenu() {
   }
 
   return (
-    <div className="relative shrink-0">
-      <button
-        ref={button}
-        type="button"
-        aria-label="New analysis"
-        title="New analysis (N)"
-        aria-expanded={stage === 'open'}
-        aria-controls="add-menu"
-        onClick={() => {
-          if (stage !== 'closed') return
-          setOpenedOn(pathname)
-          setStage('open')
-        }}
-        className="fab size-[58px] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ring)] min-[400px]:size-16"
-      >
-        <Plus className="size-7" strokeWidth={1.9} aria-hidden />
-      </button>
+    // flex, so the ring's inline wrapper sits on the bottom edge the menu opens from, with no baseline gap
+    <div className="relative flex shrink-0">
+      <MetalRing variant="circle" bezel={4} rootRef={fab} reflect={reflect ? [{ ref: reflect, strength: 0.7 }] : undefined}>
+        <button
+          ref={button}
+          type="button"
+          aria-label="New analysis"
+          title="New analysis (N)"
+          aria-expanded={stage === 'open'}
+          aria-controls="add-menu"
+          onClick={() => {
+            if (stage !== 'closed') return
+            setOpenedOn(pathname)
+            setStage('open')
+          }}
+          className="fab size-[58px] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ring)] min-[400px]:size-16"
+        >
+          <Plus className="size-7" strokeWidth={1.9} aria-hidden />
+        </button>
+      </MetalRing>
 
       {stage !== 'closed' && (
         <>

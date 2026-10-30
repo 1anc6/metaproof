@@ -1,4 +1,4 @@
-import { MoonStar, WifiOff } from 'lucide-react'
+import { WifiOff } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useServerStatus } from '../lib/hooks'
@@ -6,6 +6,7 @@ import { takeSharedImage } from '../lib/share'
 import { takeHandedFile, useUpload } from '../lib/upload'
 import { PageHeader } from '../components/ui'
 import { FileFacts } from '../components/FileFacts'
+import { ThinkingOrb } from '../components/ThinkingOrb'
 import { UploadPanel } from '../components/UploadPanel'
 
 /** The upload page: the upload card (a chosen file goes straight away) beside what happens to the file. */
@@ -45,7 +46,7 @@ export function NewAnalysis() {
 
       <ServerNotice state={server} />
 
-      <div className="grid gap-4 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <UploadPanel upload={upload} autoStart className="lg:col-span-7" />
 
         <FileFacts className="lg:col-span-5" />
@@ -57,10 +58,14 @@ export function NewAnalysis() {
 function ServerNotice({ state }: { state: ReturnType<typeof useServerStatus> }) {
   if (state !== 'waking' && state !== 'offline') return null
   const waking = state === 'waking'
-  const Icon = waking ? MoonStar : WifiOff
   return (
     <div role="status" className="panel animate-rise mb-4 flex items-start gap-3 rounded-[22px] px-4 py-3.5 text-[14.5px] font-medium">
-      <Icon className={`mt-0.5 size-4 shrink-0 ${waking ? 'text-edited' : 'text-ai'}`} strokeWidth={1.8} aria-hidden />
+      {/* asleep, the breathing orb; unreachable, a still icon */}
+      {waking ? (
+        <ThinkingOrb state="breathing" size={20} className="shrink-0" />
+      ) : (
+        <WifiOff className="mt-0.5 size-4 shrink-0 text-ai" strokeWidth={1.8} aria-hidden />
+      )}
       <p>
         {waking
           ? 'The server is waking up. Free hosting sleeps when idle, so this takes about a minute; you can upload now and it will continue on its own.'

@@ -211,7 +211,8 @@ function InstallCard() {
   )
 }
 
-/** A settings card: its title, with an optional status on the right. */
+/** A settings card: its title, with an optional status on the right. Clipped sideways, so a halo
+ *  of liquid metal near its edge (the server's LIVE badge) never widens a phone's page. */
 function Card({
   title,
   action,
@@ -224,7 +225,7 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className={`panel rounded-[28px] p-5 sm:p-6 ${className}`}>
+    <section className={`panel overflow-x-clip rounded-[28px] p-5 sm:p-6 ${className}`}>
       <div className="mb-3 flex min-h-7 items-center justify-between gap-3">
         <h2 className="card-title">{title}</h2>
         {action}
