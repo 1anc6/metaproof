@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     client_ip_header: str = "cf-connecting-ip"
 
     # Images not analyzed for this many days are deleted, report included; 0 keeps everything.
-    retention_days: int = 90
+    # One day: reports can still be shared for a while, but nothing is kept long term.
+    retention_days: int = 1
     # Log a warning once the database passes this size (Neon's free tier stops at 512 MB).
     storage_warn_mb: int = 400
     # The database plan's storage limit, shown on the status page (Neon free tier: 0.5 GB).

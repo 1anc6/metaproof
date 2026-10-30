@@ -268,7 +268,7 @@
     <li><b>Queue.</b> A job row is inserted in PostgreSQL and the worker is woken. The worker claims jobs with <code>SELECT … FOR UPDATE SKIP LOCKED</code>, so several workers could share the queue safely without Redis. It sleeps instead of polling, so the serverless database can scale to zero.</li>
     <li><b>Analyze.</b> The five analyzers run in turn; each writes its findings, raw output and duration. Progress (<code>current_step</code>) is published so the page can tick off steps. One failing analyzer cannot sink the report.</li>
     <li><b>Decide.</b> The evidence engine weighs all findings into a verdict with its top reasons.</li>
-    <li><b>Clean up.</b> The original file is deleted whatever the outcome. A hash, a small WebP thumbnail, the findings and the CLIP embedding are kept for 90 days.</li>
+    <li><b>Clean up.</b> The original file is deleted whatever the outcome. A hash, a small WebP thumbnail, the findings and the CLIP embedding are kept for 1 day.</li>
     <li><b>Read.</b> The page polls the job until it is done, then shows the report. The report is shareable at <code>/report/&lt;sha256&gt;</code>.</li>
   </ol>
 
@@ -617,7 +617,7 @@
   </table>
   <p>At 30,000 analyses the HNSW index is about 80× faster than an exact scan while returning the same best match in every query. A lesson recorded during benchmarking: random vectors gave only 39–68% recall, because random vectors have no neighbourhood structure; real CLIP embeddings cluster, which is what HNSW exploits.</p>
   <h3>Storage and retention</h3>
-  <p>About 6 KB per analysis for the row and embedding, plus ~7 KB thumbnail and a few KB of findings, so Neon's 0.5 GB free tier holds roughly 25,000–30,000 analyses. Images not analyzed for 90 days are deleted with everything derived from them. The API logs a warning at 400 MB. The database used 9.1 MB on 20 October 2026.</p>
+  <p>About 6 KB per analysis for the row and embedding, plus ~7 KB thumbnail and a few KB of findings, so Neon's 0.5 GB free tier holds roughly 25,000–30,000 analyses. Images not analyzed for 1 day are deleted with everything derived from them. The API logs a warning at 400 MB. The database used 9.1 MB on 20 October 2026.</p>
   <h3>Two database branches</h3>
   <p><b>main</b> is production (used by Render). <b>dev</b> is a copy-on-write branch for local development, so migrations and experiments can never break the live site again.</p>
 </section>
@@ -659,7 +659,7 @@
       <tr><td>Path or filename tricks</td><td>Files written to a private temp directory under random names; the uploaded name is never used</td></tr>
       <tr><td>Running out of free quota</td><td>Per-IP limit (20 uploads/hour, sliding window), global daily cap (500/day) counted in Postgres so it survives restarts</td></tr>
       <tr><td>Forged client IP</td><td>The IP is read from the header Cloudflare sets (<code>cf-connecting-ip</code>), which the client cannot forge; tested</td></tr>
-      <tr><td>Keeping personal data</td><td>Originals deleted after analysis; no accounts; filename never sent; GPS never stored; 90-day retention</td></tr>
+      <tr><td>Keeping personal data</td><td>Originals deleted after analysis; no accounts; filename never sent; GPS never stored; 1-day retention</td></tr>
       <tr><td>Container privileges</td><td>The API runs as a non-root user in Docker</td></tr>
       <tr><td>Secrets in code</td><td>Configuration from environment variables; <code>.env</code> is git-ignored; separate dev and production databases</td></tr>
       <tr><td>Web headers</td><td>Vercel sends <code>X-Content-Type-Options: nosniff</code>, <code>X-Frame-Options: DENY</code> and a strict referrer policy; CORS limited to the app's origin</td></tr>

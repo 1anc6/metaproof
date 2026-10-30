@@ -1,10 +1,10 @@
-"""Retention: keeps the database inside Neon's free tier (0.5 GB, ~25-30K analyses).
+"""Retention: MetaProof analyzes images and reports; it does not keep them (default: 1 day).
 
 An image and everything derived from it (thumbnail, embedding, jobs, findings) is deleted once
 it has not been analyzed for `retention_days`. Uploading it again after that analyzes it anew.
 Older analyses of an image that is still kept are trimmed too, except the one its shareable
-report shows. The worker runs this at startup and then at most once a day, only when woken by
-an upload, so it never wakes a suspended Neon database on its own.
+report shows. The worker runs this at startup and then at most once an hour, only when woken by
+an upload, so it never wakes a suspended database on its own.
 """
 
 import logging

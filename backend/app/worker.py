@@ -23,7 +23,7 @@ from app.db import SessionLocal
 
 log = logging.getLogger("metaproof.worker")
 
-MAINTENANCE_INTERVAL_S = 24 * 3600
+MAINTENANCE_INTERVAL_S = 3600  # hourly, so 1-day retention deletes data within ~25 hours
 
 CLAIM_SQL = text("""
     UPDATE analysis_jobs
