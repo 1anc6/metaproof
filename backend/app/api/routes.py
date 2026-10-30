@@ -37,7 +37,7 @@ STATUS_SQL = text("""
            max(finished_at) AS last_analysis_at
       FROM analysis_jobs
 """)
-STATUS_TTL_S = 60
+STATUS_TTL_S = 10
 _status_cache: tuple[float, schemas.ServiceStatus] | None = None
 _status_lock = threading.Lock()
 
@@ -46,7 +46,9 @@ _status_lock = threading.Lock()
             summary="Storage and analysis figures")
 def service_status(session: SessionDep, settings: SettingsDep):
     """Database size against the plan's limit, and the last day's analyses and failures.
-    Unlike /health this reads the database, so it is cached for a minute."""
+    Unlike /health this reads the database, so it is cached for STATUS_TTL_S seconds: the
+    Settings page polls it, and however many tabs are open the database answers it at most
+    once per window."""
     global _status_cache
     with _status_lock:
         if _status_cache and time.monotonic() - _status_cache[0] < STATUS_TTL_S:

@@ -1,7 +1,5 @@
 import { Copy, Droplets, Fingerprint, Layers, ShieldCheck, Sparkles } from 'lucide-react'
 import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
-import { ORB_GUIDE } from '../lib/orbs'
-import { ThinkingOrb } from '../components/ThinkingOrb'
 import { PageHeader, PanelTitle } from '../components/ui'
 
 const LAYERS = [
@@ -56,7 +54,6 @@ export function Method() {
             ['#verdict', 'The verdict'],
             ['#accuracy', 'Detector accuracy'],
             ['#privacy', 'Privacy'],
-            ['#orbs', 'The orbs'],
           ].map(([href, label]) => (
             <a key={href} href={href} className="flex h-9 shrink-0 items-center rounded-full px-4 text-[13.5px] whitespace-nowrap text-muted transition hover:bg-[var(--raise-bg)] hover:text-ink">
               {label}
@@ -109,53 +106,7 @@ export function Method() {
       </div>
 
       <DetectorResults />
-
-      <OrbGuide />
     </div>
-  )
-}
-
-/** What each thinking orb means, after the gallery on libraries.dev/orbs: every orb beside its words. */
-function OrbGuide() {
-  return (
-    <section id="orbs" className="panel mt-4 scroll-mt-6 rounded-[28px] p-5 sm:p-6" aria-labelledby="orbs-title">
-      <PanelTitle id="orbs-title" title="What the orbs mean" />
-      <p className="mt-2 max-w-3xl text-[14.5px] leading-relaxed text-muted">
-        While MetaProof works, a dotted orb shows what it is doing, and its words say the same, so nothing depends on
-        the motion. Each moves its own way; the fingerprint is MetaProof's own.
-      </p>
-      <ul className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-        {ORB_GUIDE.map((g) => (
-          <li key={g.name} className="well flex items-center gap-3.5 rounded-[20px] p-2 pr-4">
-            <span className="raise grid size-14 shrink-0 place-items-center rounded-[15px]">
-              <ThinkingOrb state={g.state} frame={g.frame} size={32} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[14.5px] font-medium text-ink">{g.name}</span>
-              <span className="block text-[13px] leading-snug text-faint">{g.meaning}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-4 text-[13px] text-faint">
-        The orbs are{' '}
-        <a href="https://libraries.dev/orbs" target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
-          Thinking Orbs by libraries.dev
-        </a>{' '}
-        (MIT licence).
-      </p>
-      <p className="mt-2 text-[13px] text-faint">
-        The chrome on the LIVE badge and round the phone's + is{' '}
-        <a href="https://libraries.dev/metal" target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
-          Liquid Metal by libraries.dev
-        </a>{' '}
-        (MIT licence), drawn with the liquid-metal shader from{' '}
-        <a href="https://github.com/paper-design/shaders" target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
-          Paper Shaders
-        </a>{' '}
-        (Apache 2.0 licence).
-      </p>
-    </section>
   )
 }
 

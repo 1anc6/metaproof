@@ -72,7 +72,7 @@ test('phones: no screen is wider than the phone, down to 320px', async ({ page }
     [`/analysis/${JOB_ID}`, 'Looking for invisible watermarks…'],
     [`/report/${SHA}`, 'Key findings'],
     ['/history', 'holiday.jpg'],
-    ['/method', 'What the orbs mean'],
+    ['/method', 'Detector accuracy'],
     ['/settings', 'Privacy and data'],
   ]
   for (const width of [320, 360, 390]) {

@@ -12,16 +12,8 @@ import {
   type OrbState,
 } from 'thinking-orbs'
 
-// The thinking orbs (the thinking-orbs library, libraries.dev/orbs): which orb shows which moment,
-// MetaProof's own fingerprint orb, and the orb in the tab's icon while an analysis runs.
-
-export interface OrbMeaning {
-  state: OrbState
-  name: string
-  meaning: string
-  /** MetaProof's own geometry in place of the state's (the fingerprint). */
-  frame?: ModeFrame
-}
+// The thinking orbs (the thinking-orbs library, libraries.dev/orbs): MetaProof's own fingerprint
+// orb, and the orb in the tab's icon while an analysis runs.
 
 /**
  * MetaProof's own orb, for "File received and hashed": the ridges of a fingerprint, read by a scan
@@ -61,20 +53,6 @@ export const fingerprint: ModeFrame = (size, t, o) => {
   }
   return finalizeFrame(dots, [], o.rMin)
 }
-
-/** The nine orbs, in the order a file meets them, then MetaProof's own. */
-export const ORB_GUIDE: OrbMeaning[] = [
-  { state: 'breathing', name: 'Breathing', meaning: 'Waiting: the server is waking up, or your file is next in line.' },
-  { state: 'working', name: 'Working', meaning: 'Your file is on its way to the server.' },
-  { state: 'searching', name: 'Searching', meaning: 'Reading the EXIF and XMP the file carries, or looking up your verdicts.' },
-  { state: 'shaping', name: 'Shaping', meaning: "Walking the file's segments, tables and colour profile." },
-  { state: 'connecting', name: 'Connecting', meaning: 'Following the chain of signatures in a C2PA manifest, or reaching the server.' },
-  { state: 'listening', name: 'Listening', meaning: 'Listening for a message a generator hid in the pixels.' },
-  { state: 'solving', name: 'Solving', meaning: 'The classifier works through every pixel.' },
-  { state: 'weaving', name: 'Weaving', meaning: 'Metadata, credentials and pixels are plaited into one verdict.' },
-  { state: 'composing', name: 'Composing', meaning: 'Your browser re-saves the image to show its error levels, or lays out a report.' },
-  { state: 'working', frame: fingerprint, name: 'Fingerprint', meaning: "MetaProof's own orb: the file's SHA-256 fingerprint is taken." },
-]
 
 /**
  * While `state` is set, the tab's icon is that orb, redrawn a few times a second, so an analysis can
