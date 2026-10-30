@@ -89,7 +89,7 @@ export function Shell() {
   }, [navigate, railOpen])
 
   useSheen()
-  useMetalSettings()
+  useMetalSettings(theme)
 
   return (
     <SummariesProvider>

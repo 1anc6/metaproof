@@ -32,13 +32,12 @@ export function useMetalStill() {
 }
 
 /** The metal's colour and cursor light, set once for all the metal. */
-export function useMetalSettings() {
+export function useMetalSettings(theme: 'light' | 'dark') {
   const supported = isMetalFxSupported()
   useEffect(() => {
-    // MetaProof's glass is dark in both themes, so the metal always takes its dark tuning; the
-    // override also wins over the LIVE badge
-    if (supported) setSharedPresetMode(PRESETS.chromatic.modes.dark)
-  }, [supported])
+    // the metal takes the theme's tuning; the override also wins over the LIVE badge
+    if (supported) setSharedPresetMode(PRESETS.chromatic.modes[theme])
+  }, [supported, theme])
   useEffect(() => {
     // the ring lights the pointer itself by default; MetaProof keeps it to the ring
     setCursorLightConfig({ cursor: false })
