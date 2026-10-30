@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     retention_days: int = 1
     # The example report shown on the home screen (frontend/src/lib/demo.ts). It is exempt from
     # retention, so "See an example" keeps working; an empty value exempts nothing.
-    example_sha256: str = "05a151481e617bad7e57abbef392c299a11d473a0f3323c5ef32f77fe1b3fd8d"
+    example_sha256: str = "27da9d4deb3f8c139a1767e52e9ce1569eeb132e6e7dcf96d0902ec8bacb969c"
     # Log a warning once the database passes this size (Neon's free tier stops at 512 MB).
     storage_warn_mb: int = 400
     # The database plan's storage limit, shown on the status page (Neon free tier: 0.5 GB).
