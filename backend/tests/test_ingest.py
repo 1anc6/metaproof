@@ -38,9 +38,11 @@ def test_rejects_oversized_upload(tmp_path):
     assert list(tmp_path.iterdir()) == []
 
 
-def test_rejects_too_many_pixels(tmp_path):
-    with pytest.raises(UploadRejected):
-        ingest(io.BytesIO(jpeg_bytes()), tmp_path, 5 * MB, max_pixels=1000)
+# 64x48 = 3072 pixels: just over the limit, and more than twice it, where Pillow itself refuses.
+@pytest.mark.parametrize("max_pixels", [2000, 1000])
+def test_rejects_too_many_pixels(tmp_path, max_pixels):
+    with pytest.raises(UploadRejected, match=r"larger than 0\.00[12] MP"):
+        ingest(io.BytesIO(jpeg_bytes()), tmp_path, 5 * MB, max_pixels=max_pixels)
     assert list(tmp_path.iterdir()) == []
 
 

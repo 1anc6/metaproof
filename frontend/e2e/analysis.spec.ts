@@ -1,3 +1,4 @@
+import { deflateSync } from 'node:zlib'
 import { expect, test } from '@playwright/test'
 import { JOB_ID, job, mockApi, skipWelcome } from './mock-api'
 
@@ -62,6 +63,48 @@ test('an unsupported file gets a clear message and is not uploaded', async ({ pa
   await expect(page.getByText(/Unsupported file type/)).toBeVisible()
   expect(api.uploads).toHaveLength(0)
 })
+
+test('an image over 24 MP is turned away before it is uploaded', async ({ page }) => {
+  const api = await mockApi(page)
+  await skipWelcome(page)
+  await page.goto('/new')
+  await expect(page.getByText(/up to 25 MB and 24 megapixels/)).toBeVisible()
+  await page.locator('input[type=file]').setInputFiles({ name: 'big.png', mimeType: 'image/png', buffer: blankPng(5000, 5000) })
+  await expect(page.getByText('That image is 25.0 MP. The limit is 24 MP.')).toBeVisible()
+  expect(api.uploads).toHaveLength(0)
+})
+
+/** A black greyscale PNG of any size; zeros compress to a few kB even at 25 MP. */
+function blankPng(width: number, height: number) {
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type), data])
+    const out = Buffer.alloc(body.length + 8)
+    out.writeUInt32BE(data.length, 0)
+    body.copy(out, 4)
+    out.writeUInt32BE(crc32(body), body.length + 4)
+    return out
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(width, 0)
+  ihdr.writeUInt32BE(height, 4)
+  ihdr[8] = 8 // bit depth; colour type 0 (greyscale), no interlace
+  const rows = Buffer.alloc((width + 1) * height) // each row: filter byte 0, then black pixels
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(rows)),
+    chunk('IEND', Buffer.alloc(0)),
+  ])
+}
+
+function crc32(bytes: Buffer) {
+  let c = ~0
+  for (const b of bytes) {
+    c ^= b
+    for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1))
+  }
+  return ~c >>> 0
+}
 
 test('a Gemini-style report: the AI-generated original, decisive bars, an overruled detector', async ({ page }) => {
   await mockApi(page)
