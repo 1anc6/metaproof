@@ -99,7 +99,7 @@ export function Method() {
           <PanelTitle title="Privacy" />
           <p className="mt-3 text-[14.5px] leading-relaxed text-muted">
             Uploaded files are deleted right after analysis. MetaProof stores the file's SHA-256 hash, a small thumbnail and the
-            findings so a report can be shared by link; these are deleted 90 days after the image was last analyzed. GPS
+            findings so a report can be shared by link; these are deleted 1 day after the image was last analyzed. GPS
             coordinates are never stored, and your history list stays in your browser.
           </p>
         </section>

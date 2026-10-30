@@ -42,7 +42,7 @@ export const job = {
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64')
 
 export const status = {
-  database_mb: 9.2, storage_warn_mb: 400, storage_limit_mb: 512, retention_days: 90,
+  database_mb: 9.2, storage_warn_mb: 400, storage_limit_mb: 512, retention_days: 1,
   analyses_24h: 14, failed_24h: 0, daily_cap: 500, last_analysis_at: now, pipeline_version: '0.4.0',
 }
 

@@ -18,7 +18,7 @@ export function FileFacts({ className = '' }: { className?: string }) {
         <KeyRow icon={Fingerprint} label="Fingerprint" value="SHA-256" />
         <KeyRow icon={ScanSearch} label="Checks" value="Six, in seconds" />
         <KeyRow icon={Trash2} label="Your file" value="Deleted after" />
-        <KeyRow icon={Clock3} label="Findings kept" value="90 days" />
+        <KeyRow icon={Clock3} label="Findings kept" value="1 day" />
         <KeyRow icon={MapPinOff} label="GPS" value="Never stored" />
       </dl>
       <p className="mt-3 text-[13px] leading-relaxed text-faint">

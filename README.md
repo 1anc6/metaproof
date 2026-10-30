@@ -53,7 +53,7 @@ explainable verdict: *likely authentic*, *edited*, *likely AI-generated* or *inc
 - **Postgres is the job queue:** `FOR UPDATE SKIP LOCKED`, tested with concurrent workers;
   no Redis.
 - **Privacy by design:** uploads are deleted after analysis; only a hash, a thumbnail and the
-  findings are kept, for 90 days after the image was last analyzed. GPS coordinates are never
+  findings are kept, for 1 day after the image was last analyzed. GPS coordinates are never
   stored.
 - **Installable, with share-to-analyze:** a web app manifest and a small service worker put
   MetaProof in Android's share menu, so a photo can be sent straight from the gallery.

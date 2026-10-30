@@ -12,7 +12,7 @@ import { GithubMark, PageHeader, ThemeSwitch } from '../components/ui'
 const PRIVACY = [
   'Uploaded files are deleted as soon as the analysis finishes.',
   "The server keeps the file's hash, a small thumbnail and the findings so a report can be shared by link.",
-  'Those are deleted 90 days after the image was last analyzed. Uploading it again starts a fresh analysis.',
+  'Those are deleted 1 day after the image was last analyzed. Uploading it again starts a fresh analysis.',
   'Filenames never leave this device, and GPS coordinates are never stored.',
 ]
 
@@ -173,7 +173,7 @@ function ServiceFigures() {
         </div>
         <p className="mt-2 flex items-center gap-1.5 text-[13px] text-muted">
           <Icon className="size-3.5" style={{ color: level.color }} strokeWidth={2} aria-hidden />
-          {level.label} · reports are kept for {status.retention_days} days
+          {level.label} · reports are kept for {status.retention_days} {status.retention_days === 1 ? 'day' : 'days'}
         </p>
       </div>
       <dl className="well grid grid-cols-3 rounded-[18px] py-3">

@@ -382,7 +382,7 @@ def test_maintenance_purges_and_warns_near_the_storage_limit(client, monkeypatch
                for r in caplog.records)
 
 
-def test_worker_runs_maintenance_at_most_once_a_day(monkeypatch):
+def test_worker_runs_maintenance_at_most_once_an_hour(monkeypatch):
     calls = []
     monkeypatch.setattr(retention, "run_maintenance", lambda: calls.append(1))
     clock = [1000.0]
@@ -390,10 +390,10 @@ def test_worker_runs_maintenance_at_most_once_a_day(monkeypatch):
     w = worker.Worker()
 
     w._maybe_run_maintenance()  # startup
-    clock[0] += 3600
-    w._maybe_run_maintenance()  # an upload an hour later
+    clock[0] += 600
+    w._maybe_run_maintenance()  # an upload ten minutes later
     clock[0] += worker.MAINTENANCE_INTERVAL_S
-    w._maybe_run_maintenance()  # an upload the next day
+    w._maybe_run_maintenance()  # an upload over an hour later
     assert len(calls) == 2
 
 
@@ -409,7 +409,7 @@ def test_status_reports_storage_and_the_last_day(client):
     body = client.get("/api/status").json()
     assert body["analyses_24h"] == 2 and body["failed_24h"] == 1
     assert 0 < body["database_mb"] < body["storage_limit_mb"] == 512
-    assert body["storage_warn_mb"] == 400 and body["retention_days"] == 90
+    assert body["storage_warn_mb"] == 400 and body["retention_days"] == 1
     assert body["daily_cap"] == 500 and body["last_analysis_at"]
 
 

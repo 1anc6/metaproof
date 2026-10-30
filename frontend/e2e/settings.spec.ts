@@ -12,7 +12,7 @@ test('shows storage use and the last day of analyses', async ({ page }) => {
   await page.goto('/settings')
   await expect(page.getByText('9.2 MB of 512 MB')).toBeVisible()
   await expect(meter(page)).toHaveAttribute('aria-valuetext', /healthy/)
-  await expect(page.getByText(/Healthy · reports are kept for 90 days/)).toBeVisible()
+  await expect(page.getByText(/Healthy · reports are kept for 1 day/)).toBeVisible()
   await expect(page.getByText('Analyses today')).toBeVisible()
   await expect(page.getByText('of 500 a day')).toBeVisible()
 })
