@@ -84,11 +84,12 @@ def _detect_type(path: Path) -> str:
 def _decode(path: Path, max_pixels: int) -> tuple[int, int, bytes]:
     """Fully decode once, so a broken or hostile file fails here and not inside an analyzer."""
     Image.MAX_IMAGE_PIXELS = max_pixels
+    too_large = f"The image is larger than {max_pixels / 1_000_000:g} MP."
     try:
         with big_image_lock, Image.open(path) as img:
             width, height = img.size
             if width * height > max_pixels:
-                raise UploadRejected("Image dimensions are too large.")
+                raise UploadRejected(too_large)
             img.load()
             # thumbnail() shrinks the image in place, so an RGB one needs no full-size copy.
             thumb = img if img.mode == "RGB" else img.convert("RGB")
@@ -97,6 +98,10 @@ def _decode(path: Path, max_pixels: int) -> tuple[int, int, bytes]:
             thumb.save(buf, format="WEBP", quality=75)
     except UploadRejected:
         raise
-    except (Image.DecompressionBombError, OSError, ValueError, SyntaxError) as exc:
+    except Image.DecompressionBombError as exc:
+        # Pillow refuses outright past twice the limit (48 MP phone photos among them), before
+        # the check above runs; it is the same answer, not a broken file.
+        raise UploadRejected(too_large) from exc
+    except (OSError, ValueError, SyntaxError) as exc:
         raise UploadRejected("The image could not be decoded.") from exc
     return width, height, buf.getvalue()

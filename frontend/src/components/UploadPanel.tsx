@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { formatBytes } from '../lib/format'
-import { ACCEPTED, MAX_MB, imageFromClipboard, rejectReason, useUpload } from '../lib/upload'
+import { ACCEPTED, MAX_MB, MAX_MP, imageFromClipboard, rejectReason, useUpload } from '../lib/upload'
 import { FileName } from './ui'
 
 // Touch screens have no drag and drop, so the zone words itself as a picker there.
@@ -34,15 +34,18 @@ export function UploadPanel({
   const [preview, setPreview] = useState<string | null>(null)
   const [unreadable, setUnreadable] = useState(false) // HEIC and TIFF have no preview in most browsers
   const [dragging, setDragging] = useState(false)
+  const latest = useRef<File | null>(null) // checking a file takes a moment; only the newest pick counts
   const busy = state.kind === 'uploading'
   const file = state.kind === 'uploading' ? state.file : picked
   const shownPreview = state.kind === 'uploading' ? state.preview : preview
 
   const take = useCallback(
-    (next: File) => {
+    async (next: File) => {
       setUnreadable(false)
       if (autoStart) return start(next)
-      const reason = rejectReason(next)
+      latest.current = next
+      const reason = await rejectReason(next)
+      if (latest.current !== next) return
       if (reason) return fail(reason)
       clear()
       setPicked(next)
@@ -135,7 +138,7 @@ export function UploadPanel({
         </span>
         <p className="mt-6 max-w-[38ch] text-[14px] leading-relaxed text-faint">
           For the clearest verdict, upload the original file rather than a screenshot. JPEG, PNG, WebP, TIFF or HEIC, up
-          to {MAX_MB} MB.
+          to {MAX_MB} MB and {MAX_MP} megapixels.
         </p>
       </div>
 

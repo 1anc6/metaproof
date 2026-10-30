@@ -7,6 +7,8 @@ import { rememberPreview } from './preview'
 
 export const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/tiff', 'image/heic', 'image/heif']
 export const MAX_MB = 25
+// The server's max_image_pixels (backend/app/config.py), which keeps decoding inside Render's 512 MB.
+export const MAX_MP = 24
 
 export type UploadState =
   | { kind: 'idle' }
@@ -14,10 +16,29 @@ export type UploadState =
   | { kind: 'error'; message: string }
 
 /** Why a file can't be analyzed, before anything is sent; the server re-checks everything. */
-export function rejectReason(file: File): string | null {
+export async function rejectReason(file: File): Promise<string | null> {
   if (file.type && !ACCEPTED.includes(file.type)) return 'Unsupported file type. Use a JPEG, PNG, WebP, TIFF or HEIC image.'
   if (file.size > MAX_MB * 1024 * 1024) return `That file is ${formatBytes(file.size)}. The limit is ${MAX_MB} MB.`
+  const mp = await megapixels(file)
+  if (mp !== null && mp > MAX_MP) return `That image is ${mp.toFixed(1)} MP. The limit is ${MAX_MP} MP.`
   return null
+}
+
+/** The image's size in megapixels, or null where the browser can't read it (HEIC and TIFF in most). */
+function megapixels(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve((img.naturalWidth * img.naturalHeight) / 1_000_000)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve(null)
+    }
+    img.src = url
+  })
 }
 
 /**
@@ -32,7 +53,7 @@ export function useUpload(initial: UploadState = { kind: 'idle' }) {
 
   const start = useCallback(
     async (file: File) => {
-      const reason = rejectReason(file)
+      const reason = await rejectReason(file)
       if (reason) {
         setState({ kind: 'error', message: reason })
         return
