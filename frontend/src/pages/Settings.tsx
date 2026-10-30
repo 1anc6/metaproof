@@ -103,19 +103,45 @@ const LEVELS: Record<'ok' | 'warn' | 'full', Level> = {
   full: { label: 'Almost full', color: 'var(--color-dot-ai)', icon: OctagonAlert },
 }
 
-/** Live figures from GET /api/status: storage against the plan's limit and the last day's work. */
+/** How often the figures are re-read while the page is in view. The server caches them for 10 s. */
+const REFRESH_MS = 15_000
+
+/** Live figures from GET /api/status: storage against the plan's limit and the last day's work.
+ *  Re-read every REFRESH_MS while the tab is visible, and at once when it comes back into view. */
 function ServiceFigures() {
   const [status, setStatus] = useState<ServiceStatus | null>(null)
   const [failed, setFailed] = useState(false)
   useEffect(() => {
     let cancelled = false
-    api.status().then((s) => !cancelled && setStatus(s)).catch(() => !cancelled && setFailed(true))
+    let busy = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const load = () => {
+      clearTimeout(timer)
+      if (busy || document.hidden) return // a hidden tab waits for visibilitychange
+      busy = true
+      api
+        .status()
+        .then((s) => {
+          if (cancelled) return
+          setStatus(s)
+          setFailed(false)
+        })
+        .catch(() => !cancelled && setFailed(true))
+        .finally(() => {
+          busy = false
+          if (!cancelled) timer = setTimeout(load, REFRESH_MS)
+        })
+    }
+    load()
+    document.addEventListener('visibilitychange', load)
     return () => {
       cancelled = true
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', load)
     }
   }, [])
 
-  if (failed) return <p className="text-[14.5px] leading-relaxed text-muted">Storage figures are unavailable while the server is unreachable.</p>
+  if (failed && !status) return <p className="text-[14.5px] leading-relaxed text-muted">Storage figures are unavailable while the server is unreachable.</p>
   if (!status) return <div className="skeleton h-24 !rounded-[18px]" aria-label="Loading storage figures" />
 
   const { database_mb: used, storage_limit_mb: limit, storage_warn_mb: warn } = status
@@ -159,6 +185,12 @@ function ServiceFigures() {
         />
         <Figure label="Last analysis" value={status.last_analysis_at ? formatWhen(status.last_analysis_at) : '–'} />
       </dl>
+      {failed && (
+        <p className="flex items-center gap-1.5 text-[13px] text-muted" role="status">
+          <CircleAlert className="size-3.5" style={{ color: LEVELS.warn.color }} strokeWidth={2} aria-hidden />
+          The server isn't answering, so these figures may be out of date.
+        </p>
+      )}
     </div>
   )
 }
