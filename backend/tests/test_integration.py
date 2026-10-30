@@ -21,7 +21,7 @@ if TEST_DATABASE_URL:
     from alembic import command
     from alembic.config import Config
 
-    from app import models, retention, worker
+    from app import memory, models, retention, worker
     from app.analyzers.base import AnalyzerResult
     from app.analyzers.c2pa_check import C2paAnalyzer
     from app.analyzers.metadata import MetadataAnalyzer
@@ -411,11 +411,24 @@ def test_status_reports_storage_and_the_last_day(client):
     assert 0 < body["database_mb"] < body["storage_limit_mb"] == 512
     assert body["storage_warn_mb"] == 400 and body["retention_days"] == 1
     assert body["daily_cap"] == 500 and body["last_analysis_at"]
+    assert body["memory_limit_mb"] == 512 and body["detector"] in ("loaded", "available", "missing")
 
 
-def test_status_is_cached_for_a_minute(client):
+LIVE = {"memory_mb", "memory_peak_mb", "detector"}  # read on every request, never cached
+
+
+def test_status_caches_the_database_figures(client):
     first = client.get("/api/status").json()
     upload(client, unique_jpeg(52))
-    assert client.get("/api/status").json() == first  # served from the cache
+    again = client.get("/api/status").json()
+    assert {k: v for k, v in again.items() if k not in LIVE} == {k: v for k, v in first.items() if k not in LIVE}
     routes._status_cache = None
     assert client.get("/api/status").json()["analyses_24h"] == first["analyses_24h"] + 1
+
+
+def test_status_reads_memory_and_the_detector_every_time(client, monkeypatch):
+    client.get("/api/status")  # fill the cache
+    monkeypatch.setattr(memory, "process_memory_mb", lambda: (301.5, 447.0))
+    monkeypatch.setattr(routes.DETECTOR, "_session", object())
+    body = client.get("/api/status").json()
+    assert (body["memory_mb"], body["memory_peak_mb"], body["detector"]) == (301.5, 447.0, "loaded")

@@ -108,7 +108,7 @@ function useExample(wanted: boolean) {
 /** The period as large words, the chosen one bright, like the reference's rooms; search beside it. */
 function Header({ period }: { period: Period }) {
   return (
-    <header className="mb-5 flex flex-col gap-4 @3xl:mb-6 @3xl:flex-row @3xl:items-center @3xl:justify-between">
+    <header className="mb-5 flex flex-col gap-4 pointer-coarse:gap-2 @3xl:mb-6 @3xl:flex-row @3xl:items-center @3xl:justify-between">
       <div role="group" aria-label="Period" className="-m-1 flex items-baseline gap-x-4 overflow-x-auto p-1 [scrollbar-width:none] @lg:gap-x-6 @5xl:gap-x-8">
         {PERIODS.map((p) => (
           <button
@@ -116,7 +116,8 @@ function Header({ period }: { period: Period }) {
             type="button"
             aria-pressed={period === p.key}
             onClick={() => setPref('period', p.key)}
-            className={`shrink-0 rounded-lg text-[22px] leading-tight font-medium tracking-[-0.02em] whitespace-nowrap transition-colors @lg:text-[26px] @5xl:text-[28px] ${
+            // On touch screens the words get a 44px-tall target; a mouse needs no more than the word.
+            className={`shrink-0 rounded-lg pointer-coarse:py-2 text-[22px] leading-tight font-medium tracking-[-0.02em] whitespace-nowrap transition-colors @lg:text-[26px] @5xl:text-[28px] ${
               period === p.key ? 'text-ink' : 'text-[var(--tab-dim)] hover:text-muted'
             }`}
           >
@@ -160,7 +161,7 @@ function SearchPill({ className = '' }: { className?: string }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search your history…"
-          className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-faint [&::-webkit-search-cancel-button]:hidden"
+          className="min-w-0 flex-1 self-stretch bg-transparent text-[14px] outline-none placeholder:text-faint [&::-webkit-search-cancel-button]:hidden"
         />
         <kbd className="kbd max-sm:hidden" aria-hidden>
           /
@@ -300,8 +301,8 @@ function VerdictDial({
                 <Icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
               </span>
               <span className="flex flex-col items-center leading-tight">
-                <span className={`text-[12.5px] font-medium whitespace-nowrap ${on ? 'text-ink' : 'text-muted'}`}>{short}</span>
-                <span className="mt-0.5 text-[12px] text-faint tabular-nums">{waiting ? '–' : counts[m]}</span>
+                <span className={`text-fine font-medium whitespace-nowrap ${on ? 'text-ink' : 'text-muted'}`}>{short}</span>
+                <span className="mt-0.5 text-meta text-faint tabular-nums">{waiting ? '–' : counts[m]}</span>
               </span>
             </button>
           )
@@ -362,7 +363,7 @@ function Dial({ share, color, figure, name, detail, label }: { share: number; co
             {figure !== '–' && <span className="ml-0.5 align-top text-[24px] text-faint">%</span>}
           </span>
           <span className="mt-2 block text-[14px] text-muted">{name}</span>
-          {detail && <span className="mt-0.5 block text-[12.5px] text-faint tabular-nums">{detail}</span>}
+          {detail && <span className="mt-0.5 block text-fine text-faint tabular-nums">{detail}</span>}
         </span>
       </div>
     </div>
@@ -515,7 +516,7 @@ function Trail({ items, data, now }: { items: HistoryEntry[]; data: Data; now: D
                   <span className="sr-only">{e.filename}: </span>
                   <span className={`truncate text-[13px] font-medium @max-[40rem]:sr-only ${i === n - 1 ? 'text-ink' : 'text-muted'}`}>{short}</span>
                 </span>
-                <span className="text-[12px] whitespace-nowrap text-faint">{shortWhen(e.uploadedAt, now)}</span>
+                <span className="text-meta whitespace-nowrap text-faint">{shortWhen(e.uploadedAt, now)}</span>
               </Link>
             </li>
           )
@@ -578,10 +579,11 @@ function Spotlight({
     return (
       <SpotCard
         to="/method"
-        name={`${words.join(' ')}: none ${span}. How verdicts are reached`}
+        // The name starts with the words as they read on the card, so voice control finds it by them.
+        name={`None ${span}. ${words.join(' ')}. ${AUTHENTIC_NOTE} How verdicts are reached`}
         status={`None ${span}`}
         words={words}
-        note="Authentic needs proof, such as Content Credentials."
+        note={AUTHENTIC_NOTE}
         picture={<Placeholder icon={CircleCheck} />}
       />
     )
@@ -589,7 +591,7 @@ function Spotlight({
   return (
     <div className="panel relative flex min-h-[200px] overflow-hidden rounded-[28px] p-5">
       <span className="relative flex min-w-0 flex-1 flex-col pr-[46%]">
-        <span className="text-[12.5px] text-muted">Nothing flagged {span}</span>
+        <span className="text-fine text-muted">Nothing flagged {span}</span>
         <span className="mt-1.5 text-[22px] leading-[1.15] font-medium tracking-[-0.015em]">
           {words[0]}
           <br />
@@ -603,6 +605,8 @@ function Spotlight({
     </div>
   )
 }
+
+const AUTHENTIC_NOTE = 'Authentic needs proof, such as Content Credentials.'
 
 function Placeholder({ icon: Icon }: { icon: LucideIcon }) {
   return (
@@ -629,14 +633,15 @@ function SpotCard({
 }) {
   return (
     <Link to={to} aria-label={name} className="panel group relative flex min-h-[200px] overflow-hidden rounded-[28px] p-5">
+      {/* The spaces between the pieces don't show in the column, but keep the words apart when the
+          card is read as text ("None so far Last authentic", not "farLastauthentic"). */}
       <span className="relative flex min-w-0 flex-1 flex-col pr-[46%]">
-        <span className="flex items-center gap-1.5 text-[12.5px] text-muted">{status}</span>
+        <span className="flex items-center gap-1.5 text-fine text-muted">{status}</span>{' '}
         <span className="mt-1.5 text-[22px] leading-[1.15] font-medium tracking-[-0.015em]">
-          {words[0]}
-          <br />
+          {words[0]} <br />
           {words[1]}
-        </span>
-        {note && <span className="mt-2 text-[12.5px] leading-snug text-faint">{note}</span>}
+        </span>{' '}
+        {note && <span className="mt-2 text-fine leading-snug text-faint">{note}</span>}
         {/* the reference's slide-to-unlock: on hover the white knob runs to the end of its track. Its
             carrier is the track's width less the knob's, so moving the carrier by its own width
             lands the knob at the end on any card. */}
@@ -770,7 +775,7 @@ function Activity({ entries, data, period, now, className = '' }: { entries: His
       </div>
 
       <div className="mt-5 grid min-h-[190px] flex-1 grid-cols-[auto_minmax(0,1fr)] grid-rows-[minmax(150px,1fr)_auto] gap-x-3 gap-y-2">
-        <div className="relative w-6 text-right text-[12px] text-faint tabular-nums" aria-hidden>
+        <div className="relative w-6 text-right text-meta text-faint tabular-nums" aria-hidden>
           {ticks.map((t) => (
             <span key={t} className="absolute right-0 translate-y-1/2 leading-none" style={{ bottom: `${(t / top) * 100}%` }}>
               {t}
@@ -807,7 +812,7 @@ function Activity({ entries, data, period, now, className = '' }: { entries: His
                   )}
                   {on && !b.future && (
                     <span
-                      className="raise absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2.5 py-1 text-[12.5px] font-semibold tabular-nums"
+                      className="raise absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2.5 py-1 text-fine font-semibold tabular-nums"
                       style={{ bottom: `calc(max(${h}%, 4px) + 8px)` }}
                     >
                       {b.count}
@@ -824,7 +829,7 @@ function Activity({ entries, data, period, now, className = '' }: { entries: His
           )}
         </div>
         <span aria-hidden />
-        <div className="flex gap-1.5 text-[12px] text-faint" aria-hidden>
+        <div className="flex gap-1.5 text-meta text-faint" aria-hidden>
           {list.map((b, i) => (
             <span
               key={i}

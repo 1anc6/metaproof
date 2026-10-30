@@ -130,7 +130,7 @@ export function History() {
       ) : (
         <div className="panel rounded-[28px] p-2 sm:p-3">
           {/* header row, desktop only */}
-          <div className={`grid gap-4 px-3 py-2.5 text-[12.5px] text-faint max-md:hidden ${COLUMNS}`} aria-hidden>
+          <div className={`grid gap-4 px-3 py-2.5 text-fine text-faint max-md:hidden ${COLUMNS}`} aria-hidden>
             <span>File</span>
             <span>Verdict</span>
             <span className="text-right">Size</span>
@@ -150,11 +150,11 @@ export function History() {
                       <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-11 shrink-0 rounded-[13px]" />
                       <span className="min-w-0 flex-1">
                         <FileName name={entry.filename} className="text-[14.5px] font-medium" />
-                        <span className="block truncate text-[12.5px] text-faint max-md:hidden">{s ? `${s.width}×${s.height}` : ' '}</span>
+                        <span className="block truncate text-fine text-faint max-md:hidden">{s ? `${s.width}×${s.height}` : ' '}</span>
                         {/* On phones the verdict sits under the name, so the name gets the row's full width. */}
                         <span className="mt-0.5 flex min-w-0 items-center gap-2 md:hidden">
                           {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
-                          <span className="truncate text-[12.5px] text-faint">{formatWhen(entry.uploadedAt)}</span>
+                          <span className="truncate text-fine text-faint">{formatWhen(entry.uploadedAt)}</span>
                         </span>
                       </span>
                     </span>

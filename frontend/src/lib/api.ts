@@ -89,6 +89,13 @@ export interface ServiceStatus {
   daily_cap: number
   last_analysis_at: string | null
   pipeline_version: string
+  /** The API process's memory now and at its peak since the last start; null off Linux. These and
+   *  `detector` are missing from servers older than these fields. */
+  memory_mb?: number | null
+  memory_peak_mb?: number | null
+  memory_limit_mb?: number
+  /** The AI detector's model: in memory, loaded by the next analysis, or not in the server image. */
+  detector?: 'loaded' | 'available' | 'missing'
 }
 
 export interface JobCreated {

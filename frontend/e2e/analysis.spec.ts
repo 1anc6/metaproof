@@ -74,6 +74,35 @@ test('an image over 24 MP is turned away before it is uploaded', async ({ page }
   expect(api.uploads).toHaveLength(0)
 })
 
+test('several images go one after another, then History follows them; unusable ones are named', async ({ page }) => {
+  const api = await mockApi(page)
+  await skipWelcome(page)
+  await page.goto('/new')
+  await expect(page.getByText(/Choose up to 10 at once/)).toBeVisible()
+  await page.locator('input[type=file]').setInputFiles([
+    { ...PHOTO, name: 'one.jpg' },
+    { name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7') },
+    { ...PHOTO, name: 'two.jpg' },
+  ])
+  await expect(page).toHaveURL(/\/history$/)
+  expect(api.uploads).toHaveLength(2)
+  expect(api.uploads.join('')).not.toMatch(/one\.jpg|two\.jpg/) // filenames still never leave the device
+  await expect(page.getByText('2 images sent for analysis')).toBeVisible()
+  await expect(page.getByText('One image was not sent')).toBeVisible()
+  await expect(page.getByText(/notes\.pdf: Unsupported file type/)).toBeVisible()
+})
+
+test('a batch is capped at 10, and says how many were left out', async ({ page }) => {
+  const api = await mockApi(page)
+  await skipWelcome(page)
+  await page.goto('/new')
+  await page.locator('input[type=file]').setInputFiles(Array.from({ length: 12 }, (_, i) => ({ ...PHOTO, name: `p${i}.jpg` })))
+  await expect(page).toHaveURL(/\/history$/)
+  expect(api.uploads).toHaveLength(10)
+  await expect(page.getByText('2 images were not sent')).toBeVisible()
+  await expect(page.getByText(/2 more: MetaProof takes up to 10 images at a time/)).toBeVisible()
+})
+
 /** A black greyscale PNG of any size; zeros compress to a few kB even at 25 MP. */
 function blankPng(width: number, height: number) {
   const chunk = (type: string, data: Buffer) => {

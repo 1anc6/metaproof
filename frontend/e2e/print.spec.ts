@@ -1,5 +1,6 @@
+import { readFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
-import { JOB_ID, mockApi, skipWelcome } from './mock-api'
+import { JOB_ID, SHA, job, mockApi, skipWelcome } from './mock-api'
 
 test('Save as PDF keeps every word: no glass over the cards, every check unfolded, no app chrome', async ({ page }) => {
   await mockApi(page)
@@ -21,4 +22,14 @@ test('Save as PDF keeps every word: no glass over the cards, every check unfolde
   // and none of the app around the report
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeHidden()
   await expect(page.getByRole('button', { name: 'Save as PDF' })).toBeHidden()
+})
+
+test('Download JSON saves the report as the API returned it', async ({ page }) => {
+  await mockApi(page)
+  await skipWelcome(page)
+  await page.goto(`/analysis/${JOB_ID}`)
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download JSON' }).click()])
+  expect(download.suggestedFilename()).toBe(`metaproof-report-${SHA.slice(0, 12)}.json`)
+  const saved = JSON.parse(readFileSync(await download.path(), 'utf8'))
+  expect(saved).toEqual(JSON.parse(JSON.stringify(job)))
 })

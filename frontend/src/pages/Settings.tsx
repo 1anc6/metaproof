@@ -176,6 +176,7 @@ function ServiceFigures() {
           {level.label} · reports are kept for {status.retention_days} {status.retention_days === 1 ? 'day' : 'days'}
         </p>
       </div>
+      <MemoryUse status={status} />
       <dl className="well grid grid-cols-3 rounded-[18px] py-3">
         <Figure label="Analyses today" value={`${status.analyses_24h}`} note={`of ${status.daily_cap} a day`} />
         <Figure
@@ -195,12 +196,76 @@ function ServiceFigures() {
   )
 }
 
+const MEMORY_LEVELS: typeof LEVELS = {
+  ok: { ...LEVELS.ok, label: 'Healthy' },
+  warn: { ...LEVELS.warn, label: 'Little room' },
+  full: { ...LEVELS.full, label: 'Near the limit' },
+}
+
+const DETECTOR: Record<NonNullable<ServiceStatus['detector']>, string> = {
+  loaded: 'AI detector loaded',
+  available: 'AI detector loads with the next analysis',
+  missing: 'AI detector missing: verdicts are made without it',
+}
+
+/** The API's memory against the instance's, its peak since the last start marked on the bar. An
+ *  analysis needs that much room again, so the peak, not the figure now, sets the warning. */
+function MemoryUse({ status }: { status: ServiceStatus }) {
+  const { memory_mb: used, memory_peak_mb: peak, memory_limit_mb: limit, detector } = status
+  if (!detector) return null // a server older than these figures
+  const detectorLine = (
+    <p className="flex items-center gap-1.5 text-[13px] text-muted">
+      {detector === 'missing' ? (
+        <CircleAlert className="size-3.5" style={{ color: LEVELS.warn.color }} strokeWidth={2} aria-hidden />
+      ) : (
+        <CircleCheck className="size-3.5" style={{ color: LEVELS.ok.color }} strokeWidth={2} aria-hidden />
+      )}
+      {DETECTOR[detector]}
+    </p>
+  )
+  if (used == null || peak == null || !limit) return detectorLine // memory is only read on Linux
+
+  // A worst-case image at the upload limit peaks near 450 MB of 512, which is room enough; the
+  // warning starts past that.
+  const level = MEMORY_LEVELS[peak >= limit * 0.97 ? 'full' : peak >= limit * 0.9 ? 'warn' : 'ok']
+  const Icon = level.icon
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3 text-[14px]">
+        <span className="text-muted">Server memory</span>
+        <span className="text-[13px] text-muted tabular-nums">
+          <span className="num text-[28px] text-ink">{Math.round(used)}</span> MB of {limit} MB
+        </span>
+      </div>
+      <div
+        className="bar-track relative mt-2.5 h-2 rounded-full"
+        role="meter"
+        aria-label="Server memory used"
+        aria-valuemin={0}
+        aria-valuemax={limit}
+        aria-valuenow={used}
+        aria-valuetext={`${Math.round(used)} of ${limit} MB, peak ${Math.round(peak)} MB, ${level.label.toLowerCase()}`}
+      >
+        <div className="h-full rounded-full" style={{ width: `${Math.max(Math.min(1, used / limit) * 100, 1)}%`, background: level.color }} />
+        {/* the highest it has been since the last start */}
+        <div className="absolute top-[-4px] h-4 w-0.5 rounded-full bg-line-strong" style={{ left: `${Math.min(1, peak / limit) * 100}%` }} aria-hidden />
+      </div>
+      <p className="mt-2 flex items-center gap-1.5 text-[13px] text-muted">
+        <Icon className="size-3.5" style={{ color: level.color }} strokeWidth={2} aria-hidden />
+        {level.label} · peak {Math.round(peak)} MB since the last start, {Math.max(0, Math.round(limit - peak))} MB to spare
+      </p>
+      <div className="mt-1">{detectorLine}</div>
+    </div>
+  )
+}
+
 function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="min-w-0 border-l border-line px-3.5 first:border-l-0">
-      <dt className="truncate text-[12px] leading-tight text-faint">{label}</dt>
+      {/* On a phone a label may take two lines; each keeps room for two, so the figures stay level. */}
+      <dt className="text-meta leading-tight text-faint max-sm:min-h-[2lh]">{label}</dt>
       <dd className={`mt-2 ${/^\d+$/.test(value) ? 'num text-[30px] leading-none' : 'text-[15px] leading-tight font-medium sm:text-[17px]'}`}>{value}</dd>
-      {note && <dd className="mt-0.5 text-[12px] leading-tight text-faint">{note}</dd>}
+      {note && <dd className="mt-0.5 text-meta leading-tight text-faint">{note}</dd>}
     </div>
   )
 }

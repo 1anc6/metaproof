@@ -239,7 +239,7 @@ export function Meter({
           aria-hidden
         />
       </div>
-      <div className="mt-2 flex justify-between text-[12px] text-faint tabular-nums">
+      <div className="mt-2 flex justify-between text-meta text-faint tabular-nums">
         {labels.map((l) => (
           <span key={l}>{l}</span>
         ))}

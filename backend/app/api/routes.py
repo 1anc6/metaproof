@@ -8,7 +8,8 @@ from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, selectinload
 
-from app import models, schemas
+from app import memory, models, schemas
+from app.analyzers import ANALYZERS
 from app.config import Settings, get_settings
 from app.db import get_session
 from app.ingest import UploadRejected, ingest
@@ -21,6 +22,7 @@ SessionDep = Annotated[Session, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 upload_limiter = SlidingWindowLimiter(get_settings().uploads_per_ip_per_hour)
+DETECTOR = next(a for a in ANALYZERS if a.name == "detector")
 
 
 # HEAD too: uptime monitors (UptimeRobot) check with HEAD, and a 405 reads as an outage.
@@ -45,28 +47,33 @@ _status_lock = threading.Lock()
 @router.get("/status", response_model=schemas.ServiceStatus, tags=["System"],
             summary="Storage and analysis figures")
 def service_status(session: SessionDep, settings: SettingsDep):
-    """Database size against the plan's limit, and the last day's analyses and failures.
-    Unlike /health this reads the database, so it is cached for STATUS_TTL_S seconds: the
-    Settings page polls it, and however many tabs are open the database answers it at most
-    once per window."""
+    """Database size against the plan's limit, the last day's analyses and failures, and the
+    API's memory and detector model. Unlike /health this reads the database, so the database
+    figures are cached for STATUS_TTL_S seconds: the Settings page polls it, and however many tabs
+    are open the database answers it at most once per window. Memory and the model cost nothing
+    to read and change from one analysis to the next, so they are read every time."""
     global _status_cache
     with _status_lock:
-        if _status_cache and time.monotonic() - _status_cache[0] < STATUS_TTL_S:
-            return _status_cache[1]
-        row = session.execute(STATUS_SQL).one()
-        result = schemas.ServiceStatus(
-            database_mb=round(row.size_bytes / (1024 * 1024), 1),
-            storage_warn_mb=settings.storage_warn_mb,
-            storage_limit_mb=settings.storage_limit_mb,
-            retention_days=settings.retention_days,
-            analyses_24h=row.analyses_24h,
-            failed_24h=row.failed_24h,
-            daily_cap=settings.daily_upload_cap,
-            last_analysis_at=row.last_analysis_at,
-            pipeline_version=settings.pipeline_version,
-        )
-        _status_cache = (time.monotonic(), result)
-        return result
+        if not (_status_cache and time.monotonic() - _status_cache[0] < STATUS_TTL_S):
+            row = session.execute(STATUS_SQL).one()
+            _status_cache = (time.monotonic(), schemas.ServiceStatus(
+                database_mb=round(row.size_bytes / (1024 * 1024), 1),
+                storage_warn_mb=settings.storage_warn_mb,
+                storage_limit_mb=settings.storage_limit_mb,
+                retention_days=settings.retention_days,
+                analyses_24h=row.analyses_24h,
+                failed_24h=row.failed_24h,
+                daily_cap=settings.daily_upload_cap,
+                last_analysis_at=row.last_analysis_at,
+                pipeline_version=settings.pipeline_version,
+                memory_limit_mb=settings.memory_limit_mb,
+                detector="missing",  # replaced below on every request
+            ))
+        cached = _status_cache[1]
+    now_mb, peak_mb = memory.process_memory_mb()
+    detector = "loaded" if DETECTOR.loaded else "available" if DETECTOR.available else "missing"
+    return cached.model_copy(update={"memory_mb": now_mb, "memory_peak_mb": peak_mb,
+                                     "detector": detector})
 
 
 @router.post(
