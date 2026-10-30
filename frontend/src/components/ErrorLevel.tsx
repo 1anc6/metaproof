@@ -110,7 +110,7 @@ export function ErrorLevel({ job }: { job: Job }) {
             className="mt-4 h-auto max-h-[70vh] w-full rounded-[18px] bg-black object-contain"
           />
           {state.scaled && (
-            <p className="mt-2 text-[12px] text-faint">Scaled down to {MAX_SIDE} px on the long side for the browser.</p>
+            <p className="mt-2 text-meta text-faint">Scaled down to {MAX_SIDE} px on the long side for the browser.</p>
           )}
         </div>
       ) : (

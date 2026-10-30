@@ -52,6 +52,27 @@ test('keeps the last figures, marked as possibly stale, when a refresh fails', a
   await expect(meter(page)).toBeVisible()
 })
 
+test("shows the server's memory against the instance, with room left after its peak", async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/settings')
+  await expect(page.getByText('MB of 512 MB').nth(1)).toBeVisible()
+  await expect(page.getByRole('meter', { name: 'Server memory used' })).toHaveAttribute('aria-valuetext', '262 of 512 MB, peak 432 MB, healthy')
+  await expect(page.getByText(/peak 432 MB since the last start, 80 MB to spare/)).toBeVisible()
+  await expect(page.getByText('AI detector loaded')).toBeVisible()
+
+  await mockApi(page, { status: { memory_peak_mb: 470, detector: 'missing' } })
+  await page.reload()
+  await expect(page.getByText(/Little room · peak 470 MB since the last start, 42 MB to spare/)).toBeVisible()
+  await expect(page.getByText('AI detector missing: verdicts are made without it')).toBeVisible()
+})
+
+test('leaves memory out where the server cannot read it, and still names the detector', async ({ page }) => {
+  await mockApi(page, { status: { memory_mb: null, memory_peak_mb: null, detector: 'available' } })
+  await page.goto('/settings')
+  await expect(page.getByRole('meter', { name: 'Server memory used' })).toHaveCount(0)
+  await expect(page.getByText('AI detector loads with the next analysis')).toBeVisible()
+})
+
 test('says so plainly when the server cannot be reached', async ({ page }) => {
   await mockApi(page, { status: 'down' })
   await page.goto('/settings')

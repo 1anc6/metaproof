@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { api } from './api'
 import { formatBytes } from './format'
 import { addToHistory } from './history'
@@ -10,9 +11,21 @@ export const MAX_MB = 25
 // The server's max_image_pixels (backend/app/config.py), which keeps decoding inside Render's 512 MB.
 export const MAX_MP = 24
 
+// Images taken in one go. The server allows 20 uploads an hour from one address; 10 leaves room.
+export const MAX_BATCH = 10
+
 export type UploadState =
   | { kind: 'idle' }
-  | { kind: 'uploading'; file: File; progress: number; preview: string; startedAt: number; secondsLeft: number | null }
+  | {
+      kind: 'uploading'
+      file: File
+      progress: number
+      preview: string
+      startedAt: number
+      secondsLeft: number | null
+      /** Set when several images go one after another: which one this is, from 0. */
+      batch?: { index: number; total: number }
+    }
   | { kind: 'error'; message: string }
 
 /** Why a file can't be analyzed, before anything is sent; the server re-checks everything. */
@@ -51,6 +64,39 @@ export function useUpload(initial: UploadState = { kind: 'idle' }) {
   const controller = useRef<AbortController | null>(null)
   const [state, setState] = useState<UploadState>(initial)
 
+  /** Uploads one checked file with progress and time left, and remembers it on this device. */
+  const send = useCallback(async (file: File, signal: AbortSignal, batch?: { index: number; total: number }) => {
+    // A local preview of the picked file; nothing extra leaves the browser.
+    const preview = URL.createObjectURL(file)
+    setState({ kind: 'uploading', file, progress: 0, preview, startedAt: performance.now(), secondsLeft: null, batch })
+    try {
+      const created = await api.upload(
+        file,
+        (progress) =>
+          setState((s) => {
+            if (s.kind !== 'uploading') return s
+            // Time left, from the pace so far; only once there is enough of it to go on.
+            const elapsed = (performance.now() - s.startedAt) / 1000
+            const secondsLeft = progress > 0.05 && progress < 1 ? Math.ceil((elapsed * (1 - progress)) / progress) : null
+            return { ...s, progress, secondsLeft }
+          }),
+        signal,
+      )
+      rememberPreview(created.job_id, preview)
+      addToHistory({
+        jobId: created.job_id,
+        sha256: created.sha256,
+        filename: file.name || 'pasted-image',
+        sizeBytes: file.size,
+        uploadedAt: new Date().toISOString(),
+      })
+      return created
+    } catch (e) {
+      URL.revokeObjectURL(preview)
+      throw e
+    }
+  }, [])
+
   const start = useCallback(
     async (file: File) => {
       const reason = await rejectReason(file)
@@ -58,48 +104,73 @@ export function useUpload(initial: UploadState = { kind: 'idle' }) {
         setState({ kind: 'error', message: reason })
         return
       }
-      // A local preview of the picked file; nothing extra leaves the browser.
-      const preview = URL.createObjectURL(file)
       const ctrl = new AbortController()
       controller.current = ctrl
-      setState({ kind: 'uploading', file, progress: 0, preview, startedAt: performance.now(), secondsLeft: null })
       try {
-        const created = await api.upload(
-          file,
-          (progress) =>
-            setState((s) => {
-              if (s.kind !== 'uploading') return s
-              // Time left, from the pace so far; only once there is enough of it to go on.
-              const elapsed = (performance.now() - s.startedAt) / 1000
-              const secondsLeft = progress > 0.05 && progress < 1 ? Math.ceil((elapsed * (1 - progress)) / progress) : null
-              return { ...s, progress, secondsLeft }
-            }),
-          ctrl.signal,
-        )
-        rememberPreview(created.job_id, preview)
-        addToHistory({
-          jobId: created.job_id,
-          sha256: created.sha256,
-          filename: file.name || 'pasted-image',
-          sizeBytes: file.size,
-          uploadedAt: new Date().toISOString(),
-        })
+        const created = await send(file, ctrl.signal)
         navigate(`/analysis/${created.job_id}`)
       } catch (e) {
-        URL.revokeObjectURL(preview)
         setState((e as Error).name === 'AbortError' ? { kind: 'idle' } : { kind: 'error', message: (e as Error).message })
       } finally {
         if (controller.current === ctrl) controller.current = null
       }
     },
-    [navigate],
+    [navigate, send],
+  )
+
+  /**
+   * Several images: each is checked, then they go one after another (the server analyzes one at a
+   * time anyway) and History follows their verdicts as they come in. One image is just `start`.
+   */
+  const startMany = useCallback(
+    async (files: File[]) => {
+      if (files.length <= 1) return files[0] && start(files[0])
+      const checked = await Promise.all(files.map(async (file) => ({ file, reason: await rejectReason(file) })))
+      const accepted = checked.filter((c) => !c.reason).map((c) => c.file)
+      const batch = accepted.slice(0, MAX_BATCH)
+      const refused = checked.filter((c) => c.reason)
+      const notSent = refused.length + accepted.length - batch.length
+      const notes = [
+        ...refused.map((c) => `${c.file.name || 'An image'}: ${c.reason}`),
+        ...(accepted.length > MAX_BATCH ? [`${accepted.length - MAX_BATCH} more: MetaProof takes up to ${MAX_BATCH} images at a time.`] : []),
+      ]
+      if (batch.length === 0) {
+        setState({ kind: 'error', message: refused.length === 1 ? refused[0].reason! : `None of these can be analyzed. ${notes[0]}` })
+        return
+      }
+
+      const ctrl = new AbortController()
+      controller.current = ctrl
+      let sent = 0
+      try {
+        for (const [index, file] of batch.entries()) {
+          await send(file, ctrl.signal, { index, total: batch.length })
+          sent++
+        }
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') {
+          setState({ kind: 'idle' })
+          if (sent) toast(`Stopped after ${sent} of ${batch.length}`, { description: 'The ones already sent are in History.' })
+        } else {
+          const message = (e as Error).message
+          setState({ kind: 'error', message: sent ? `${sent} of ${batch.length} sent; the rest stopped. ${message}` : message })
+        }
+        return
+      } finally {
+        if (controller.current === ctrl) controller.current = null
+      }
+      navigate('/history')
+      toast.success(`${sent} images sent for analysis`, { description: 'Their verdicts appear here as each one finishes.' })
+      if (notSent) toast.warning(`${notSent === 1 ? 'One image was' : `${notSent} images were`} not sent`, { description: notes.join(' ') })
+    },
+    [navigate, send, start],
   )
 
   const cancel = useCallback(() => controller.current?.abort(), [])
   const fail = useCallback((message: string) => setState({ kind: 'error', message }), [])
   const clear = useCallback(() => setState({ kind: 'idle' }), [])
 
-  return { state, start, cancel, fail, clear }
+  return { state, start, startMany, cancel, fail, clear }
 }
 
 // A file picked away from the upload page (the phone bar's + menu), left for that page to start.

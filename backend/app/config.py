@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     storage_warn_mb: int = 400
     # The database plan's storage limit, shown on the status page (Neon free tier: 0.5 GB).
     storage_limit_mb: int = 512
+    # The API instance's memory, shown on the status page beside what the process uses
+    # (Render free instance: 512 MB).
+    memory_limit_mb: int = 512
 
     # Cosine similarity at or above which two images count as near-duplicates.
     similar_min_similarity: float = 0.92

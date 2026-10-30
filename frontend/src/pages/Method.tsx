@@ -47,8 +47,12 @@ export function Method() {
     <div>
       <PageHeader title="How it works" subtitle="Six independent checks, a verdict that shows its working, and never a claim of absolute truth." />
 
-      <nav aria-label="On this page" className="-mx-4 mb-5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
-        <div className="track inline-flex gap-0.5 rounded-full p-1">
+      {/* On a phone the page runs to five screens, so the links stay at the top as frosted chrome. */}
+      <nav
+        aria-label="On this page"
+        className="-mx-4 mb-5 overflow-x-auto px-4 [scrollbar-width:none] max-sm:sticky max-sm:top-[max(8px,env(safe-area-inset-top))] max-sm:z-30 sm:mx-0 sm:px-0"
+      >
+        <div className="track inline-flex gap-0.5 rounded-full p-1 max-sm:[background:var(--glass-bg)] max-sm:[backdrop-filter:var(--glass-blur)] max-sm:[-webkit-backdrop-filter:var(--glass-blur)]">
           {[
             ['#checks', 'The six checks'],
             ['#verdict', 'The verdict'],
@@ -62,7 +66,7 @@ export function Method() {
         </div>
       </nav>
 
-      <section id="checks" className="scroll-mt-6" aria-labelledby="checks-title">
+      <section id="checks" className="scroll-mt-16 sm:scroll-mt-6" aria-labelledby="checks-title">
         <h2 id="checks-title" className="sr-only">
           The six checks
         </h2>
@@ -83,7 +87,7 @@ export function Method() {
       </section>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-12 lg:items-start">
-        <section id="verdict" className="panel scroll-mt-6 rounded-[28px] p-5 sm:p-6 lg:col-span-5">
+        <section id="verdict" className="panel scroll-mt-16 sm:scroll-mt-6 rounded-[28px] p-5 sm:p-6 lg:col-span-5">
           <PanelTitle title="How the verdict is decided" />
           <ol className="mt-4 flex flex-col gap-3.5">
             {RULES.map((rule) => (
@@ -95,7 +99,7 @@ export function Method() {
           </ol>
         </section>
 
-        <section id="privacy" className="panel scroll-mt-6 rounded-[28px] p-5 sm:p-6 lg:col-span-7">
+        <section id="privacy" className="panel scroll-mt-16 sm:scroll-mt-6 rounded-[28px] p-5 sm:p-6 lg:col-span-7">
           <PanelTitle title="Privacy" />
           <p className="mt-3 text-[14.5px] leading-relaxed text-muted">
             Uploaded files are deleted right after analysis. MetaProof stores the file's SHA-256 hash, a small thumbnail and the
@@ -129,17 +133,18 @@ function RateRow({ name, rates }: { name: string; rates: number[] }) {
 
 function DetectorResults() {
   return (
-    <section id="accuracy" className="panel mt-4 scroll-mt-6 rounded-[28px] p-5 sm:p-6">
+    <section id="accuracy" className="panel mt-4 scroll-mt-16 sm:scroll-mt-6 rounded-[28px] p-5 sm:p-6">
       <PanelTitle title="How well the detector works" />
       {/* Held-out benchmark figures, measured on generators the model never saw in training. */}
       <dl className="well mt-4 grid grid-cols-3 rounded-[18px] py-3.5">
         {[
           ['AUC, as uploaded', SUMMARY.auc.toFixed(2)],
-          ['AUC, recompressed', SUMMARY.aucRecompressed.toFixed(2)],
+          ['AUC, recom­pressed', SUMMARY.aucRecompressed.toFixed(2)], // may break where a phone needs it
           ['Calibration error', `${Math.round(SUMMARY.calibrationError * 100)}%`],
         ].map(([label, value]) => (
-          <div key={label} className="min-w-0 border-l border-line px-4 first:border-l-0">
-            <dt className="truncate text-[12.5px] leading-tight text-faint">{label}</dt>
+          // Labels wrap on a phone rather than lose their ending; the figures stay level below them.
+          <div key={label} className="flex min-w-0 flex-col justify-between border-l border-line px-3 first:border-l-0 sm:px-4">
+            <dt className="text-fine leading-tight text-faint">{label}</dt>
             <dd className="num mt-1.5 text-[30px] leading-none">{value}</dd>
           </div>
         ))}
@@ -161,7 +166,7 @@ function DetectorResults() {
 
       <div className="mt-6 grid gap-x-10 gap-y-8 lg:grid-cols-2">
         <div>
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[12.5px] text-faint">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-fine text-faint">
             <span className="font-medium text-ink">AI images detected, per unseen generator</span>
             <span className="flex items-center gap-3">
               <span className="flex items-center gap-1.5">
@@ -180,7 +185,7 @@ function DetectorResults() {
         </div>
 
         <div>
-          <p className="text-[12.5px] font-medium text-ink">Newest generators (2026), as uploaded: still mostly missed</p>
+          <p className="text-fine font-medium text-ink">Newest generators (2026), as uploaded: still mostly missed</p>
           <ul className="mt-4 flex flex-col gap-3">
             {NEWEST.map((g) => (
               <RateRow key={g.name} name={g.name} rates={[g.clean]} />
@@ -195,7 +200,7 @@ function DetectorResults() {
       </div>
 
       <div className="mt-7">
-        <p className="text-[12.5px] font-medium text-ink">How the score is used (as uploaded / recompressed)</p>
+        <p className="text-fine font-medium text-ink">How the score is used (as uploaded / recompressed)</p>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-[13.5px]">
             <thead className="text-faint">

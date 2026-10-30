@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { formatBytes } from '../lib/format'
-import { ACCEPTED, MAX_MB, MAX_MP, imageFromClipboard, rejectReason, useUpload } from '../lib/upload'
+import { ACCEPTED, MAX_BATCH, MAX_MB, MAX_MP, imageFromClipboard, rejectReason, useUpload } from '../lib/upload'
 import { FileName } from './ui'
 
 // Touch screens have no drag and drop, so the zone words itself as a picker there.
@@ -28,7 +28,7 @@ export function UploadPanel({
   className?: string
 }) {
   const own = useUpload()
-  const { state, start, cancel, fail, clear } = upload ?? own
+  const { state, start, startMany, cancel, fail, clear } = upload ?? own
   const input = useRef<HTMLInputElement>(null)
   const [picked, setPicked] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -56,6 +56,12 @@ export function UploadPanel({
     },
     [autoStart, start, fail, clear],
   )
+  // Several at once go straight off as a batch on the upload page; the workspace takes the first.
+  const takeAll = (files: FileList | null) => {
+    const list = Array.from(files ?? [])
+    if (list.length > 1 && autoStart) startMany(list)
+    else if (list[0]) take(list[0])
+  }
   const drop = () => {
     setPicked(null)
     setPreview((old) => {
@@ -86,7 +92,9 @@ export function UploadPanel({
   }
 
   const title = busy
-    ? 'Uploading your image'
+    ? state.batch
+      ? `Uploading ${state.batch.index + 1} of ${state.batch.total}`
+      : 'Uploading your image'
     : dragging
       ? 'Release to add it'
       : picked
@@ -118,8 +126,7 @@ export function UploadPanel({
         onDrop={(e) => {
           e.preventDefault()
           setDragging(false)
-          const dropped = e.dataTransfer.files[0]
-          if (dropped && !busy) take(dropped)
+          if (!busy) takeAll(e.dataTransfer.files)
         }}
         className={`zone flex flex-1 flex-col items-center justify-center rounded-[24px] px-5 pt-6 pb-6 text-center transition ${
           busy ? '' : 'cursor-pointer hover:bg-[var(--panel-hover)]'
@@ -138,7 +145,7 @@ export function UploadPanel({
         </span>
         <p className="mt-6 max-w-[38ch] text-[14px] leading-relaxed text-faint">
           For the clearest verdict, upload the original file rather than a screenshot. JPEG, PNG, WebP, TIFF or HEIC, up
-          to {MAX_MB} MB and {MAX_MP} megapixels.
+          to {MAX_MB} MB and {MAX_MP} megapixels.{autoStart && ` Choose up to ${MAX_BATCH} at once.`}
         </p>
       </div>
 
@@ -228,10 +235,10 @@ export function UploadPanel({
         ref={input}
         type="file"
         accept={ACCEPTED.join(',')}
+        multiple={autoStart}
         className="hidden"
         onChange={(e) => {
-          const next = e.target.files?.[0]
-          if (next) take(next)
+          takeAll(e.target.files)
           e.target.value = ''
         }}
       />

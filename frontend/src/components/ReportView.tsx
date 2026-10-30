@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowUpRight, ChevronDown, Compass, Droplets, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, ChevronDown, Compass, Droplets, FileJson, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
@@ -50,7 +50,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
               className="absolute inset-0 size-full object-contain"
             />
           </div>
-          <figcaption className="flex flex-wrap gap-x-2 gap-y-0.5 px-2.5 pt-3 pb-1.5 text-[12.5px] text-faint">
+          <figcaption className="flex flex-wrap gap-x-2 gap-y-0.5 px-2.5 pt-3 pb-1.5 text-fine text-faint">
             <span>{formatType(job.media.mime_type)}</span>
             <span aria-hidden>·</span>
             <span>
@@ -98,14 +98,14 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
             <Indicator label="Detector score" value={reading ? String(reading.pct) : '—'} unit={reading ? '/ 100' : undefined} />
           </dl>
           {reading && (
-            <p className="mt-2.5 text-[12.5px] leading-relaxed text-faint">
+            <p className="mt-2.5 text-fine leading-relaxed text-faint">
               The detector score is how closely the pixels resemble the AI images the model learned from. It often misses
               newer generators, so it is one signal among the checks, not the chance that this image is AI-generated.
             </p>
           )}
 
           <EvidenceChips job={job} verdict={verdict} />
-          <Actions sha={sha} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
+          <Actions job={job} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
         </section>
       </section>
 
@@ -166,10 +166,10 @@ function analyzedWhen(iso: string) {
 function Indicator({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <div className="min-w-0 border-l border-line px-3 first:border-l-0 sm:px-4">
-      <dt className="text-[12px] leading-tight text-faint">{label}</dt>
+      <dt className="text-meta leading-tight text-faint">{label}</dt>
       <dd className="mt-1 flex items-baseline gap-1">
         <span className="text-[20px] leading-none font-semibold tabular-nums">{value}</span>
-        {unit && <span className="text-[12px] text-faint">{unit}</span>}
+        {unit && <span className="text-meta text-faint">{unit}</span>}
       </dd>
     </div>
   )
@@ -207,13 +207,23 @@ function AnalysisDetails({ analyzers }: { analyzers: AnalyzerResult[] }) {
   )
 }
 
+/** The report exactly as the API returned it: verdict, scores, every analyzer's findings and raw
+ *  output, for keeping or for other tools. The filename stays on this device, as always. */
+function downloadJson(job: Job) {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(job, null, 2)], { type: 'application/json' }))
+  const a = Object.assign(document.createElement('a'), { href: url, download: `metaproof-report-${job.media.sha256.slice(0, 12)}.json` })
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 // Phones get the system share sheet (WhatsApp, Messages, …); desktops copy the link.
 const nativeShare =
   typeof navigator !== 'undefined' &&
   typeof navigator.share === 'function' &&
   window.matchMedia('(pointer: coarse)').matches
 
-function Actions({ sha, title }: { sha: string; title: string }) {
+function Actions({ job, title }: { job: Job; title: string }) {
+  const sha = job.media.sha256
   const shareUrl = `${window.location.origin}/report/${sha}`
   const share = async () => {
     if (nativeShare) {
@@ -232,15 +242,24 @@ function Actions({ sha, title }: { sha: string; title: string }) {
     }
   }
   return (
-    <div className="no-print mt-5 flex flex-wrap gap-2.5">
-      <button type="button" onClick={share} className="btn-ghost">
+    // On a phone the three go side by side with a word each; their names keep the whole phrase.
+    <div className="no-print mt-5 grid grid-cols-3 gap-2.5 sm:flex sm:flex-wrap">
+      <button type="button" onClick={share} aria-label={nativeShare ? 'Share report' : 'Copy share link'} className="btn-ghost max-sm:px-2">
         {nativeShare ? <Share2 className="size-4" strokeWidth={1.7} /> : <Link2 className="size-4" strokeWidth={1.7} />}
-        {nativeShare ? 'Share report' : 'Copy share link'}
+        <span className="sm:hidden">Share</span>
+        <span className="max-sm:hidden">{nativeShare ? 'Share report' : 'Copy share link'}</span>
       </button>
-      <button type="button" onClick={() => window.print()} className="btn-ghost">
-        <Printer className="size-4" strokeWidth={1.7} /> Save as PDF
+      <button type="button" onClick={() => window.print()} aria-label="Save as PDF" className="btn-ghost max-sm:px-2">
+        <Printer className="size-4" strokeWidth={1.7} />
+        <span className="sm:hidden">PDF</span>
+        <span className="max-sm:hidden">Save as PDF</span>
       </button>
-      <Link to="/new" className="btn-primary max-sm:w-full sm:ml-auto">
+      <button type="button" onClick={() => downloadJson(job)} aria-label="Download JSON" className="btn-ghost max-sm:px-2">
+        <FileJson className="size-4" strokeWidth={1.7} />
+        <span className="sm:hidden">JSON</span>
+        <span className="max-sm:hidden">Download JSON</span>
+      </button>
+      <Link to="/new" className="btn-primary col-span-3 sm:ml-auto">
         <Plus className="size-4" strokeWidth={2.4} /> Analyze another
       </Link>
     </div>
@@ -254,7 +273,7 @@ function FindingRow({ finding }: { finding: Finding }) {
       <SignalDot signal={finding.signal} />
       <div className="min-w-0">
         <p className="text-[15px] leading-relaxed text-ink">{finding.message}</p>
-        <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px] text-faint">
+        <p className="mt-1.5 flex flex-wrap items-center gap-2 text-fine text-faint">
           {s.label}
           <span className="tag">{STRENGTH_LABEL[finding.strength]}</span>
         </p>
@@ -429,7 +448,7 @@ function Fields({ rows }: { rows: [string, ReactNode][] }) {
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           {shown.map(([k, v]) => (
             <div key={k} className="min-w-0">
-              <dt className="text-[12px] text-faint">{k}</dt>
+              <dt className="text-meta text-faint">{k}</dt>
               <dd className="mt-0.5 truncate text-sm text-ink" title={typeof v === 'string' ? v : undefined}>
                 {v}
               </dd>
@@ -475,7 +494,7 @@ function MetadataDetails({ raw }: { raw: Record<string, unknown> }) {
             All {Object.keys(exiftool).length} ExifTool tags
           </summary>
           <div className="max-h-80 overflow-auto px-4 pb-4">
-            <table className="w-full font-mono text-[12px]">
+            <table className="w-full font-mono text-meta">
               <tbody>
                 {Object.entries(exiftool).map(([k, v]) => (
                   <tr key={k} className="border-t border-line">
@@ -568,7 +587,7 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
             {typeof raw.segments_truncated === 'number' && `, first ${segments.length} rows shown`}
           </p>
           <div className="max-h-80 overflow-auto px-4 pb-3">
-            <table className="w-full font-mono text-[12px]">
+            <table className="w-full font-mono text-meta">
               <thead>
                 <tr className="text-left text-faint">
                   <th className="py-1.5 pr-4 font-normal">{unit}</th>
@@ -604,7 +623,7 @@ function StructureDetails({ raw }: { raw: Record<string, unknown> }) {
           <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2">
             {jpeg.quant_tables.map((t) => (
               <div key={t.id}>
-                <p className="mb-1.5 text-[12px] text-faint">Table {t.id}</p>
+                <p className="mb-1.5 text-meta text-faint">Table {t.id}</p>
                 <div className="grid grid-cols-8 gap-px font-mono text-[11px] text-muted tabular-nums">
                   {t.values.map((v, i) => (
                     <span key={i} className="rounded-[3px] bg-[var(--raise-bg)] py-0.5 text-center">{v}</span>
@@ -643,7 +662,7 @@ function ActionList({ title, actions }: { title: string; actions: C2paAction[] }
   if (actions.length === 0) return null
   return (
     <div>
-      <p className="text-[12px] text-faint">{title}</p>
+      <p className="text-meta text-faint">{title}</p>
       <ol className="mt-2 flex flex-col gap-1.5">
         {actions.map((a, i) => (
           <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm">

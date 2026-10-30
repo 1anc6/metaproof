@@ -61,7 +61,7 @@ export function VerdictSpectrum({
           )
         })}
       </div>
-      <div className="mt-2 grid grid-cols-4 gap-1.5 text-[12px] leading-tight" aria-hidden>
+      <div className="mt-2 grid grid-cols-4 gap-1.5 text-meta leading-tight" aria-hidden>
         {SEGMENTS.map((s) => (
           <span key={s.key} className={s.key === label ? 'font-semibold text-ink' : 'text-faint'}>
             {s.label}

@@ -77,6 +77,11 @@ class DetectorAnalyzer:
     def available(self) -> bool:
         return self.model_path.exists()
 
+    @property
+    def loaded(self) -> bool:
+        """In memory: from the first analysis after a start until the process ends."""
+        return self._session is not None
+
     def _get_session(self):
         # Loaded on first use so startup stays fast and memory is only spent when needed.
         with self._lock:
