@@ -399,7 +399,7 @@ function Latest({ done, data, span, waiting, example, now }: { done: HistoryEntr
               {waiting ? <span className="skeleton block h-10 w-48" /> : example ? (v?.short ?? 'Example') : `Nothing ${span}`}
             </p>
             <p className="mt-2.5 text-[13.5px] text-muted">
-              {example ? 'A FLUX image the detector never saw' : waiting ? <OrbText state="searching">Loading verdicts…</OrbText> : 'Analyze an image to see its verdict here.'}
+              {example ? 'A sample image, analysed in advance' :waiting ? <OrbText state="searching">Loading verdicts…</OrbText> : 'Analyze an image to see its verdict here.'}
             </p>
           </div>
           <Link to={example ? DEMO_REPORT_PATH : '/new'} className="btn-ghost btn-sm shrink-0 max-[420px]:hidden">
