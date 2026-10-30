@@ -6,7 +6,6 @@ import type { OrbState } from 'thinking-orbs'
 import { useServerStatus, type ServerState } from '../lib/hooks'
 import { useLens } from '../lib/lens'
 import { useMetalSettings } from '../lib/metal'
-import { useOrbGravity } from '../lib/orbs'
 import { setPref, usePrefs } from '../lib/prefs'
 import { useThemeSync } from '../lib/theme'
 import { AddMenu } from './AddMenu'
@@ -90,7 +89,6 @@ export function Shell() {
   }, [navigate, railOpen])
 
   useSheen()
-  useOrbGravity()
   useMetalSettings()
 
   return (

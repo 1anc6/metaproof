@@ -3,10 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DEMO_REPORT_PATH } from '../lib/demo'
 import { formatBytes } from '../lib/format'
-import { fingerprint } from '../lib/orbs'
 import { ACCEPTED, MAX_MB, imageFromClipboard, rejectReason, useUpload } from '../lib/upload'
-import { MetalRing } from './Metal'
-import { ThinkingOrb } from './ThinkingOrb'
 import { FileName } from './ui'
 
 // Touch screens have no drag and drop, so the zone words itself as a picker there.
@@ -15,7 +12,7 @@ const TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coar
 const typeOf = (file: File) => (file.type.split('/')[1] ?? 'image').replace('jpeg', 'jpg').toUpperCase()
 
 /**
- * The way in, after the upload card reference: a dashed drop zone with a glowing blue orb and a line
+ * The way in, after the upload card reference: a dashed drop zone with a glowing lime disc and a line
  * on what makes a good upload; once there is a file, a white row with its preview, size and time
  * left over a blue bar; then two equal buttons. Choose, drop or paste an image. On the workspace the
  * file waits for "Analyze image"; with `autoStart` (the upload page) it goes as soon as it is chosen.
@@ -33,7 +30,6 @@ export function UploadPanel({
   const own = useUpload()
   const { state, start, cancel, fail, clear } = upload ?? own
   const input = useRef<HTMLInputElement>(null)
-  const second = useRef<HTMLButtonElement>(null) // Paste or Cancel, beside the metal-ringed button
   const [picked, setPicked] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [unreadable, setUnreadable] = useState(false) // HEIC and TIFF have no preview in most browsers
@@ -107,9 +103,8 @@ export function UploadPanel({
         : ''
 
   return (
-    // clipped sideways: the metal's halo round the button at its edge would widen a phone's page
-    <section aria-label="Upload an image" className={`panel flex min-w-0 flex-col overflow-x-clip rounded-[32px] p-2.5 sm:p-3 ${className}`}>
-      {/* The drop zone: what to do, the orb, and what makes a good upload. The whole zone picks a file. */}
+    <section aria-label="Upload an image" className={`panel flex min-w-0 flex-col rounded-[32px] p-2.5 sm:p-3 ${className}`}>
+      {/* The drop zone: what to do, the disc, and what makes a good upload. The whole zone picks a file. */}
       <div
         onClick={choose}
         onDragOver={(e) => {
@@ -130,28 +125,14 @@ export function UploadPanel({
         <p className="text-[17px] font-semibold tracking-[-0.01em]" aria-live="polite">
           {title}
         </p>
-        {/* The lime face in a bezel of liquid metal; the swell while a file is held over the zone
-            takes both, so they grow as one. */}
-        <div className={`mt-5 transition-transform duration-300 ${dragging ? 'scale-105' : ''}`}>
-          <MetalRing variant="circle" bezel={5}>
-          <span className={`orb size-[112px] sm:size-[124px] ${dragging || busy ? 'orb-live' : ''}`} aria-hidden>
-            {/* At rest, the connecting orb, wiring faster while a file is held over the zone; uploading,
-                the working orb; once every byte is sent the server fingerprints the file, so the orb
-                turns into MetaProof's fingerprint. All in dark ink on the lime. */}
-            {state.kind === 'uploading' ? (
-              <ThinkingOrb
-                state="working"
-                frame={state.progress >= 1 ? fingerprint : undefined}
-                size={64}
-                on="light"
-                color="#1d2309"
-              />
-            ) : (
-              <ThinkingOrb state="connecting" size={64} on="light" color="#1d2309" speed={dragging ? 1.6 : 1} />
-            )}
-          </span>
-          </MetalRing>
-        </div>
+        {/* The lime disc swells while a file is held over the zone, and its glow breathes then and
+            while uploading. */}
+        <span
+          className={`orb mt-5 size-[112px] transition-transform duration-300 sm:size-[124px] ${dragging ? 'scale-105' : ''} ${dragging || busy ? 'orb-live' : ''}`}
+          aria-hidden
+        >
+          <Upload className="size-10" strokeWidth={1.8} />
+        </span>
         <p className="mt-6 max-w-[38ch] text-[14px] leading-relaxed text-faint">
           For the clearest verdict, upload the original file rather than a screenshot. JPEG, PNG, WebP, TIFF or HEIC, up
           to {MAX_MB} MB.
@@ -204,38 +185,34 @@ export function UploadPanel({
 
       <div className="mt-2.5 grid grid-cols-2 gap-2.5">
         {busy ? (
-          <button ref={second} type="button" onClick={cancel} className="btn-ghost h-12">
+          <button type="button" onClick={cancel} className="btn-ghost h-12">
             Cancel
           </button>
         ) : picked ? (
-          <button ref={second} type="button" onClick={drop} className="btn-ghost h-12">
+          <button type="button" onClick={drop} className="btn-ghost h-12">
             Cancel
           </button>
         ) : (
-          <button ref={second} type="button" onClick={paste} className="btn-ghost h-12">
+          <button type="button" onClick={paste} className="btn-ghost h-12">
             <ClipboardPaste className="size-4" strokeWidth={1.6} /> Paste
           </button>
         )}
-        {/* The way in, in a bezel of liquid metal whose light the button beside it catches. One
-            button whose words change, so the ring keeps measuring the same element. */}
-        <MetalRing bezel={3} reflect={[second]}>
-          <button
-            type="button"
-            onClick={picked && !busy ? () => start(picked) : choose}
-            disabled={busy}
-            className="btn-primary h-12 w-full"
-          >
-            {picked && !busy ? (
-              'Analyze image'
-            ) : busy ? (
-              'Uploading…'
-            ) : (
-              <>
-                <Upload className="size-4" strokeWidth={2} /> Choose image
-              </>
-            )}
-          </button>
-        </MetalRing>
+        <button
+          type="button"
+          onClick={picked && !busy ? () => start(picked) : choose}
+          disabled={busy}
+          className="btn-primary h-12 w-full"
+        >
+          {picked && !busy ? (
+            'Analyze image'
+          ) : busy ? (
+            'Uploading…'
+          ) : (
+            <>
+              <Upload className="size-4" strokeWidth={2} /> Choose image
+            </>
+          )}
+        </button>
       </div>
       <p className="mt-3 mb-1 px-2 text-[13px] text-faint">
         {busy ? 'If the server was asleep, the first upload can take up to a minute. ' : 'The file is deleted after the analysis. '}

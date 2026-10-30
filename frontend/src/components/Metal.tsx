@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
-import { BEND, BEND_DEFAULTS, MetalBadge, MetalFx, useMetalBend, type MetalFxReflectionTarget } from 'metal-fx'
+import { useCallback, useRef, type ReactNode, type RefObject } from 'react'
+import { BEND, MetalBadge, MetalFx, useMetalBend, type MetalFxReflectionTarget } from 'metal-fx'
 import { useMetalStill } from '../lib/metal'
-import { usePrefs } from '../lib/prefs'
 
-const BEND_OFF = { ...BEND_DEFAULTS, enabled: false }
+// The library playground's own starting point: 90% metal at a 1.6× shader scale.
+const STRENGTH = 0.9
+const SCALE = 1.6
 
 /**
  * A ring of liquid metal round one button or face, from libraries.dev/metal (metal-fx). The pointer
@@ -29,14 +30,9 @@ export function MetalRing({
   className?: string
   children: ReactNode
 }) {
-  const m = usePrefs().metal
   const still = useMetalStill()
   const own = useRef<HTMLDivElement | null>(null)
-  const bendOn = useRef(m.bend)
-  useEffect(() => {
-    bendOn.current = m.bend
-  }, [m.bend])
-  useMetalBend(own, () => (bendOn.current ? BEND : BEND_OFF))
+  useMetalBend(own, () => BEND)
   const ref = useCallback(
     (el: HTMLDivElement | null) => {
       own.current = el
@@ -44,21 +40,20 @@ export function MetalRing({
     },
     [rootRef],
   )
-  // the scale chosen in Settings is the pill's; a circle keeps its own proportion to it
-  const scale = (variant === 'circle' ? 1.3 / 1.6 : 1) * m.shaderScale
+  // the scale is the pill's; a circle keeps its own proportion to it
+  const scale = (variant === 'circle' ? 1.3 / 1.6 : 1) * SCALE
   return (
     <MetalFx
       ref={ref}
       variant={variant}
-      preset={m.preset}
+      preset="chromatic"
       theme="dark"
-      strength={m.strength}
+      strength={STRENGTH}
       shaderScale={scale}
-      disableGlow={!m.glow}
       paused={still}
       innerShadow
       normalizeHostStyles={false}
-      reflectionTargets={m.reflection ? reflect : undefined}
+      reflectionTargets={reflect}
       className={className}
       style={bezel ? { margin: -bezel } : undefined}
     >
@@ -75,7 +70,7 @@ export function MetalRing({
 
 /**
  * "LIVE" on a pill of liquid metal: the library's MetalBadge, the "New" badge on libraries.dev/metal.
- * Its colour, glow and pause come from the shared settings (lib/metal.ts). The pill is for the eye;
+ * Its colour and pause come from the shared settings (lib/metal.ts). The pill is for the eye;
  * `label` says the same in words for screen readers (null where words already sit beside it).
  *
  * In development only, React's double-mount leaves metal that appears after other metal blank (the
@@ -93,12 +88,11 @@ export function LiveBadge({
   scale?: number
   className?: string
 }) {
-  const m = usePrefs().metal
   useMetalStill()
   return (
     <span className={`metal-badge inline-flex shrink-0 ${className}`}>
       <span aria-hidden className="inline-flex">
-        <MetalBadge theme="dark" scale={scale} strength={m.strength} shaderScale={m.shaderScale} reflectionTargets={m.reflection ? reflect : undefined}>
+        <MetalBadge theme="dark" scale={scale} strength={STRENGTH} shaderScale={SCALE} reflectionTargets={reflect}>
           LIVE
         </MetalBadge>
       </span>

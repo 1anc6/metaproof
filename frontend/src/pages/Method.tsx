@@ -1,5 +1,4 @@
 import { Copy, Droplets, Fingerprint, Layers, ShieldCheck, Sparkles } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
 import { ORB_GUIDE } from '../lib/orbs'
 import { ThinkingOrb } from '../components/ThinkingOrb'
@@ -143,14 +142,10 @@ function OrbGuide() {
         <a href="https://libraries.dev/orbs" target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
           Thinking Orbs by libraries.dev
         </a>{' '}
-        (MIT licence). Change their speed, colour and dots in{' '}
-        <Link to="/settings" className="font-medium text-accent hover:underline">
-          Settings
-        </Link>
-        .
+        (MIT licence).
       </p>
       <p className="mt-2 text-[13px] text-faint">
-        The chrome on the LIVE badge and round the ways to add a picture is{' '}
+        The chrome on the LIVE badge and round the phone's + is{' '}
         <a href="https://libraries.dev/metal" target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
           Liquid Metal by libraries.dev
         </a>{' '}

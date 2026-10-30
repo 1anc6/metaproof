@@ -6,9 +6,6 @@ import { formatWhen } from '../lib/format'
 import { useHistory, type HistoryEntry } from '../lib/history'
 import { clearWithUndo } from '../lib/undo'
 import { promptInstall, useInstallState } from '../lib/install'
-import { setMetalPrefs, setOrbPrefs } from '../lib/prefs'
-import { MetalPlayground } from '../components/MetalPlayground'
-import { OrbPlayground } from '../components/OrbPlayground'
 import { ServerBadge } from '../components/Shell'
 import { GithubMark, PageHeader, ThemeSwitch } from '../components/ui'
 
@@ -34,34 +31,6 @@ export function Settings() {
         <Card title="Appearance">
           <p className="text-[14.5px] text-muted">Light, dark, or follow this device's setting. Saved in this browser.</p>
           <ThemeSwitch labels className="mt-4" />
-        </Card>
-
-        <Card
-          title="Thinking orbs"
-          action={
-            <button type="button" onClick={() => setOrbPrefs(null)} aria-label="Reset the orbs" className="btn-ghost btn-sm">
-              Reset
-            </button>
-          }
-        >
-          <p className="mb-5 text-[14.5px] text-muted">
-            The dotted orbs that show what MetaProof is doing. Tune them here and every orb in the app follows.
-          </p>
-          <OrbPlayground />
-        </Card>
-
-        <Card
-          title="Liquid metal"
-          action={
-            <button type="button" onClick={() => setMetalPrefs(null)} aria-label="Reset the metal" className="btn-ghost btn-sm">
-              Reset
-            </button>
-          }
-        >
-          <p className="mb-5 text-[14.5px] text-muted">
-            The chrome on the LIVE badge and round the ways to add a picture. Tune it here and all of it follows.
-          </p>
-          <MetalPlayground />
         </Card>
 
         <Card title="This device">

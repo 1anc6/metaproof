@@ -1,56 +1,34 @@
 import type { ReactNode } from 'react'
-import { ThinkingOrb as Orb, type ModeFrame, type ModeOpts, type OrbSize, type OrbState } from 'thinking-orbs'
+import { ThinkingOrb as Orb, type ModeFrame, type OrbSize, type OrbState } from 'thinking-orbs'
 import { fingerprint } from '../lib/orbs'
-import { usePrefs } from '../lib/prefs'
 
 /**
  * A thinking orb from libraries.dev (the thinking-orbs library): a dotted sphere whose motion says
- * what MetaProof is doing. The speed, ink, dots, dot size, orbit paths, engine knobs and cursor
- * gravity chosen in Settings apply to every one. MetaProof's glass is dark in both themes, so the
- * ink is light unless the orb sits on a light face (`on="light"`). With `label` the orb is an image
- * of that name; without one it is decoration beside words that already say what is happening.
- * Reduced motion holds it on one frame; offscreen and in a hidden tab it stops drawing.
+ * what MetaProof is doing. MetaProof's glass is dark in both themes, so the ink is always light.
+ * With `label` the orb is an image of that name; without one it is decoration beside words that
+ * already say what is happening. Reduced motion holds it on one frame; offscreen and in a hidden
+ * tab it stops drawing.
  */
 export function ThinkingOrb({
   state,
   size = 32,
-  on = 'glass',
   label,
   frame,
-  speed = 1,
-  color,
-  opts,
   className,
 }: {
   state: OrbState
   size?: OrbSize
-  /** 'auto' takes the ink from the nearest data-theme="dark|light" above it (the playground's stage) */
-  on?: 'glass' | 'light' | 'auto'
   label?: string
   /** geometry of MetaProof's own in place of the state's, such as the fingerprint */
   frame?: ModeFrame
-  /** multiplies the speed chosen in Settings */
-  speed?: number
-  /** in place of the tint chosen in Settings; null for the library's monochrome */
-  color?: string | null
-  opts?: ModeOpts
   className?: string
 }) {
-  const o = usePrefs().orbs
-  const tint = color === undefined ? o.tint : color
   return (
     <Orb
       state={state}
       size={size}
-      theme={on === 'glass' ? 'dark' : on}
-      speed={o.speed * speed}
-      paused={!o.animate}
-      color={tint || undefined}
-      dots={o.dots}
-      dotSize={o.dotSize}
-      opts={{ ...(state === 'working' && { ghostA: o.orbitPaths }), ...o.opts[state], ...opts }}
+      theme="dark"
       frame={frame}
-      gravity={o.gravity}
       aria-label={label}
       {...(!label && { role: 'presentation', 'aria-hidden': true })}
       data-orb={frame === fingerprint ? 'fingerprint' : state}

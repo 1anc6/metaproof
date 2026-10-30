@@ -73,7 +73,7 @@ test('phones: no screen is wider than the phone, down to 320px', async ({ page }
     [`/report/${SHA}`, 'Key findings'],
     ['/history', 'holiday.jpg'],
     ['/method', 'What the orbs mean'],
-    ['/settings', 'Thinking orbs'],
+    ['/settings', 'Privacy and data'],
   ]
   for (const width of [320, 360, 390]) {
     await page.setViewportSize({ width, height: 800 })

@@ -6,8 +6,7 @@ responsive from
 phone to desktop.
 
 Whatever MetaProof is busy with shows as a [Thinking Orb](https://libraries.dev/orbs) (`thinking-orbs`, MIT):
-each analysis step has its own, hashing draws MetaProof's own fingerprint frame (`src/lib/orbs.ts`), and the
-playground in Settings tunes every orb at once (speed, colour, dots, engine knobs, cursor gravity).
+each analysis step has its own, and hashing draws MetaProof's own fingerprint frame (`src/lib/orbs.ts`).
 
 ```bash
 npm install
