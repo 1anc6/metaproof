@@ -15,9 +15,10 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://localhost/metaproof"
 
     max_upload_mb: int = 25
-    # Larger images are rejected. 30 MP keeps decoding inside the 512 MB Render free instance
-    # and still covers phone cameras; higher values also guard against decompression bombs.
-    max_image_pixels: int = 30_000_000
+    # Larger images are rejected. 24 MP still covers phone cameras' default photos and keeps the
+    # worst case (an RGBA PNG at the limit) about 70 MB under the 512 MB Render free instance;
+    # at 30 MP it peaked at 494 MB. It also guards against decompression bombs.
+    max_image_pixels: int = 24_000_000
     temp_dir: Path = Path(tempfile.gettempdir()) / "metaproof"
 
     # Comma-separated list of frontend origins allowed to call the API.
