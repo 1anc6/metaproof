@@ -77,7 +77,7 @@ def test_small_images_are_skipped(tmp_path):
 
 
 def test_decoding_in_strips_matches_one_pass(monkeypatch):
-    # Big photos are decoded 256 rows at a time to save memory; the bits must not change.
+    # Big photos are decoded 64 rows at a time to save memory; the bits must not change.
     from app.analyzers import watermark
 
     rgb = np.random.default_rng(7).integers(0, 256, (1000, 600, 3), dtype=np.uint8)

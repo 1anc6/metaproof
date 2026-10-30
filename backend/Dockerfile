@@ -28,8 +28,17 @@ COPY --chown=app alembic.ini ./
 COPY --chown=app migrations ./migrations
 
 USER app
+# By default glibc gives each thread that allocates its own memory pool and keeps what is freed
+# there, so uploads and the worker would hold several images' worth between them. Two pools
+# keep that in check. glibc also raises its mmap threshold to the size of each big block it
+# frees, so after the first upload Pillow's 16 MB image blocks come from the pools and stay
+# there (two 30 MP RGBA PNGs in a row peaked at 745 MB). A fixed 8 MB keeps image buffers on
+# mmap, returned to the OS as soon as they are freed, and numpy's smaller temporaries in the
+# pools, where reusing them is fast. app/memory.py hands back the rest after each analyzer.
 ENV PYTHONUNBUFFERED=1 \
-    TEMP_DIR=/tmp/metaproof
+    TEMP_DIR=/tmp/metaproof \
+    MALLOC_ARENA_MAX=2 \
+    MALLOC_MMAP_THRESHOLD_=8388608
 
 # Render passes the port in $PORT. Migrations run first so a deploy brings the schema up
 # to date; Alembic does nothing when there is nothing new. One uvicorn process keeps memory

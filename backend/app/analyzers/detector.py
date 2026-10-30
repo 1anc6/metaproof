@@ -86,6 +86,9 @@ class DetectorAnalyzer:
                 opts = ort.SessionOptions()
                 opts.intra_op_num_threads = 1
                 opts.inter_op_num_threads = 1
+                # Buffers are freed after each run instead of kept for the next. Outputs are
+                # bit-identical either way.
+                opts.enable_cpu_mem_arena = False
                 self._session = ort.InferenceSession(
                     str(self.model_path), opts, providers=["CPUExecutionProvider"]
                 )
@@ -96,6 +99,9 @@ class DetectorAnalyzer:
             return AnalyzerResult(raw={"available": False}, findings=[])
         with Image.open(media.path) as img:
             pixels, trimmed = prepare(img)
+            # Leaving `with` only closes the file; this frees the decoded photo (115 MB at
+            # 30 MP) before the model is loaded and run, instead of after.
+            img.close()
         p_ai, embedding = self._get_session().run(None, {"pixels": pixels})
         p_ai = float(p_ai[0])
         return AnalyzerResult(
@@ -151,7 +157,8 @@ def _border(a: np.ndarray) -> int:
 
 def trim_borders(img: Image.Image) -> tuple[Image.Image, dict[str, int]]:
     """Cut added bands (meme caption, app bars) off the edges. Deterministic."""
-    img = img.convert("RGB")
+    # convert() copies even an image that is RGB already: 115 MB more for a 30 MP photo.
+    img = img if img.mode == "RGB" else img.convert("RGB")
     w, h = img.size
     scale = min(1.0, TRIM_SCAN / max(w, h))
     if scale < 1:
@@ -179,7 +186,7 @@ def trim_borders(img: Image.Image) -> tuple[Image.Image, dict[str, int]]:
 
 
 def standardize(img: Image.Image) -> Image.Image:
-    img = img.convert("RGB")
+    img = img if img.mode == "RGB" else img.convert("RGB")
     w, h = img.size
     if min(w, h) > STANDARD_SHORT_SIDE:
         r = STANDARD_SHORT_SIDE / min(w, h)
