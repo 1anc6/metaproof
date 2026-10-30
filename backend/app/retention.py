@@ -23,6 +23,7 @@ log = logging.getLogger("metaproof.retention")
 PURGE_MEDIA_SQL = text("""
     DELETE FROM media_files m
      WHERE m.first_seen_at < :cutoff
+       AND m.sha256 <> :keep
        AND NOT EXISTS (
             SELECT 1 FROM analysis_jobs j
              WHERE j.media_id = m.id
@@ -57,8 +58,8 @@ def retention_cutoff(settings: Settings) -> datetime | None:
     return datetime.now(UTC) - timedelta(days=settings.retention_days)
 
 
-def purge_expired(session: Session, cutoff: datetime) -> PurgeResult:
-    media = session.execute(PURGE_MEDIA_SQL, {"cutoff": cutoff}).rowcount
+def purge_expired(session: Session, cutoff: datetime, keep_sha256: str = "") -> PurgeResult:
+    media = session.execute(PURGE_MEDIA_SQL, {"cutoff": cutoff, "keep": keep_sha256.lower()}).rowcount
     jobs = session.execute(PURGE_SUPERSEDED_JOBS_SQL, {"cutoff": cutoff}).rowcount
     return PurgeResult(media_deleted=media, jobs_deleted=jobs)
 
@@ -69,7 +70,7 @@ def run_maintenance() -> None:
     with SessionLocal() as session:
         cutoff = retention_cutoff(settings)
         if cutoff is not None:
-            result = purge_expired(session, cutoff)
+            result = purge_expired(session, cutoff, settings.example_sha256)
             session.commit()
             if result.media_deleted or result.jobs_deleted:
                 log.info("retention: deleted %d images and %d older analyses",

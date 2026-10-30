@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Images not analyzed for this many days are deleted, report included; 0 keeps everything.
     # One day: reports can still be shared for a while, but nothing is kept long term.
     retention_days: int = 1
+    # The example report shown on the home screen (frontend/src/lib/demo.ts). It is exempt from
+    # retention, so "See an example" keeps working; an empty value exempts nothing.
+    example_sha256: str = "05a151481e617bad7e57abbef392c299a11d473a0f3323c5ef32f77fe1b3fd8d"
     # Log a warning once the database passes this size (Neon's free tier stops at 512 MB).
     storage_warn_mb: int = 400
     # The database plan's storage limit, shown on the status page (Neon free tier: 0.5 GB).
