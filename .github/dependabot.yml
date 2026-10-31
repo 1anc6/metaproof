@@ -24,6 +24,13 @@ updates:
     directory: /frontend
     schedule:
       interval: weekly
+    # Deliberate upgrades, not weekly bumps: Node's types follow the Node that CI runs (22), and
+    # a new TypeScript major can change what type-checks.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
     groups:
       frontend:
         update-types: [minor, patch]
