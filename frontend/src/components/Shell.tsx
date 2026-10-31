@@ -95,17 +95,17 @@ export function Shell() {
   return (
     <SummariesProvider>
       <div className="min-h-dvh lg:p-4 print:p-0">
-        <div className="backdrop" aria-hidden>
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
+        <Room className="backdrop" />
         <a href="#main" className="btn-primary no-print fixed top-3 left-3 z-[60] -translate-y-20 focus-visible:translate-y-0">
           Skip to content
         </a>
         <div className="relative lg:grid lg:min-h-[calc(100dvh-32px)] lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5 lg:rounded-[40px] lg:p-4 print:block print:p-0">
-          <div className="frame-glass" aria-hidden />
+          <div className="frame-glass" aria-hidden>
+            <div className="frame-clip">
+              <Room className="backdrop frame-room" />
+              <Room className="backdrop frame-room frame-room-frost" />
+            </div>
+          </div>
           {/* One navigation at a time, so its server check and its links exist once. */}
           {isDesktop && <Rail theme={theme} open={railOpen} />}
           <div className="min-w-0">
@@ -127,6 +127,18 @@ export function Shell() {
         <Toaster theme="dark" position="bottom-center" offset={{ bottom: isDesktop ? 32 : 100 }} mobileOffset={{ bottom: 100 }} />
       </div>
     </SummariesProvider>
+  )
+}
+
+/** The room's light: four soft spans over its gradient (`.backdrop` in index.css). */
+function Room({ className }: { className: string }) {
+  return (
+    <div className={className} aria-hidden>
+      <span />
+      <span />
+      <span />
+      <span />
+    </div>
   )
 }
 

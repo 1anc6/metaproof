@@ -869,7 +869,7 @@ function SeenBefore({ sha }: { sha: string }) {
       <ul className="mt-3 grid gap-1 sm:grid-cols-2">
         {items.map((m) => (
           <li key={m.sha256}>
-            <Link to={`/report/${m.sha256}`} className="flex items-center gap-3 rounded-[16px] p-2 transition hover:bg-[var(--raise-bg)] hover:shadow-[var(--raise-shadow)]">
+            <Link to={`/report/${m.sha256}`} className="row-raise flex items-center gap-3 rounded-[16px] p-2">
               <Thumb sha={m.sha256} className="size-12 shrink-0 rounded-[12px]" />
               <div className="min-w-0 flex-1">
                 <p className="text-[14px] font-medium tabular-nums">{Math.round(m.similarity * 100)}% similar</p>

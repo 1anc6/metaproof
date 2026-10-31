@@ -146,7 +146,7 @@ export function History() {
                 <li key={entry.jobId} className="group relative">
                   <Link
                     to={`/analysis/${entry.jobId}`}
-                    className={`grid grid-cols-[minmax(0,1fr)_36px] items-center gap-4 rounded-[18px] px-3 py-2.5 transition hover:bg-[var(--raise-bg)] hover:shadow-[var(--raise-shadow)] ${COLUMNS}`}
+                    className={`grid grid-cols-[minmax(0,1fr)_36px] items-center gap-4 rounded-[18px] px-3 py-2.5 row-raise ${COLUMNS}`}
                   >
                     <span className="flex min-w-0 items-center gap-3">
                       <Thumb sha={entry.sha256} blur={prefs.blurPreviews} className="size-11 shrink-0 rounded-[13px]" />

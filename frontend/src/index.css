@@ -93,6 +93,17 @@
   }
 }
 
+/* Where the pointer lights a glass card (Shell's useSheen). Not inherited, so moving the light
+   restyles the card alone, not every row inside it. */
+@property --mx {
+  syntax: '*';
+  inherits: false;
+}
+@property --my {
+  syntax: '*';
+  inherits: false;
+}
+
 /* Used from component CSS below, so declared outside the theme where they are always emitted. */
 /* the orb's glow swells while a file is held over the drop zone, and while it uploads */
 @keyframes breathe {
@@ -126,7 +137,7 @@
   --grain: 0.16;
   /* the window: one large pane of frosted glass that holds the rail and the page */
   --frame-bg: linear-gradient(170deg, rgb(255 255 255 / 0.26), rgb(255 248 246 / 0.2));
-  --frame-blur: blur(44px) saturate(1.2);
+  --frame-saturate: 1.2;
   --frame-solid: #f8e9e5;
   --frame-rim: inset 0 1px 0 rgb(255 255 255 / 0.85), inset 0 0 0 1px rgb(255 255 255 / 0.45);
   --frame-shadow: 0 2px 6px rgb(120 40 55 / 0.08), 0 40px 90px -36px rgb(120 40 55 / 0.45);
@@ -210,7 +221,7 @@
   --bd-pool: rgb(255 255 255 / 0.05);
   --grain: 0.3;
   --frame-bg: linear-gradient(170deg, rgb(20 20 22 / 0.58), rgb(10 10 12 / 0.64));
-  --frame-blur: blur(44px) saturate(1.15);
+  --frame-saturate: 1.15;
   --frame-solid: #121214;
   --frame-rim: inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.05);
   --frame-shadow: 0 2px 6px rgb(0 0 0 / 0.3), 0 40px 90px -36px rgb(0 0 0 / 0.9);
@@ -319,21 +330,55 @@
 
 /* The window's glass. Its own layer behind the content, so the window itself creates no containing
    block for fixed descendants. On phones it is the whole screen; on a desktop a rounded pane with
-   the room showing round its edge. */
+   the room showing round its edge.
+   Only the still room lies behind the pane, so the pane frosts its own copy of the room, without the
+   grain: a blur of something that never changes is drawn once and kept. A backdrop-filter instead
+   blurred the whole screen again on every frame that anything moved or scrolled, which held
+   laptops' integrated graphics near 30fps. */
 .frame-glass {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+}
+/* the copy is fixed to the screen like the room, so it holds still while the page scrolls; a
+   clip-path, unlike overflow, also clips fixed descendants to the pane */
+.frame-clip {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0);
+}
+.frame-room {
+  z-index: auto;
+  filter: saturate(var(--frame-saturate));
+}
+.frame-room::after {
+  display: none;
+}
+/* the frosted copy, over a clear one: a filter's blur thins out at the copy's edges, where the clear
+   copy shows instead of the grainy room. No will-change here, which would redo the blur every frame. */
+.frame-room-frost {
+  filter: blur(44px) saturate(var(--frame-saturate));
+}
+/* the white wash and the rim, over the copy */
+.frame-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--frame-bg);
-  -webkit-backdrop-filter: var(--frame-blur);
-  backdrop-filter: var(--frame-blur);
 }
 @media (min-width: 1024px) {
   .frame-glass {
     position: absolute;
     border-radius: inherit;
-    box-shadow: var(--frame-rim), var(--frame-shadow);
+    box-shadow: var(--frame-shadow);
+  }
+  .frame-glass::after {
+    box-shadow: var(--frame-rim);
+  }
+  .frame-clip {
+    clip-path: inset(0 round 40px);
   }
 }
 
@@ -381,10 +426,23 @@
      over it, with a light that follows the pointer. */
   .panel {
     position: relative;
-    background:
-      radial-gradient(260px circle at var(--mx, -400px) var(--my, -400px), var(--sheen), transparent 70%),
-      var(--panel-bg);
+    isolation: isolate;
+    background: var(--panel-bg);
     box-shadow: var(--panel-rim), var(--panel-shadow);
+  }
+  /* The light, under the card's content. On a layer of its own, so moving it redraws the light
+     alone, not the card and everything in it. */
+  @media (hover: hover) and (pointer: fine) {
+    .panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(260px circle at var(--mx, -400px) var(--my, -400px), var(--sheen), transparent 70%);
+      will-change: transform;
+    }
   }
   :is(a, button).panel {
     transition-property: box-shadow, transform, background-color;
@@ -573,6 +631,30 @@
   .raise {
     background: var(--raise-bg);
     box-shadow: var(--raise-shadow);
+  }
+
+  /* A row that lifts into brighter glass under the pointer. The lift is a layer that fades in, so
+     running the pointer down a long list doesn't repaint the list on every frame of the fade. */
+  .row-raise {
+    position: relative;
+    isolation: isolate;
+  }
+  .row-raise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: var(--raise-bg);
+    box-shadow: var(--raise-shadow);
+    opacity: 0;
+    transition: opacity 200ms var(--ease-out);
+  }
+  @media (hover: hover) {
+    .row-raise:hover::before {
+      opacity: 1;
+    }
   }
 
   /* A row inside a glass card, a step brighter than the card. */
@@ -979,13 +1061,14 @@
 
 /* Asked for less transparency: the glass turns to solid colour and the room goes plain. */
 @media (prefers-reduced-transparency: reduce) {
-  .frame-glass {
+  .frame-glass::after {
     background: var(--frame-solid);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
   .panel {
     background: var(--panel-solid);
+  }
+  .panel::after {
+    display: none;
   }
   .glass {
     background: var(--glass-solid);
@@ -1053,6 +1136,7 @@
      ::before laid over the whole card, so it printed as a white sheet over the card's words, and
      "Save as PDF" came out as empty boxes. On paper the cards' border does the rim's job. */
   .panel::before,
+  .panel::after,
   .glass::before,
   .rail::before,
   .lens {
