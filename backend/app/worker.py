@@ -24,6 +24,9 @@ from app.db import SessionLocal
 log = logging.getLogger("metaproof.worker")
 
 MAINTENANCE_INTERVAL_S = 3600  # hourly, so 1-day retention deletes data within ~25 hours
+# A job that was running when the process died is retried, but not forever: an image that
+# crashes the process (say, by running it out of memory) would otherwise crash every restart.
+MAX_ATTEMPTS = 3
 
 CLAIM_SQL = text("""
     UPDATE analysis_jobs
@@ -89,7 +92,8 @@ class Worker:
 
 
 def recover_interrupted_jobs() -> None:
-    """After a restart, requeue jobs whose temp file survived and fail the rest."""
+    """After a restart, requeue jobs whose temp file survived and fail the rest, including
+    jobs that have already been tried MAX_ATTEMPTS times."""
     with SessionLocal() as session:
         stuck = session.scalars(
             select(models.AnalysisJob).where(
@@ -97,7 +101,11 @@ def recover_interrupted_jobs() -> None:
             )
         ).all()
         for job in stuck:
-            if job.temp_path and Path(job.temp_path).exists():
+            if job.attempts >= MAX_ATTEMPTS:
+                log.warning("job %s interrupted %d times; giving up", job.id, job.attempts)
+                _fail(job, "This image could not be analyzed.")
+                _delete_upload(job)
+            elif job.temp_path and Path(job.temp_path).exists():
                 job.status = models.JobStatus.queued
             else:
                 _fail(job, "The upload expired before analysis finished. Please upload again.")

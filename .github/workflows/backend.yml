@@ -1,7 +1,7 @@
 name: Backend
 
-# Render deploys main by itself whenever files under backend/ change (Auto-Deploy: On Commit,
-# Root Directory: backend), alongside these checks.
+# Render deploys main by itself whenever files under backend/ change (Root Directory: backend).
+# Set its Auto-Deploy to "After CI Checks Pass" so a red run here never reaches production.
 
 on:
   push:
@@ -14,6 +14,9 @@ on:
 defaults:
   run:
     working-directory: backend
+
+env:
+  UV_VERSION: "0.13.6"
 
 jobs:
   test:
@@ -37,9 +40,21 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: backend/pyproject.toml
-      - run: pip install -e ".[dev]"
-      - run: ruff check .
-      - run: pytest -q -rs
+      - run: pip install "uv==$UV_VERSION"
+      # --locked fails if uv.lock no longer matches pyproject.toml: run `uv lock` and commit it.
+      - run: uv sync --locked --extra dev --python 3.12
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync pytest -q -rs
+      # The exact versions the Docker image installs, checked against known vulnerabilities.
+      - run: |
+          uv export --frozen --no-dev --no-emit-project --no-header -o "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit==2.10.1 --strict --disable-pip --require-hashes -r "$RUNNER_TEMP/requirements.txt"
 
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # The image Render builds, without the 121 MB detector model (the build skips it).
+      - run: docker build --build-arg DETECTOR_URL=skip -t metaproof-api .
+      # Every dependency installs and imports on Linux, as the deployed API will.
+      - run: docker run --rm metaproof-api python -c "import app.main"

@@ -23,6 +23,15 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6"]
 
+[tool.uv]
+# uv.lock pins every dependency (Docker and CI install from it; Dependabot updates it). Some
+# releases ship wheels for only a few platforms (c2pa-python 0.38.2: macOS only), so the lock
+# must pick versions that install on Linux (Docker, CI) and Windows.
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

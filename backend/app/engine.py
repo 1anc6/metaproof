@@ -1,7 +1,9 @@
 """Evidence engine: turns findings from all analyzers into one explainable verdict.
 
-v0.1 is rule-based. When the AI detector lands, its calibrated probability enters as one
-more weighted score, and the thresholds below are fitted on a validation set.
+Rule-based: each finding adds its strength's weight to the outcome it points to, and the AI
+detector takes part the same way, through the findings its score thresholds produce
+(app/analyzers/detector.py). Confidence stays empty unless the evidence is conclusive, because
+these summed weights are not calibrated probabilities.
 """
 
 from dataclasses import dataclass

@@ -1,0 +1,29 @@
+# Weekly dependency updates as pull requests, which CI checks before anything is merged.
+# Minor and patch updates are grouped into one PR per ecosystem to keep the noise down.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /backend
+    schedule:
+      interval: weekly
+    groups:
+      backend:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      frontend:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

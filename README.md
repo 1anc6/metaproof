@@ -125,10 +125,14 @@ over int8, are in [`ml/README.md`](ml/README.md).
 Requirements: Python 3.11+, Node 20+, a Postgres database ([Neon](https://neon.tech) free tier
 works). Optional: [ExifTool](https://exiftool.org).
 
+Backend dependencies are pinned in `backend/uv.lock`; CI and the Docker image install exactly
+those versions, and Dependabot proposes updates weekly. After editing `pyproject.toml`'s
+dependencies, run `uv lock` and commit the lockfile (CI fails if it is out of date).
+
 ```bash
 cd backend
 python -m venv .venv && .venv/Scripts/activate      # macOS/Linux: source .venv/bin/activate
-pip install -e ".[dev]"
+pip install uv && uv sync --extra dev --inexact     # the locked versions
 cp .env.example .env                                # paste your database URL
 alembic upgrade head
 # optional: the detector model (121 MB)

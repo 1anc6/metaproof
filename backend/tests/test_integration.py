@@ -219,6 +219,28 @@ def test_restart_recovery_requeues_or_fails_interrupted_jobs(client):
         assert s.get(models.AnalysisJob, lost).status == models.JobStatus.failed
 
 
+def test_restart_recovery_gives_up_on_a_job_that_keeps_crashing(client):
+    body = upload(client, unique_jpeg(8)).json()
+    with SessionLocal() as s:
+        job = s.get(models.AnalysisJob, body["job_id"])
+        job.status, job.attempts = models.JobStatus.running, worker.MAX_ATTEMPTS
+        temp_path = Path(job.temp_path)
+        s.commit()
+
+    worker.recover_interrupted_jobs()
+
+    with SessionLocal() as s:
+        job = s.get(models.AnalysisJob, body["job_id"])
+        assert job.status == models.JobStatus.failed and job.temp_path is None
+    assert not temp_path.exists()
+
+
+def test_malformed_hashes_are_not_found(client):
+    for path in ("report", "thumbnail"):
+        assert client.get(f"/api/media/not-a-hash/{path}").status_code == 404
+    assert client.get("/api/media/not-a-hash/similar").json() == []
+
+
 # --- limits -----------------------------------------------------------------------------------
 
 def test_per_ip_limit_returns_429(client, monkeypatch):

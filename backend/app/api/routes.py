@@ -1,3 +1,4 @@
+import re
 import threading
 import time
 import uuid
@@ -23,6 +24,7 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 upload_limiter = SlidingWindowLimiter(get_settings().uploads_per_ip_per_hour)
 DETECTOR = next(a for a in ANALYZERS if a.name == "detector")
+SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
 # HEAD too: uptime monitors (UptimeRobot) check with HEAD, and a 405 reads as an outage.
@@ -184,10 +186,11 @@ def get_analysis(job_id: uuid.UUID, session: SessionDep):
             summary="Shareable report for a file")
 def get_report(sha256: str, session: SessionDep):
     """Shareable link: the latest finished analysis of a file, addressed by its hash."""
+    sha256 = _file_hash(sha256, "No finished report for this file.")
     job = session.scalars(
         _job_query()
         .join(models.AnalysisJob.media)
-        .where(models.MediaFile.sha256 == sha256.lower(),
+        .where(models.MediaFile.sha256 == sha256,
                models.AnalysisJob.status == models.JobStatus.done)
         .order_by(models.AnalysisJob.finished_at.desc())
         .limit(1)
@@ -220,6 +223,8 @@ def get_similar(sha256: str, session: SessionDep, settings: SettingsDep,
                 limit: Annotated[int, Query(ge=1, le=10)] = 5):
     """Other files that look like the same picture (resized, cropped or recompressed copies),
     found by CLIP embedding similarity with a pgvector HNSW index."""
+    if not SHA256_RE.fullmatch(sha256.lower()):
+        return []
     rows = session.execute(SIMILAR_SQL, {"sha": sha256.lower(), "limit": limit}).all()
     return [
         schemas.SimilarMedia(sha256=r.sha256, similarity=round(float(r.similarity), 4),
@@ -231,13 +236,23 @@ def get_similar(sha256: str, session: SessionDep, settings: SettingsDep,
 @router.get("/media/{sha256}/thumbnail", tags=["Reports"], summary="Thumbnail (WebP)",
             response_class=Response)
 def get_thumbnail(sha256: str, session: SessionDep):
+    sha256 = _file_hash(sha256, "Unknown file.")
     thumb = session.scalar(
-        select(models.MediaFile.thumbnail).where(models.MediaFile.sha256 == sha256.lower())
+        select(models.MediaFile.thumbnail).where(models.MediaFile.sha256 == sha256)
     )
     if thumb is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown file.")
     return Response(thumb, media_type="image/webp",
                     headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
+def _file_hash(value: str, not_found: str) -> str:
+    """The lowercase SHA-256 in a URL. Anything else can't name a file, so it is a 404 at once,
+    without a database query; the client already handles 404."""
+    sha256 = value.lower()
+    if not SHA256_RE.fullmatch(sha256):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, not_found)
+    return sha256
 
 
 def _latest_job(session: Session, media_id: uuid.UUID, settings: Settings):

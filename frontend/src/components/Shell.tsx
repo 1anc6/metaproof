@@ -10,6 +10,7 @@ import { setPref, usePrefs } from '../lib/prefs'
 import { useThemeSync } from '../lib/theme'
 import { AddMenu } from './AddMenu'
 import { LiveBadge } from './Metal'
+import { RouteBoundary } from './RouteBoundary'
 import { SummariesProvider } from './SummariesProvider'
 import { ThinkingOrb } from './ThinkingOrb'
 import { Logo, Mark, ThemeToggle } from './ui'
@@ -114,7 +115,9 @@ export function Shell() {
               tabIndex={-1}
               className="@container mx-auto w-full max-w-[1320px] px-4 pt-2 pb-[calc(112px+env(safe-area-inset-bottom))] outline-none sm:px-6 lg:px-2 lg:pt-3 lg:pb-3"
             >
-              <Outlet />
+              <RouteBoundary pathname={pathname}>
+                <Outlet />
+              </RouteBoundary>
             </main>
           </div>
         </div>
