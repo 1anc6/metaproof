@@ -1,5 +1,6 @@
 import { Component, Suspense, type ErrorInfo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { reportError } from '../lib/errors'
 import { ThinkingOrb } from './ThinkingOrb'
 import { ErrorPanel } from './ui'
 
@@ -37,7 +38,7 @@ class PageErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Page crashed', error, info.componentStack)
+    reportError(error, { componentStack: info.componentStack })
   }
 
   render() {

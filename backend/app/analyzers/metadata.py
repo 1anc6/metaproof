@@ -117,7 +117,7 @@ def _thumbnail_similarity(img: Image.Image, exif) -> float | None:
         return None
     t = t[rows[0]: rows[-1] + 1, cols[0]: cols[-1] + 1]
     img.draft("L", (t.shape[1] * 2, t.shape[0] * 2))  # JPEG: decode at reduced size, cheaply
-    m = np.asarray(img.convert("L").resize((t.shape[1], t.shape[0]), Image.BILINEAR),
+    m = np.asarray(img.convert("L").resize((t.shape[1], t.shape[0]), Image.Resampling.BILINEAR),
                    dtype=np.float64)
     a, b = t - t.mean(), m - m.mean()
     denom = np.sqrt((a * a).sum() * (b * b).sum())

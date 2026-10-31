@@ -167,7 +167,7 @@ def trim_borders(img: Image.Image) -> tuple[Image.Image, dict[str, int]]:
     w, h = img.size
     scale = min(1.0, TRIM_SCAN / max(w, h))
     if scale < 1:
-        small = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BOX)
+        small = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.Resampling.BOX)
     else:
         small = img
     a = np.asarray(small, dtype=np.float32)
@@ -195,7 +195,7 @@ def standardize(img: Image.Image) -> Image.Image:
     w, h = img.size
     if min(w, h) > STANDARD_SHORT_SIDE:
         r = STANDARD_SHORT_SIDE / min(w, h)
-        img = img.resize((max(1, round(w * r)), max(1, round(h * r))), Image.BICUBIC)
+        img = img.resize((max(1, round(w * r)), max(1, round(h * r))), Image.Resampling.BICUBIC)
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=STANDARD_JPEG_QUALITY)
     buf.seek(0)
@@ -216,7 +216,7 @@ def prepare(img: Image.Image) -> tuple[np.ndarray, dict[str, int]]:
         size = (CLIP_SIZE, int(CLIP_SIZE * h / w))
     else:
         size = (int(CLIP_SIZE * w / h), CLIP_SIZE)
-    img = img.resize(size, Image.BICUBIC)
+    img = img.resize(size, Image.Resampling.BICUBIC)
     w, h = img.size
     left = round((w - CLIP_SIZE) / 2.0)
     top = round((h - CLIP_SIZE) / 2.0)

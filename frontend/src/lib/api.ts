@@ -1,109 +1,30 @@
 // Typed client for the MetaProof API. In development Vite proxies /api; in production
 // VITE_API_URL points at the Render service.
+import type { components } from './api-schema'
+
 const BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 
-export type Signal = 'authentic' | 'edited' | 'ai' | 'neutral'
-export type Strength = 'weak' | 'moderate' | 'strong' | 'conclusive'
-export type JobStatus = 'queued' | 'running' | 'done' | 'failed'
-export type VerdictLabel = 'likely_authentic' | 'edited' | 'likely_ai_generated' | 'inconclusive'
+// The types come from the API's own schema (backend/openapi.json, generated into api-schema.ts
+// by `npm run gen:api`), so they cannot drift from what the server sends. CI checks both files
+// are up to date.
+type Schemas = components['schemas']
 
-export interface Finding {
-  code: string
-  signal: Signal
-  strength: Strength
-  message: string
-}
-
-export interface AnalyzerResult {
-  analyzer: string
-  version: string
-  ok: boolean
-  duration_ms: number
-  error: string | null
-  findings: Finding[]
-  raw: Record<string, unknown>
-}
-
-export interface Verdict {
-  label: VerdictLabel
-  confidence: number | null
-  engine_version: string
-  scores: Record<'authentic' | 'edited' | 'ai', number>
-  top_reasons: Finding[]
-}
-
-export interface Media {
-  sha256: string
-  mime_type: string
-  size_bytes: number
-  width: number
-  height: number
-  first_seen_at: string
-}
-
+export type Signal = Schemas['Signal']
+export type Strength = Schemas['Strength']
+export type JobStatus = Schemas['JobStatus']
+export type VerdictLabel = Schemas['VerdictLabel']
 /** What a running job is doing: an analyzer, then weighing the evidence. */
-export type AnalysisStep = 'metadata' | 'c2pa' | 'watermark' | 'detector' | 'verdict'
+export type AnalysisStep = Schemas['AnalysisStep']
 
-export interface Job {
-  job_id: string
-  status: JobStatus
-  /** Set only while running. Missing from servers older than this field. */
-  current_step?: AnalysisStep | null
-  error: string | null
-  pipeline_version: string
-  created_at: string
-  finished_at: string | null
-  media: Media
-  verdict: Verdict | null
-  analyzers: AnalyzerResult[]
-}
-
-export interface JobSummary {
-  job_id: string
-  status: JobStatus
-  sha256: string
-  mime_type: string
-  size_bytes: number
-  width: number
-  height: number
-  label: VerdictLabel | null
-  confidence: number | null
-  created_at: string
-  finished_at: string | null
-}
-
-export interface SimilarMedia {
-  sha256: string
-  similarity: number
-  label: VerdictLabel | null
-  first_seen_at: string
-}
-
-export interface ServiceStatus {
-  database_mb: number
-  storage_warn_mb: number
-  storage_limit_mb: number
-  retention_days: number
-  analyses_24h: number
-  failed_24h: number
-  daily_cap: number
-  last_analysis_at: string | null
-  pipeline_version: string
-  /** The API process's memory now and at its peak since the last start; null off Linux. These and
-   *  `detector` are missing from servers older than these fields. */
-  memory_mb?: number | null
-  memory_peak_mb?: number | null
-  memory_limit_mb?: number
-  /** The AI detector's model: in memory, loaded by the next analysis, or not in the server image. */
-  detector?: 'loaded' | 'available' | 'missing'
-}
-
-export interface JobCreated {
-  job_id: string
-  sha256: string
-  status: JobStatus
-  duplicate: boolean
-}
+export type Finding = Schemas['FindingOut']
+export type AnalyzerResult = Schemas['AnalyzerOut']
+export type Verdict = Schemas['VerdictOut']
+export type Media = Schemas['MediaOut']
+export type Job = Schemas['JobOut']
+export type JobSummary = Schemas['JobSummary']
+export type SimilarMedia = Schemas['SimilarMedia']
+export type ServiceStatus = Schemas['ServiceStatus']
+export type JobCreated = Schemas['JobCreated']
 
 export class ApiError extends Error {
   readonly status: number

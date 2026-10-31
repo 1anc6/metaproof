@@ -44,7 +44,11 @@ jobs:
       # --locked fails if uv.lock no longer matches pyproject.toml: run `uv lock` and commit it.
       - run: uv sync --locked --extra dev --python 3.12
       - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync mypy
       - run: uv run --no-sync pytest -q -rs
+      # openapi.json is the contract the frontend's types come from: regenerate it after changing
+      # a response model (python scripts/export_openapi.py), then run `npm run gen:api`.
+      - run: uv run --no-sync python scripts/export_openapi.py && git diff --exit-code openapi.json
       # The exact versions the Docker image installs, checked against known vulnerabilities.
       - run: |
           uv export --frozen --no-dev --no-emit-project --no-header -o "$RUNNER_TEMP/requirements.txt"

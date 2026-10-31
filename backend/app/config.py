@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     # Cosine similarity at or above which two images count as near-duplicates.
     similar_min_similarity: float = 0.92
 
+    # Sentry project DSN for error reports; empty turns error tracking off (app/monitoring.py).
+    sentry_dsn: str = ""
+    sentry_environment: str = "production"
+
     # Run the analysis worker inside the API process (a single container on Render).
     run_worker: bool = True
 

@@ -119,13 +119,13 @@ def process_next_job() -> bool:
         session.commit()
         if job_id is None:
             return False
-        job = session.get(models.AnalysisJob, job_id)
+        job = session.get_one(models.AnalysisJob, job_id)
         try:
             run_job(session, job)
         except Exception as exc:
             session.rollback()
             log.exception("job %s failed", job_id)
-            job = session.get(models.AnalysisJob, job_id)
+            job = session.get_one(models.AnalysisJob, job_id)
             _fail(job, f"Analysis failed: {type(exc).__name__}")
         finally:
             _delete_upload(job)

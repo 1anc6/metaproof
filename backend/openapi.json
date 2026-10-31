@@ -1,0 +1,985 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MetaProof API",
+    "description": "Evidence-based authenticity analysis for images. Each upload is checked for metadata traces, C2PA Content Credentials, invisible generator watermarks and AI-generation artifacts, then given one explainable verdict: likely authentic, edited, likely AI-generated or inconclusive.\n\n**Typical flow:** `POST /api/analyses` → poll `GET /api/analyses/{job_id}` → share `/api/media/{sha256}/report`.\n\nSource: [github.com/1anc6/metaproof](https://github.com/1anc6/metaproof)",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health check",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Api Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Storage and analysis figures",
+        "description": "Database size against the plan's limit, the last day's analyses and failures, and the\nAPI's memory and detector model. Unlike /health this reads the database, so the database\nfigures are cached for STATUS_TTL_S seconds: the Settings page polls it, and however many tabs\nare open the database answers it at most once per window. Memory and the model cost nothing\nto read and change from one analysis to the next, so they are read every time.",
+        "operationId": "service_status_api_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analyses": {
+      "post": {
+        "tags": [
+          "Analyses"
+        ],
+        "summary": "Upload an image for analysis",
+        "description": "Accepts JPEG, PNG, WebP, TIFF or HEIC. Returns a job id to poll; the file itself is deleted\nafter analysis. Uploading a file that was already analyzed returns the existing job.",
+        "operationId": "create_analysis_api_analyses_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_analysis_api_analyses_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCreated"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Already analyzed: returns the existing job"
+          },
+          "422": {
+            "description": "Not a supported image, too large, or corrupt"
+          },
+          "429": {
+            "description": "Upload limit reached"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Analyses"
+        ],
+        "summary": "Summaries for a list of jobs",
+        "description": "There are no accounts, so each browser keeps its own job ids and asks for them here.\nUnknown ids are skipped. Results are newest first.",
+        "operationId": "list_analyses_api_analyses_get",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "maxItems": 100,
+              "title": "Ids"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobSummary"
+                  },
+                  "title": "Response List Analyses Api Analyses Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analyses/{job_id}": {
+      "get": {
+        "tags": [
+          "Analyses"
+        ],
+        "summary": "Get job status, verdict and findings",
+        "description": "Poll until `status` is `done` or `failed`.",
+        "operationId": "get_analysis_api_analyses__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/{sha256}/report": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Shareable report for a file",
+        "description": "Shareable link: the latest finished analysis of a file, addressed by its hash.",
+        "operationId": "get_report_api_media__sha256__report_get",
+        "parameters": [
+          {
+            "name": "sha256",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sha256"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/{sha256}/similar": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Near-duplicates analyzed before",
+        "description": "Other files that look like the same picture (resized, cropped or recompressed copies),\nfound by CLIP embedding similarity with a pgvector HNSW index.",
+        "operationId": "get_similar_api_media__sha256__similar_get",
+        "parameters": [
+          {
+            "name": "sha256",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sha256"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10,
+              "minimum": 1,
+              "default": 5,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SimilarMedia"
+                  },
+                  "title": "Response Get Similar Api Media  Sha256  Similar Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/{sha256}/thumbnail": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Thumbnail (WebP)",
+        "operationId": "get_thumbnail_api_media__sha256__thumbnail_get",
+        "parameters": [
+          {
+            "name": "sha256",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sha256"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisStep": {
+        "type": "string",
+        "enum": [
+          "metadata",
+          "structure",
+          "c2pa",
+          "watermark",
+          "detector",
+          "verdict"
+        ],
+        "title": "AnalysisStep",
+        "description": "What a running job is doing: one analyzer after another (app.analyzers.ANALYZERS, whose\nnames these must match), then weighing the evidence."
+      },
+      "AnalyzerOut": {
+        "properties": {
+          "analyzer": {
+            "type": "string",
+            "title": "Analyzer"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingOut"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "raw": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Raw"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analyzer",
+          "version",
+          "ok",
+          "duration_ms",
+          "error",
+          "findings",
+          "raw"
+        ],
+        "title": "AnalyzerOut"
+      },
+      "Body_create_analysis_api_analyses_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_create_analysis_api_analyses_post"
+      },
+      "FindingOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "signal": {
+            "$ref": "#/components/schemas/Signal"
+          },
+          "strength": {
+            "$ref": "#/components/schemas/Strength"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "signal",
+          "strength",
+          "message"
+        ],
+        "title": "FindingOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobCreated": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "duplicate": {
+            "type": "boolean",
+            "title": "Duplicate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "sha256",
+          "status",
+          "duplicate"
+        ],
+        "title": "JobCreated"
+      },
+      "JobOut": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "current_step": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisStep"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "pipeline_version": {
+            "type": "string",
+            "title": "Pipeline Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "media": {
+            "$ref": "#/components/schemas/MediaOut"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "analyzers": {
+            "items": {
+              "$ref": "#/components/schemas/AnalyzerOut"
+            },
+            "type": "array",
+            "title": "Analyzers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "error",
+          "pipeline_version",
+          "created_at",
+          "finished_at",
+          "media",
+          "verdict",
+          "analyzers"
+        ],
+        "title": "JobOut"
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed"
+        ],
+        "title": "JobStatus"
+      },
+      "JobSummary": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "sha256",
+          "mime_type",
+          "size_bytes",
+          "width",
+          "height",
+          "label",
+          "confidence",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "JobSummary",
+        "description": "Light row for history lists: no findings or raw analyzer output."
+      },
+      "MediaOut": {
+        "properties": {
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sha256",
+          "mime_type",
+          "size_bytes",
+          "width",
+          "height",
+          "first_seen_at"
+        ],
+        "title": "MediaOut"
+      },
+      "ServiceStatus": {
+        "properties": {
+          "database_mb": {
+            "type": "number",
+            "title": "Database Mb"
+          },
+          "storage_warn_mb": {
+            "type": "integer",
+            "title": "Storage Warn Mb"
+          },
+          "storage_limit_mb": {
+            "type": "integer",
+            "title": "Storage Limit Mb"
+          },
+          "retention_days": {
+            "type": "integer",
+            "title": "Retention Days"
+          },
+          "analyses_24h": {
+            "type": "integer",
+            "title": "Analyses 24H"
+          },
+          "failed_24h": {
+            "type": "integer",
+            "title": "Failed 24H"
+          },
+          "daily_cap": {
+            "type": "integer",
+            "title": "Daily Cap"
+          },
+          "last_analysis_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Analysis At"
+          },
+          "pipeline_version": {
+            "type": "string",
+            "title": "Pipeline Version"
+          },
+          "memory_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Mb"
+          },
+          "memory_peak_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Peak Mb"
+          },
+          "memory_limit_mb": {
+            "type": "integer",
+            "title": "Memory Limit Mb"
+          },
+          "detector": {
+            "type": "string",
+            "enum": [
+              "loaded",
+              "available",
+              "missing"
+            ],
+            "title": "Detector"
+          }
+        },
+        "type": "object",
+        "required": [
+          "database_mb",
+          "storage_warn_mb",
+          "storage_limit_mb",
+          "retention_days",
+          "analyses_24h",
+          "failed_24h",
+          "daily_cap",
+          "last_analysis_at",
+          "pipeline_version",
+          "memory_limit_mb",
+          "detector"
+        ],
+        "title": "ServiceStatus",
+        "description": "Public health figures for the Settings page. No per-user or per-file data."
+      },
+      "Signal": {
+        "type": "string",
+        "enum": [
+          "authentic",
+          "edited",
+          "ai",
+          "neutral"
+        ],
+        "title": "Signal",
+        "description": "Which verdict a finding points towards."
+      },
+      "SimilarMedia": {
+        "properties": {
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "similarity": {
+            "type": "number",
+            "title": "Similarity"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sha256",
+          "similarity",
+          "label",
+          "first_seen_at"
+        ],
+        "title": "SimilarMedia"
+      },
+      "Strength": {
+        "type": "string",
+        "enum": [
+          "weak",
+          "moderate",
+          "strong",
+          "conclusive"
+        ],
+        "title": "Strength"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerdictLabel": {
+        "type": "string",
+        "enum": [
+          "likely_authentic",
+          "edited",
+          "likely_ai_generated",
+          "inconclusive"
+        ],
+        "title": "VerdictLabel"
+      },
+      "VerdictOut": {
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/VerdictLabel"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "engine_version": {
+            "type": "string",
+            "title": "Engine Version"
+          },
+          "scores": {
+            "$ref": "#/components/schemas/VerdictScores"
+          },
+          "top_reasons": {
+            "items": {
+              "$ref": "#/components/schemas/FindingOut"
+            },
+            "type": "array",
+            "title": "Top Reasons"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "confidence",
+          "engine_version",
+          "scores",
+          "top_reasons"
+        ],
+        "title": "VerdictOut"
+      },
+      "VerdictScores": {
+        "properties": {
+          "authentic": {
+            "type": "number",
+            "title": "Authentic"
+          },
+          "edited": {
+            "type": "number",
+            "title": "Edited"
+          },
+          "ai": {
+            "type": "number",
+            "title": "Ai"
+          }
+        },
+        "type": "object",
+        "required": [
+          "authentic",
+          "edited",
+          "ai"
+        ],
+        "title": "VerdictScores",
+        "description": "Summed evidence weight for each outcome (app/engine.py)."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Analyses",
+      "description": "Upload images and follow their analysis."
+    },
+    {
+      "name": "Reports",
+      "description": "Finished reports, addressed by file hash."
+    },
+    {
+      "name": "System",
+      "description": "Service status."
+    }
+  ]
+}

@@ -50,3 +50,12 @@ def test_clear_edit_evidence():
     d = decide([f(Signal.edited, Strength.moderate), f(Signal.edited, Strength.weak)])
     assert d.label == "edited"
     assert d.scores["edited"] == 1.5
+
+
+def test_every_analyzer_is_a_step_the_api_can_report():
+    # A running job's current_step is an analyzer's name; one the schema doesn't list would make
+    # polling that job fail with a 500 until it finished.
+    from app.analyzers import ANALYZERS
+    from app.schemas import AnalysisStep
+
+    assert {a.name for a in ANALYZERS} | {"verdict"} == {s.value for s in AnalysisStep}

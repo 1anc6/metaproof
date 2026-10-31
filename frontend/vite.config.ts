@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { readFileSync } from 'node:fs'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -25,5 +26,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     preview: { headers: productionHeaders() },
+    // Unit tests sit beside the code in src/; e2e/ holds Playwright's browser tests.
+    test: { include: ['src/**/*.test.ts'] },
   }
 })

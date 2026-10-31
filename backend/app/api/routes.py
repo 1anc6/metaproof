@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app import memory, models, schemas
 from app.analyzers import ANALYZERS
+from app.analyzers.detector import DetectorAnalyzer
 from app.config import Settings, get_settings
 from app.db import get_session
 from app.ingest import UploadRejected, ingest
@@ -23,14 +24,18 @@ SessionDep = Annotated[Session, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 upload_limiter = SlidingWindowLimiter(get_settings().uploads_per_ip_per_hour)
-DETECTOR = next(a for a in ANALYZERS if a.name == "detector")
+DETECTOR = next(a for a in ANALYZERS if isinstance(a, DetectorAnalyzer))
 SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
-# HEAD too: uptime monitors (UptimeRobot) check with HEAD, and a 405 reads as an outage.
-@router.api_route("/health", methods=["GET", "HEAD"], tags=["System"], summary="Health check")
+@router.get("/health", tags=["System"], summary="Health check")
 def health() -> dict:
     return {"status": "ok"}
+
+
+# HEAD too: uptime monitors (UptimeRobot) check with HEAD, and a 405 reads as an outage. Its own
+# route, left out of the schema, so the two don't share one OpenAPI operation id.
+router.add_api_route("/health", health, methods=["HEAD"], include_in_schema=False)
 
 
 STATUS_SQL = text("""

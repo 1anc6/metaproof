@@ -10,8 +10,9 @@ an upload, so it never wakes a suspended database on its own.
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
-from sqlalchemy import text
+from sqlalchemy import CursorResult, text
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
@@ -59,8 +60,10 @@ def retention_cutoff(settings: Settings) -> datetime | None:
 
 
 def purge_expired(session: Session, cutoff: datetime, keep_sha256: str = "") -> PurgeResult:
-    media = session.execute(PURGE_MEDIA_SQL, {"cutoff": cutoff, "keep": keep_sha256.lower()}).rowcount
-    jobs = session.execute(PURGE_SUPERSEDED_JOBS_SQL, {"cutoff": cutoff}).rowcount
+    # A DELETE's result is a CursorResult, which knows how many rows it removed.
+    media = cast(CursorResult, session.execute(
+        PURGE_MEDIA_SQL, {"cutoff": cutoff, "keep": keep_sha256.lower()})).rowcount
+    jobs = cast(CursorResult, session.execute(PURGE_SUPERSEDED_JOBS_SQL, {"cutoff": cutoff})).rowcount
     return PurgeResult(media_deleted=media, jobs_deleted=jobs)
 
 

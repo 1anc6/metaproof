@@ -6,9 +6,9 @@ name: Frontend
 on:
   push:
     branches: [main]
-    paths: ["frontend/**", ".github/workflows/frontend.yml"]
+    paths: ["frontend/**", "backend/openapi.json", ".github/workflows/frontend.yml"]
   pull_request:
-    paths: ["frontend/**", ".github/workflows/frontend.yml"]
+    paths: ["frontend/**", "backend/openapi.json", ".github/workflows/frontend.yml"]
   workflow_dispatch:
 
 defaults:
@@ -29,6 +29,9 @@ jobs:
       # Known vulnerabilities in what ships to the browser (dev tools are left out).
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
+      # The API types must match backend/openapi.json: run `npm run gen:api` after it changes.
+      - run: npm run gen:api && git diff --exit-code src/lib/api-schema.ts
+      - run: npm test
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

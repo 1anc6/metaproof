@@ -5,8 +5,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import { setUpErrorTracking } from './lib/errors'
 import { setUpInstall } from './lib/install'
 
+setUpErrorTracking()
 setUpInstall()
 
 // Pages load their code on first visit. A tab opened before a deploy asks for files the new

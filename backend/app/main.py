@@ -7,9 +7,12 @@ from fastapi.responses import RedirectResponse
 
 from app.api.routes import router
 from app.config import get_settings
+from app.monitoring import init_error_tracking
 from app.worker import Worker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+# Before the app is built, so Sentry can hook into FastAPI.
+init_error_tracking(get_settings())
 
 
 @asynccontextmanager

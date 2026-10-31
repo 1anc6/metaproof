@@ -78,7 +78,7 @@ def check_daily_cap(session: Session, cap: int) -> None:
     count = session.scalar(
         select(func.count()).select_from(models.AnalysisJob)
         .where(models.AnalysisJob.created_at >= since)
-    )
+    ) or 0
     if count >= cap:
         raise RateLimited("MetaProof has reached its daily analysis limit. Please try again "
                           "tomorrow.", retry_after=3600)

@@ -3,6 +3,7 @@ handed back to the OS. A 30 MP photo takes 115 MB once decoded."""
 
 import ctypes
 import threading
+from collections.abc import Callable
 from pathlib import Path
 
 # Held while an upload is decoded (in FastAPI's thread pool) and while each analyzer runs (on
@@ -10,6 +11,7 @@ from pathlib import Path
 # a few seconds for the analyzer in progress.
 big_image_lock = threading.Lock()
 
+_malloc_trim: Callable[[int], int] | None
 try:  # glibc, as in the Docker image; elsewhere there is nothing to call
     _malloc_trim = ctypes.CDLL("libc.so.6").malloc_trim
     _malloc_trim.argtypes = [ctypes.c_size_t]

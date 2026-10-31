@@ -56,7 +56,10 @@ never saw during training.</sub>
   no Redis.
 - **Privacy by design:** uploads are deleted after analysis; only a hash, a thumbnail and the
   findings are kept, for 1 day after the image was last analyzed. GPS coordinates are never
-  stored.
+  stored. One deliberate exception to "nothing is shared": the "seen before" search shows
+  near-identical copies analyzed by others (their verdict, date and thumbnail), but only to
+  someone who already holds a near-identical image (cosine similarity ≥ 0.92). Error reports,
+  when Sentry is configured, carry no IP addresses, request bodies or uploads.
 - **Installable, with share-to-analyze:** a web app manifest and a small service worker put
   MetaProof in Android's share menu, so a photo can be sent straight from the gallery.
 - **Runs on free tiers:** Vercel + Render + Neon + Hugging Face Hub, with CI on GitHub Actions.
@@ -153,12 +156,22 @@ docker run -d -p 54329:5432 -e POSTGRES_PASSWORD=test -e POSTGRES_DB=metaproof_t
 TEST_DATABASE_URL=postgresql://postgres:test@localhost:54329/metaproof_test pytest
 ```
 
-Browser tests for the frontend (Playwright against the production build, API faked):
+Type checks: `mypy` in `backend/`. Frontend unit tests (Vitest) and browser tests (Playwright
+against the production build, API faked):
 
 ```bash
 cd frontend
+npm test
 npx playwright install chromium   # once
 npm run test:e2e
+```
+
+The frontend's API types are generated from the backend's schema. After changing a response
+model, regenerate both files (CI fails while either is stale):
+
+```bash
+cd backend && python scripts/export_openapi.py
+cd ../frontend && npm run gen:api
 ```
 
 ## API
