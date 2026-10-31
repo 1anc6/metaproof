@@ -53,6 +53,7 @@ function build(rows: Row[]): { entries: HistoryEntry[]; summaries: Record<string
     height: 3024,
     label,
     confidence: label ? 0.9 : null,
+    inconclusive_reason: label === 'inconclusive' ? ('insufficient' as const) : null,
     created_at: ago(minutes),
     finished_at: status === 'done' ? ago(minutes) : null,
   }))

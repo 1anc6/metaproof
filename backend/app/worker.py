@@ -181,7 +181,7 @@ def run_job(session: Session, job: models.AnalysisJob) -> None:
     decision = evidence.decide(all_findings)
     session.add(models.Verdict(
         job_id=job.id, label=decision.label, confidence=decision.confidence,
-        engine_version=evidence.ENGINE_VERSION, scores=decision.scores,
+        inconclusive_reason=decision.reason, engine_version=evidence.ENGINE_VERSION, scores=decision.scores,
         top_reasons=decision.top_reasons,
     ))
     job.status = models.JobStatus.done

@@ -46,6 +46,17 @@ def test_close_competing_evidence_is_inconclusive():
     assert d.label == "inconclusive"
 
 
+def test_inconclusive_says_why():
+    # Nothing, or too little for any outcome: insufficient.
+    assert decide([]).reason == "insufficient"
+    assert decide([f(Signal.authentic, Strength.weak), f(Signal.authentic, Strength.weak)]).reason == "insufficient"
+    # Enough evidence, but for more than one outcome: conflicting.
+    assert decide([f(Signal.edited, Strength.moderate), f(Signal.ai, Strength.moderate)]).reason == "conflicting"
+    # A decided verdict has no reason to give.
+    assert decide([f(Signal.edited, Strength.strong)]).reason is None
+    assert decide([f(Signal.ai, Strength.conclusive)]).reason is None
+
+
 def test_clear_edit_evidence():
     d = decide([f(Signal.edited, Strength.moderate), f(Signal.edited, Strength.weak)])
     assert d.label == "edited"

@@ -124,6 +124,8 @@ class Verdict(Base):
     )
     label: Mapped[str] = mapped_column(String(32), index=True)
     confidence: Mapped[float | None] = mapped_column(Float)
+    # Inconclusive verdicts only: "insufficient" or "conflicting" (app/engine.py).
+    inconclusive_reason: Mapped[str | None] = mapped_column(String(16))
     engine_version: Mapped[str] = mapped_column(String(32))
     scores: Mapped[dict] = mapped_column(JSONB, default=dict)
     top_reasons: Mapped[list] = mapped_column(JSONB, default=list)

@@ -13,6 +13,8 @@ export type Signal = Schemas['Signal']
 export type Strength = Schemas['Strength']
 export type JobStatus = Schemas['JobStatus']
 export type VerdictLabel = Schemas['VerdictLabel']
+/** Why a verdict is inconclusive: too little evidence, or evidence pointing more than one way. */
+export type InconclusiveReason = Schemas['InconclusiveReason']
 /** What a running job is doing: an analyzer, then weighing the evidence. */
 export type AnalysisStep = Schemas['AnalysisStep']
 

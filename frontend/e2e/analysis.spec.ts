@@ -1,6 +1,6 @@
 import { deflateSync } from 'node:zlib'
 import { expect, test } from '@playwright/test'
-import { JOB_ID, job, mockApi, skipWelcome } from './mock-api'
+import { JOB_ID, job, mockApi, seedHistory, skipWelcome } from './mock-api'
 
 const PHOTO = { name: 'my holiday.jpg', mimeType: 'image/jpeg', buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46]) }
 
@@ -11,7 +11,7 @@ test('upload sends no filename, then shows the report and remembers it on this d
   await page.locator('input[type=file]').setInputFiles(PHOTO)
 
   await expect(page).toHaveURL(new RegExp(`/analysis/${JOB_ID}$`))
-  await expect(page.getByRole('heading', { name: 'Inconclusive' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Inconclusive', exact: true })).toBeVisible()
   await expect(page.getByText('leaning real')).toBeVisible()
 
   expect(api.uploads).toHaveLength(1)
@@ -36,7 +36,7 @@ test('a sleeping server is waited for, not reported as a failure', async ({ page
   await page.locator('input[type=file]').setInputFiles(PHOTO)
 
   await expect(page).toHaveURL(new RegExp(`/analysis/${JOB_ID}$`), { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: 'Inconclusive' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Inconclusive', exact: true })).toBeVisible()
   expect(api.uploads).toHaveLength(1)
 })
 
@@ -53,6 +53,24 @@ test('a report that leans real explains why in plain words', async ({ page }) =>
   await expect(page.getByText('Matches the picture (0.99)')).toBeVisible()
   await page.getByRole('button', { name: /Invisible watermark/ }).click()
   await expect(page.getByText(/No known generator watermark/)).toBeVisible()
+})
+
+test('an inconclusive report says why, and what it looked for but did not find', async ({ page }) => {
+  await mockApi(page)
+  await seedHistory(page)
+  await skipWelcome(page)
+  await page.goto(`/analysis/${JOB_ID}`)
+  const why = page.getByRole('region', { name: 'Why it is inconclusive' })
+  await expect(why.getByText('Too little evidence')).toBeVisible()
+  await expect(why.getByText(/The only evidence is camera details in the metadata and the structure of an untouched camera file/)).toBeVisible()
+  await expect(why.getByText(/stronger proof, such as signed Content Credentials/)).toBeVisible()
+  // Found, missing, and checks that did not run on this job, each said in words.
+  await expect(why.getByRole('listitem').filter({ hasText: 'Camera metadata' })).toContainText('Found')
+  await expect(why.getByRole('listitem').filter({ hasText: 'Generator watermark' })).toContainText('Not found')
+  await expect(why.getByRole('listitem').filter({ hasText: 'Content Credentials' })).toContainText('Not checked')
+
+  await page.goto('/history')
+  await expect(page.getByText('Little evidence', { exact: true })).toBeVisible()
 })
 
 test('an unsupported file gets a clear message and is not uploaded', async ({ page }) => {

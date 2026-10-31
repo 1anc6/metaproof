@@ -23,6 +23,11 @@ MIN_MARGIN = 0.75
 # Claiming "authentic" needs more than easily forged camera EXIF.
 MIN_AUTHENTIC_SUPPORT = 2.0
 
+# Why a verdict came out inconclusive, so the report can say which: too little evidence for any
+# outcome, or enough evidence pointing more than one way.
+INSUFFICIENT = "insufficient"
+CONFLICTING = "conflicting"
+
 LABELS = {
     Signal.authentic: "likely_authentic",
     Signal.edited: "edited",
@@ -36,6 +41,8 @@ class Decision:
     confidence: float | None
     scores: dict[str, float]
     top_reasons: list[dict]
+    # Set only for an inconclusive verdict: INSUFFICIENT or CONFLICTING.
+    reason: str | None = None
 
 
 def decide(findings: list[Finding]) -> Decision:
@@ -55,8 +62,10 @@ def decide(findings: list[Finding]) -> Decision:
     (best, best_score), (_, runner_up) = ranked[0], ranked[1]
     needed = MIN_AUTHENTIC_SUPPORT if best == Signal.authentic.value else MIN_SUPPORT
 
-    if best_score < needed or best_score - runner_up < MIN_MARGIN:
-        return Decision("inconclusive", None, scores, reasons)
+    if best_score < needed:
+        return Decision("inconclusive", None, scores, reasons, INSUFFICIENT)
+    if best_score - runner_up < MIN_MARGIN:
+        return Decision("inconclusive", None, scores, reasons, CONFLICTING)
 
     # Rule-based scores are not probabilities, so confidence stays empty until calibration.
     return Decision(LABELS[Signal(best)], None, scores, reasons)

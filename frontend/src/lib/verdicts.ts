@@ -1,5 +1,5 @@
 import { CircleCheck, CircleHelp, PenLine, Sparkles, type LucideIcon } from 'lucide-react'
-import type { JobStatus, Signal, Strength, VerdictLabel } from './api'
+import type { InconclusiveReason, JobStatus, Signal, Strength, VerdictLabel } from './api'
 
 export interface VerdictStyle {
   title: string
@@ -52,6 +52,20 @@ export const VERDICTS: Record<VerdictLabel, VerdictStyle> = {
     color: 'var(--color-neutral)',
     dot: 'var(--color-dot-neutral)',
     icon: CircleHelp,
+  },
+}
+
+/** The two ways a verdict ends up inconclusive (backend app/engine.py), in the reader's words. */
+export const INCONCLUSIVE_REASONS: Record<InconclusiveReason, { title: string; short: string; summary: string }> = {
+  insufficient: {
+    title: 'Too little evidence',
+    short: 'Little evidence',
+    summary: 'None of the checks found enough to decide either way. That is common: most images carry no provenance data.',
+  },
+  conflicting: {
+    title: 'Mixed evidence',
+    short: 'Mixed evidence',
+    summary: 'There is evidence, but it points more than one way and no outcome has a clear lead.',
   },
 }
 

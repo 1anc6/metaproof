@@ -171,6 +171,7 @@ def list_analyses(
             mime_type=j.media.mime_type, size_bytes=j.media.size_bytes, width=j.media.width,
             height=j.media.height, label=j.verdict.label if j.verdict else None,
             confidence=j.verdict.confidence if j.verdict else None,
+            inconclusive_reason=j.verdict.inconclusive_reason if j.verdict else None,
             created_at=j.created_at, finished_at=j.finished_at,
         )
         for j in jobs
@@ -295,7 +296,8 @@ def _job_out(job: models.AnalysisJob) -> schemas.JobOut:
         media=schemas.MediaOut(sha256=m.sha256, mime_type=m.mime_type, size_bytes=m.size_bytes,
                                width=m.width, height=m.height, first_seen_at=m.first_seen_at),
         verdict=None if v is None else schemas.VerdictOut(
-            label=v.label, confidence=v.confidence, engine_version=v.engine_version,
+            label=v.label, confidence=v.confidence, inconclusive_reason=v.inconclusive_reason,
+            engine_version=v.engine_version,
             scores=v.scores, top_reasons=[schemas.FindingOut(**r) for r in v.top_reasons],
         ),
         analyzers=[

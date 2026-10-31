@@ -20,6 +20,14 @@ class VerdictLabel(str, enum.Enum):
     inconclusive = "inconclusive"
 
 
+class InconclusiveReason(str, enum.Enum):
+    """Why a verdict is inconclusive: too little evidence for any outcome, or evidence that points
+    more than one way with no clear lead (app/engine.py)."""
+
+    insufficient = "insufficient"
+    conflicting = "conflicting"
+
+
 class AnalysisStep(str, enum.Enum):
     """What a running job is doing: one analyzer after another (app.analyzers.ANALYZERS, whose
     names these must match), then weighing the evidence."""
@@ -67,6 +75,8 @@ class VerdictScores(BaseModel):
 class VerdictOut(BaseModel):
     label: VerdictLabel
     confidence: float | None
+    # Set only when label is inconclusive.
+    inconclusive_reason: InconclusiveReason | None = None
     engine_version: str
     scores: VerdictScores
     top_reasons: list[FindingOut]
@@ -93,6 +103,7 @@ class JobSummary(BaseModel):
     height: int
     label: VerdictLabel | None
     confidence: float | None
+    inconclusive_reason: InconclusiveReason | None = None
     created_at: datetime
     finished_at: datetime | None
 

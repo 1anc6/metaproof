@@ -17,6 +17,7 @@ export const job = {
   verdict: {
     label: 'inconclusive',
     confidence: null,
+    inconclusive_reason: 'insufficient',
     engine_version: 'test',
     scores: { authentic: 1, edited: 0, ai: 0 },
     top_reasons: [],
@@ -72,7 +73,7 @@ export async function mockApi(
     }
     if (pathname === '/api/analyses') {
       return route.fulfill({
-        json: [{ job_id: JOB_ID, status: 'done', sha256: SHA, mime_type: 'image/jpeg', size_bytes: 123456, width: 1280, height: 960, label: 'inconclusive', confidence: null, created_at: now, finished_at: now }],
+        json: [{ job_id: JOB_ID, status: 'done', sha256: SHA, mime_type: 'image/jpeg', size_bytes: 123456, width: 1280, height: 960, label: 'inconclusive', confidence: null, inconclusive_reason: 'insufficient', created_at: now, finished_at: now }],
       })
     }
     if (pathname === `/api/analyses/${JOB_ID}` || pathname === `/api/media/${SHA}/report`) return route.fulfill({ json: job })

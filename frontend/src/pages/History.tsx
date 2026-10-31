@@ -7,7 +7,7 @@ import { useHistory } from '../lib/history'
 import { usePrefs } from '../lib/prefs'
 import { useHistorySummaries } from '../lib/summaries'
 import { clearWithUndo, removeWithUndo } from '../lib/undo'
-import { VERDICTS } from '../lib/verdicts'
+import { INCONCLUSIVE_REASONS, VERDICTS } from '../lib/verdicts'
 import { FileName, PageHeader, Thumb, VerdictBadge } from '../components/ui'
 
 type Filter = 'all' | 'flagged' | VerdictLabel
@@ -140,6 +140,8 @@ export function History() {
           <ul className="flex flex-col gap-0.5">
             {rows.map((entry) => {
               const s = data[entry.jobId]
+              // Which kind of inconclusive, so the list says why without opening the report.
+              const why = s?.label === 'inconclusive' && s.inconclusive_reason ? INCONCLUSIVE_REASONS[s.inconclusive_reason].short : null
               return (
                 <li key={entry.jobId} className="group relative">
                   <Link
@@ -154,11 +156,17 @@ export function History() {
                         {/* On phones the verdict sits under the name, so the name gets the row's full width. */}
                         <span className="mt-0.5 flex min-w-0 items-center gap-2 md:hidden">
                           {s ? <VerdictBadge label={s.label} status={s.status} /> : <span className="skeleton block h-3 w-16" />}
-                          <span className="truncate text-fine text-faint">{formatWhen(entry.uploadedAt)}</span>
+                          <span className="truncate text-fine text-faint">
+                            {why && `${why} · `}
+                            {formatWhen(entry.uploadedAt)}
+                          </span>
                         </span>
                       </span>
                     </span>
-                    <span className="max-md:hidden">{s ? <VerdictBadge label={s.label} status={s.status} pill /> : <span className="skeleton block h-3 w-20" />}</span>
+                    <span className="flex min-w-0 flex-col items-start gap-1 max-md:hidden">
+                      {s ? <VerdictBadge label={s.label} status={s.status} pill /> : <span className="skeleton block h-3 w-20" />}
+                      {why && <span className="truncate pl-1 text-fine text-faint">{why}</span>}
+                    </span>
                     <span className="text-right text-[13px] text-muted tabular-nums max-md:hidden">{formatBytes(entry.sizeBytes)}</span>
                     <span className="text-right text-[13px] text-faint max-md:hidden">{formatWhen(entry.uploadedAt)}</span>
                     <span />

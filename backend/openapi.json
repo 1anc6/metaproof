@@ -446,6 +446,15 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "InconclusiveReason": {
+        "type": "string",
+        "enum": [
+          "insufficient",
+          "conflicting"
+        ],
+        "title": "InconclusiveReason",
+        "description": "Why a verdict is inconclusive: too little evidence for any outcome, or evidence that points\nmore than one way with no clear lead (app/engine.py)."
+      },
       "JobCreated": {
         "properties": {
           "job_id": {
@@ -621,6 +630,16 @@
               }
             ],
             "title": "Confidence"
+          },
+          "inconclusive_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InconclusiveReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "created_at": {
             "type": "string",
@@ -916,6 +935,16 @@
               }
             ],
             "title": "Confidence"
+          },
+          "inconclusive_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InconclusiveReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "engine_version": {
             "type": "string",

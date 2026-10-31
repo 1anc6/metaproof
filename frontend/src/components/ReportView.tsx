@@ -1,10 +1,11 @@
-import { ArrowLeft, ArrowUpRight, ChevronDown, Compass, Droplets, FileJson, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, ChevronDown, CircleCheck, CircleHelp, CircleMinus, CircleSlash, Compass, Droplets, FileJson, Fingerprint, Layers, Link2, Plus, Printer, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { api, type AnalyzerResult, type Finding, type Job, type SimilarMedia, type Verdict } from '../lib/api'
 import { formatBytes, formatType, formatWhen, shortHash } from '../lib/format'
-import { leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
+import { evidenceChecklist, whyInconclusive, type CheckState } from '../lib/explain'
+import { INCONCLUSIVE_REASONS, leaning, SIGNALS, STRENGTH_LABEL, VERDICTS } from '../lib/verdicts'
 import { FileName, Gauge, Meter, PanelTitle, SignalDot, Thumb, VerdictBadge } from './ui'
 import { VerdictGlyph, VerdictSpectrum } from './Verdict'
 import { ErrorLevel } from './ErrorLevel'
@@ -12,10 +13,14 @@ import { ErrorLevel } from './ErrorLevel'
 export function ReportView({ job, filename }: { job: Job; filename?: string }) {
   const verdict = job.verdict!
   const v = VERDICTS[verdict.label]
-  const lean = verdict.label === 'inconclusive' ? leaning(verdict.scores) : null
+  const inconclusive = verdict.label === 'inconclusive'
+  const lean = inconclusive ? leaning(verdict.scores) : null
+  const reason = inconclusive && verdict.inconclusive_reason ? INCONCLUSIVE_REASONS[verdict.inconclusive_reason] : null
   const sha = job.media.sha256
   const reading = detectorReading(job)
-  const summary = lean
+  const summary = verdict.inconclusive_reason === 'conflicting'
+    ? `The evidence points more than one way${lean ? `, leaning ${lean.label}` : ''}, and no outcome has a clear lead. Treat it as unverified.`
+    : lean
     ? lean.key === 'authentic'
       ? leansRealSummary(job)
       : `Some evidence points to an ${lean.label} image, but not enough to decide. Treat it as unverified.`
@@ -81,10 +86,16 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
               </h1>
             </div>
           </div>
-          {lean && (
-            <p className="mt-3 flex items-center gap-2 text-[15px] font-medium text-ink">
-              <span className="size-2 rounded-full" style={{ background: lean.color }} aria-hidden />
-              Leaning {lean.label}
+          {(lean || reason) && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-medium text-ink">
+              {reason && <span>{reason.title}</span>}
+              {reason && lean && <span className="text-faint" aria-hidden>·</span>}
+              {lean && (
+                <span className="flex items-center gap-2">
+                  <span className="size-2 rounded-full" style={{ background: lean.color }} aria-hidden />
+                  Leaning {lean.label}
+                </span>
+              )}
             </p>
           )}
 
@@ -108,6 +119,8 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
           <Actions job={job} title={lean ? `${v.title}, leaning ${lean.label}` : v.title} />
         </section>
       </section>
+
+      {inconclusive && <WhyInconclusive job={job} />}
 
       {/* The findings, then the weight behind each outcome and the detector's score: three in a row
           on a wide screen, the findings above the other two on a narrower one. */}
@@ -140,7 +153,7 @@ export function ReportView({ job, filename }: { job: Job; filename?: string }) {
         <DetectorScore job={job} className="xl:col-span-3" />
       </div>
 
-      {verdict.label === 'inconclusive' && <NextSteps />}
+      {inconclusive && <NextSteps job={job} />}
 
       <SeenBefore sha={sha} />
 
@@ -878,33 +891,113 @@ const SEARCH_TOOLS = [
 ]
 
 /** Inconclusive is the most common verdict, so it should leave the reader with something to do. */
-function NextSteps() {
+const CHECK_STATE: Record<CheckState, { label: string; icon: typeof CircleCheck }> = {
+  found: { label: 'Found', icon: CircleCheck },
+  missing: { label: 'Not found', icon: CircleMinus },
+  unclear: { label: 'Unclear', icon: CircleHelp },
+  skipped: { label: 'Not checked', icon: CircleSlash },
+}
+
+/** For an inconclusive verdict: why, in words about this image, and what was looked for but missing. */
+function WhyInconclusive({ job }: { job: Job }) {
+  const reason = job.verdict?.inconclusive_reason
+  return (
+    <section className="panel grid gap-5 rounded-[28px] p-5 sm:p-6 lg:grid-cols-12 lg:gap-8" aria-labelledby="why-title">
+      <div className="lg:col-span-5">
+        <PanelTitle id="why-title" title="Why it is inconclusive" status={reason && <span className="tag">{INCONCLUSIVE_REASONS[reason].title}</span>} />
+        {whyInconclusive(job).map((line, i) => (
+          <p key={i} className={`text-[15px] leading-relaxed ${i === 0 ? 'mt-3 text-ink' : 'mt-2.5 text-muted'}`}>
+            {line}
+          </p>
+        ))}
+        <p className="mt-2.5 text-[13px] leading-relaxed text-faint">
+          Missing evidence never counts against an image; it only leaves less to decide on.
+        </p>
+      </div>
+      <div className="lg:col-span-7">
+        <h3 className="label">What MetaProof looked for</h3>
+        <ul className="mt-1 flex flex-col">
+          {evidenceChecklist(job).map((item) => {
+            const state = CHECK_STATE[item.state]
+            const Icon = state.icon
+            return (
+              <li key={item.key} className="flex gap-3 border-t border-line py-3 first:border-t-0">
+                <Icon
+                  className={`mt-0.5 size-[18px] shrink-0 ${item.state === 'found' ? '' : 'text-faint'}`}
+                  strokeWidth={1.8}
+                  style={item.state === 'found' ? { color: SIGNALS[item.signal].dot } : undefined}
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] font-medium text-ink">
+                    {item.label}
+                    <span className="tag">{state.label}</span>
+                  </p>
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-muted">{item.note}</p>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+function NextSteps({ job }: { job: Job }) {
+  const steps: Record<'search' | 'original' | 'context', ReactNode> = {
+    search: (
+      <>
+        <span className="font-semibold text-ink">Find the original.</span> A reverse image search shows where the
+        picture appeared first and whether an older or larger version exists:
+        <span className="mt-2.5 flex flex-wrap gap-2">
+          {SEARCH_TOOLS.map((t) => (
+            <a key={t.name} href={t.url} target="_blank" rel="noreferrer" className="chip h-8 px-3 text-[13px] hover:bg-[var(--btn-hover)]">
+              {t.name} <ArrowUpRight className="size-3.5 text-faint" />
+            </a>
+          ))}
+        </span>
+      </>
+    ),
+    original: (
+      <>
+        <span className="font-semibold text-ink">Ask for the original file.</span> Photos straight from a camera or
+        phone keep more metadata, and some carry signed Content Credentials that MetaProof can verify.
+      </>
+    ),
+    context: (
+      <>
+        <span className="font-semibold text-ink">Look at the context.</span> Who posted it first, and do other
+        sources show the same scene from another angle?
+      </>
+    ),
+  }
+  // Lead with the step most likely to settle this image: outside sources break a tie between
+  // conflicting evidence; a copy stripped of its metadata is best replaced by the original.
+  const conflicting = job.verdict?.inconclusive_reason === 'conflicting'
+  const stripped = job.analyzers.some((a) => a.findings.some((f) => f.code === 'meta.stripped'))
+  const order: (keyof typeof steps)[] = conflicting
+    ? ['context', 'search', 'original']
+    : stripped
+      ? ['original', 'search', 'context']
+      : ['search', 'original', 'context']
   return (
     <section className="panel rounded-[28px] p-5 sm:p-6">
       <div className="flex items-center gap-2.5">
         <Compass className="size-[18px] text-faint" strokeWidth={1.6} />
         <h2 className="card-title">What you can do next</h2>
       </div>
+      <p className="mt-2 text-[14px] text-muted">
+        {conflicting
+          ? 'Evidence from outside the file can break the tie.'
+          : stripped
+            ? 'This copy has lost its metadata, so the best evidence is likely in an earlier copy.'
+            : 'More evidence is what would settle it.'}
+      </p>
       <ol className="mt-4 grid gap-4 text-[14px] leading-relaxed text-muted md:grid-cols-3 md:gap-6">
-        <li>
-          <span className="font-semibold text-ink">Find the original.</span> A reverse image search shows where the
-          picture appeared first and whether an older or larger version exists:
-          <span className="mt-2.5 flex flex-wrap gap-2">
-            {SEARCH_TOOLS.map((t) => (
-              <a key={t.name} href={t.url} target="_blank" rel="noreferrer" className="chip h-8 px-3 text-[13px] hover:bg-[var(--btn-hover)]">
-                {t.name} <ArrowUpRight className="size-3.5 text-faint" />
-              </a>
-            ))}
-          </span>
-        </li>
-        <li>
-          <span className="font-semibold text-ink">Ask for the original file.</span> Photos straight from a camera or
-          phone keep more metadata, and some carry signed Content Credentials that MetaProof can verify.
-        </li>
-        <li>
-          <span className="font-semibold text-ink">Look at the context.</span> Who posted it first, and do other
-          sources show the same scene from another angle?
-        </li>
+        {order.map((key) => (
+          <li key={key}>{steps[key]}</li>
+        ))}
       </ol>
       <p className="mt-4 text-[13px] text-faint">
         These sites open in a new tab; you upload the image there yourself. MetaProof sends them nothing.

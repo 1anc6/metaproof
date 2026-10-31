@@ -198,6 +198,13 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * InconclusiveReason
+         * @description Why a verdict is inconclusive: too little evidence for any outcome, or evidence that points
+         *     more than one way with no clear lead (app/engine.py).
+         * @enum {string}
+         */
+        InconclusiveReason: "insufficient" | "conflicting";
         /** JobCreated */
         JobCreated: {
             /**
@@ -265,6 +272,7 @@ export interface components {
             label: components["schemas"]["VerdictLabel"] | null;
             /** Confidence */
             confidence: number | null;
+            inconclusive_reason?: components["schemas"]["InconclusiveReason"] | null;
             /**
              * Created At
              * Format: date-time
@@ -373,6 +381,7 @@ export interface components {
             label: components["schemas"]["VerdictLabel"];
             /** Confidence */
             confidence: number | null;
+            inconclusive_reason?: components["schemas"]["InconclusiveReason"] | null;
             /** Engine Version */
             engine_version: string;
             scores: components["schemas"]["VerdictScores"];
