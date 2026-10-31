@@ -1,5 +1,5 @@
 # MetaProof API image. Built and run by Render (free web service, 512 MB RAM).
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 # ExifTool gives the metadata analyzer a full tag dump.
 RUN apt-get update \
