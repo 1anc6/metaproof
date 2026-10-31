@@ -14,6 +14,11 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+    # The API stays on Python 3.12 (as CI does): a newer Python is a deliberate move, made once
+    # onnxruntime, c2pa-python and pi-heif ship wheels for it, not a weekly bump.
+    ignore:
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
 
   - package-ecosystem: npm
     directory: /frontend
