@@ -79,8 +79,13 @@ class DetectorAnalyzer:
 
     @property
     def loaded(self) -> bool:
-        """In memory: from the first analysis after a start until the process ends."""
+        """In memory: from the next analysis until the worker unloads it after a quiet spell."""
         return self._session is not None
+
+    def unload(self) -> None:
+        """Free the model (about 130 MB); the next analysis loads it again."""
+        with self._lock:
+            self._session = None
 
     def _get_session(self):
         # Loaded on first use so startup stays fast and memory is only spent when needed.

@@ -19,6 +19,7 @@ from app import engine as evidence
 from app import memory, models, retention
 from app.analyzers import ANALYZERS
 from app.analyzers.base import Finding, MediaInfo
+from app.analyzers.detector import DetectorAnalyzer
 from app.db import SessionLocal
 
 log = logging.getLogger("metaproof.worker")
@@ -27,6 +28,10 @@ MAINTENANCE_INTERVAL_S = 3600  # hourly, so 1-day retention deletes data within 
 # A job that was running when the process died is retried, but not forever: an image that
 # crashes the process (say, by running it out of memory) would otherwise crash every restart.
 MAX_ATTEMPTS = 3
+# The detector's model is freed after this long without a job, so the API idles at about half
+# its memory (~125 MB instead of ~250 MB). The next analysis loads it again, a few seconds more
+# on Render's CPU. Peak memory is unchanged: every analysis still needs the model.
+MODEL_IDLE_S = 300
 
 CLAIM_SQL = text("""
     UPDATE analysis_jobs
@@ -68,7 +73,8 @@ class Worker:
             log.exception("could not recover interrupted jobs")
         self._wake.set()  # drain anything queued before startup
         while not self._stop.is_set():
-            self._wake.wait()
+            if not self._wait_for_work():
+                continue
             self._wake.clear()
             try:
                 while not self._stop.is_set() and process_next_job():
@@ -77,6 +83,18 @@ class Worker:
                 log.exception("worker loop error")
                 time.sleep(2)
             self._maybe_run_maintenance()
+
+    def _wait_for_work(self) -> bool:
+        """Sleep until an upload wakes the worker (True). While a model is loaded, give up after
+        MODEL_IDLE_S, unload it and return False; it touches no database, so Neon can sleep."""
+        loaded = [a for a in ANALYZERS if isinstance(a, DetectorAnalyzer) and a.loaded]
+        if self._wake.wait(MODEL_IDLE_S if loaded else None):
+            return True
+        for detector in loaded:
+            detector.unload()
+        memory.release_freed_memory()
+        log.info("detector model unloaded after %d s without a job", MODEL_IDLE_S)
+        return False
 
     def _maybe_run_maintenance(self) -> None:
         # Runs only after a wake-up (startup or an upload), so an idle Neon database can sleep.

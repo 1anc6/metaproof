@@ -129,7 +129,8 @@ class ServiceStatus(BaseModel):
     pipeline_version: str
     # The API process, read on every request: resident memory now and its peak since the last
     # start (null off Linux), against the instance's memory; and the AI detector's model, which
-    # is loaded by the first analysis after a start, or missing if the image was built without it.
+    # is loaded by an analysis and freed after a few idle minutes, or missing if the image was
+    # built without it.
     memory_mb: float | None = None
     memory_peak_mb: float | None = None
     memory_limit_mb: int

@@ -49,6 +49,21 @@ def test_missing_model_is_skipped(tmp_path: Path):
     assert result.raw == {"available": False} and result.findings == []
 
 
+def test_worker_unloads_the_model_when_idle(monkeypatch, tmp_path: Path):
+    from app import worker
+
+    detector = DetectorAnalyzer(tmp_path / "detector.onnx")
+    detector._session = object()  # stands in for a loaded ONNX session
+    monkeypatch.setattr(worker, "ANALYZERS", [detector])
+    monkeypatch.setattr(worker, "MODEL_IDLE_S", 0.01)
+    w = worker.Worker()
+
+    w._wake.set()  # an upload arrives in time: the model stays
+    assert w._wait_for_work() and detector.loaded
+    w._wake.clear()  # nothing arrives: the model is freed
+    assert not w._wait_for_work() and not detector.loaded
+
+
 def _photo(w: int, h: int) -> Image.Image:
     """Smooth colour waves plus sensor-like noise: no flat rows or columns anywhere."""
     rng = np.random.default_rng(0)
