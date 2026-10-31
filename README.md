@@ -59,7 +59,10 @@ never saw during training.</sub>
   stored. One deliberate exception to "nothing is shared": the "seen before" search shows
   near-identical copies analyzed by others (their verdict, date and thumbnail), but only to
   someone who already holds a near-identical image (cosine similarity ≥ 0.92). Error reports,
-  when Sentry is configured, carry no IP addresses, request bodies or uploads.
+  when Sentry is configured, carry no IP addresses, location, request bodies or uploads: the
+  SDKs send none, and both Sentry projects also scrub them on arrival (Prevent Storing of IP
+  Addresses, plus a data-scrubbing rule removing `$user.geo.**` and
+  `contexts.culture.timezone`).
 - **Installable, with share-to-analyze:** a web app manifest and a small service worker put
   MetaProof in Android's share menu, so a photo can be sent straight from the gallery.
 - **Runs on free tiers:** Vercel + Render + Neon + Hugging Face Hub, with CI on GitHub Actions.
