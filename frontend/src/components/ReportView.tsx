@@ -372,6 +372,11 @@ function DetectorScore({ job, className = '' }: { job: Job; className?: string }
           className="mx-auto my-4 w-full max-w-[250px]"
         />
       </div>
+      {reading.stability && (
+        <div className="mb-4">
+          <CopyScores reading={reading} />
+        </div>
+      )}
       <p className="text-[13px] leading-relaxed text-faint">
         The tick marks {Math.round(b.weak)}, where the score starts to count as AI evidence. A score is how much the pixels
         resemble AI images, not a probability; on its own it never decides the verdict.
@@ -746,11 +751,67 @@ function detectorBand(pct: number, bands: ReturnType<typeof detectorBands>): Ban
   return { key: 'unsure', label: 'No clear signs either way', color: 'var(--color-neutral)' }
 }
 
+/**
+ * The detector's score and the band its evidence was counted in. A flagged score is also taken on
+ * everyday copies of the image (the stability check), and counts only as far as the lowest holds.
+ */
 function detectorReading(job: Job) {
   const raw = job.analyzers.find((a) => a.analyzer === 'detector')?.raw
-  if (!raw?.available || typeof raw.p_ai !== 'number') return null
+  return raw ? readingOf(raw) : null
+}
+
+type Stability = { copies: Record<string, number>; lowest: number }
+
+function readingOf(raw: Record<string, unknown>) {
+  if (!raw.available || typeof raw.p_ai !== 'number') return null
   const pct = Math.round(raw.p_ai * 100)
-  return { pct, band: detectorBand(pct, detectorBands(raw)) }
+  const bands = detectorBands(raw)
+  const stability = raw.stability as Stability | undefined
+  const counted = stability ? Math.round(stability.lowest * 100) : pct
+  const countedBand = detectorBand(counted, bands)
+  const fell = countedBand.key !== detectorBand(pct, bands).key
+  // Beside a high score, "no clear signs" would read as a contradiction; say what happened instead.
+  const band = fell && countedBand.key === 'unsure' ? { ...countedBand, label: 'Did not hold on copies' } : countedBand
+  return { pct, band, stability, counted, fell }
+}
+
+// How a report names each everyday copy; keys match STABILITY_COPIES in the backend's detector.
+const COPY_NAMES: Record<string, string> = {
+  shared: 'Shared, as messaging apps send it',
+  crop_tl_70: 'Cropped to the top left',
+  crop_br_70: 'Cropped to the bottom right',
+  crop_80: 'Cropped to the centre',
+  straightened: 'Straightened',
+  filtered: 'Filtered',
+}
+
+/** The score on the uploaded file and on each everyday copy, the lowest marked as the one counted. */
+function CopyScores({ reading, className = '' }: { reading: NonNullable<ReturnType<typeof readingOf>>; className?: string }) {
+  const { stability, pct, counted, band, fell } = reading
+  if (!stability) return null
+  const rows: [string, number][] = [['This file', pct], ...Object.entries(stability.copies).map(([k, p]): [string, number] => [COPY_NAMES[k] ?? k, Math.round(p * 100)])]
+  const lowest = rows.findIndex(([, p]) => p === counted)
+  const counts = fell ? (band.key === 'unsure' ? 'no evidence' : `“${band.label.toLowerCase()}”`) : null
+  return (
+    <div className={className}>
+      <p className="text-[13px] font-medium text-ink">Stability check</p>
+      <ul className="mt-1.5 flex flex-col" aria-label="Detector score on everyday copies">
+        {rows.map(([name, p], i) => (
+          <li key={name} className="flex items-baseline justify-between gap-3 border-b border-line py-1.5 text-[13px] last:border-b-0">
+            <span className={i === lowest ? 'text-ink' : 'text-muted'}>{name}</span>
+            <span className={`num tabular-nums ${i === lowest ? 'font-semibold' : 'text-muted'}`} style={i === lowest ? { color: band.color } : undefined}>
+              {p}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[13px] leading-relaxed text-faint">
+        {fell
+          ? `The score falls to ${counted} on an everyday copy, so it counts as ${counts}. A real photo the detector flags by mistake often loses the flag this way; an AI image usually keeps it.`
+          : `The score holds on everyday copies (lowest ${counted}), which makes a mistaken flag less likely.`}
+      </p>
+    </div>
+  )
 }
 
 // Measured on a held-out benchmark (ml/MODEL_CARD.md): the share of each generator's images the
@@ -759,12 +820,13 @@ const KNOWN_GAP =
   'The pixel detector misses most images from the newest photorealistic generators: it catches about 1 in 5 from Google\'s Nano Banana 2 and OpenAI\'s GPT Image 2. A low score does not mean a photo is real.'
 
 function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
-  if (!raw.available || typeof raw.p_ai !== 'number') {
+  const reading = readingOf(raw)
+  if (!reading) {
     return <p className="text-sm text-muted">The detector model is not loaded on this server.</p>
   }
-  const pct = Math.round(raw.p_ai * 100)
+  const { pct } = reading
   const bands = detectorBands(raw)
-  const { label, color } = detectorBand(pct, bands)
+  const { label, color } = reading.band
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -783,6 +845,7 @@ function DetectorDetails({ raw }: { raw: Record<string, unknown> }) {
           className="mt-3"
         />
       </div>
+      <CopyScores reading={reading} className="max-w-md" />
       <p className="text-[13px] leading-relaxed text-faint">
         A calibrated classifier on CLIP image features, tested on generators it never saw during
         training. It is one signal among several: strong provenance evidence outweighs it, and it

@@ -155,12 +155,17 @@ export function evidenceChecklist(job: Job): EvidenceItem[] {
   else {
     const score = `Score ${Math.round(p * 100)}/100`
     const [f] = det.findings
+    // The lowest score on everyday copies, when the stability check ran (flagged images only).
+    const lowest = (det.raw.stability as { lowest?: number } | undefined)?.lowest
+    const fellTo = typeof lowest === 'number' ? Math.round(lowest * 100) : null
     items.push(
       f?.code === 'detector.ai_pixels'
-        ? { key: 'detector', label: 'AI detector', state: 'found', signal: 'ai', note: `${score}: the pixels resemble AI images.` }
+        ? { key: 'detector', label: 'AI detector', state: 'found', signal: 'ai', note: `${score}: the pixels resemble AI images${fellTo === null ? '' : `, ${fellTo} or more on everyday copies`}.` }
         : f?.code === 'detector.camera_like'
           ? { key: 'detector', label: 'AI detector', state: 'found', signal: 'authentic', note: `${score}: the pixels look like a camera photo.` }
-          : { key: 'detector', label: 'AI detector', state: 'unclear', signal: 'neutral', note: `${score}: in the range where it cannot tell.` },
+          : f?.code === 'detector.unstable'
+            ? { key: 'detector', label: 'AI detector', state: 'unclear', signal: 'neutral', note: `${score}, but ${fellTo} on an everyday copy, so the flag does not hold.` }
+            : { key: 'detector', label: 'AI detector', state: 'unclear', signal: 'neutral', note: `${score}: in the range where it cannot tell.` },
     )
   }
 
