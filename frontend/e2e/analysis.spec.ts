@@ -199,30 +199,3 @@ test('a Gemini-style report: the AI-generated original, decisive bars, an overru
   await expect(page.getByText('Earlier history: the original it was made from')).toBeVisible()
   await expect(page.getByText('· trainedAlgorithmicMedia')).toBeVisible()
 })
-
-test('a flag that falls on an everyday copy is shown with each copy and counted as unclear', async ({ page }) => {
-  await mockApi(page)
-  await skipWelcome(page)
-  const detector = {
-    analyzer: 'detector', version: '0.2.0', ok: true, duration_ms: 3100, error: null,
-    findings: [{
-      code: 'detector.unstable', signal: 'neutral', strength: 'weak',
-      message: 'The AI-image detector rates the pixels 96% likely to be AI-generated, but only 33% on a crop of its top-left part. A score that falls this much counts as no evidence.',
-    }],
-    raw: {
-      available: true, p_ai: 0.96, model: 'clip-vitb16-mlp-v3',
-      bands: { strong: 0.91, weak: 0.79, likely_real_below: 0.05 },
-      stability: { copies: { shared: 0.95, crop_tl_70: 0.33, crop_br_70: 0.41 }, lowest: 0.33 },
-    },
-  }
-  await page.route(`**/api/analyses/${JOB_ID}`, (route) => route.fulfill({
-    json: { ...job, analyzers: [...job.analyzers, detector] },
-  }))
-  await page.goto(`/analysis/${JOB_ID}`)
-  // The gauge keeps the model's own score, but the band is the one the evidence was counted in.
-  const card = page.locator('section', { has: page.getByRole('heading', { name: 'Detector score' }) })
-  await expect(card.getByText('Did not hold on copies').first()).toBeVisible()
-  const copies = card.getByRole('list', { name: 'Detector score on everyday copies' })
-  await expect(copies.getByRole('listitem')).toHaveText([/This file\s*96/, /Shared.*95/, /top left\s*33/, /bottom right\s*41/])
-  await expect(card.getByText(/falls to 33 on an everyday copy/)).toBeVisible()
-})

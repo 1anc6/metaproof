@@ -5,16 +5,7 @@ import pytest
 from PIL import Image, ImageDraw
 
 from app.analyzers.base import MediaInfo, Signal, Strength
-from app.analyzers.detector import (
-    STABILITY_COPIES,
-    STABILITY_WORK_SIDE,
-    DetectorAnalyzer,
-    findings_for,
-    prepare,
-    preprocess,
-    trim_borders,
-    working_copy,
-)
+from app.analyzers.detector import DetectorAnalyzer, findings_for, prepare, preprocess, trim_borders
 
 
 @pytest.mark.parametrize("size", [(1024, 1024), (1920, 1080), (257, 999), (100, 60)])
@@ -156,77 +147,3 @@ def test_prepare_matches_converting_to_rgb_first(tmp_path, captioned, mode, fmt)
         with Image.open(path) as a, Image.open(path) as b:
             got, want = prepare(a), prepare(b.convert("RGB"))
     assert np.array_equal(got[0], want[0]) and got[1] == want[1]
-
-
-# --- stability check -----------------------------------------------------------------------
-
-class FakeSession:
-    """Stands in for the ONNX session: returns the given scores in order, one per run."""
-
-    def __init__(self, scores: list[float]):
-        self.scores = list(scores)
-        self.shapes: list[tuple] = []
-
-    def run(self, _outputs, feeds):
-        self.shapes.append(feeds["pixels"].shape)
-        return [np.array([self.scores.pop(0)], dtype=np.float32), np.zeros((1, 512), np.float32)]
-
-
-def _analyzer(tmp_path: Path, scores: list[float]) -> tuple[DetectorAnalyzer, FakeSession, MediaInfo]:
-    model = tmp_path / "detector.onnx"
-    model.write_bytes(b"")
-    detector = DetectorAnalyzer(model)
-    detector._session = session = FakeSession(scores)
-    path = tmp_path / "photo.jpg"
-    _photo(3000, 2000).save(path, quality=92)
-    return detector, session, MediaInfo(path, "image/jpeg", 3000, 2000)
-
-
-def test_unflagged_image_is_scored_once(tmp_path: Path):
-    detector, session, media = _analyzer(tmp_path, [0.5])
-    result = detector.run(media)
-    assert len(session.shapes) == 1 and "stability" not in result.raw
-    assert result.findings[0].code == "detector.uncertain"
-
-
-def test_flagged_image_is_scored_on_every_copy(tmp_path: Path):
-    copies = [0.95, 0.33, 0.41, 0.9, 0.9, 0.9, 0.9][: len(STABILITY_COPIES)]
-    copies[-1] = 0.33  # the lowest copy, whichever copies ship
-    detector, session, media = _analyzer(tmp_path, [0.96, *copies])
-    result = detector.run(media)
-    assert len(session.shapes) == 1 + len(STABILITY_COPIES)
-    assert all(s == (1, 3, 224, 224) for s in session.shapes)
-    assert result.raw["p_ai"] == 0.96
-    assert result.raw["stability"] == {"copies": dict(zip(STABILITY_COPIES, copies)), "lowest": 0.33}
-    assert result.findings[0].code == "detector.unstable"
-    assert result.findings[0].signal == Signal.neutral
-
-
-@pytest.mark.parametrize("p, low, code, signal, strength", [
-    (0.96, 0.93, "detector.ai_pixels", Signal.ai, Strength.strong),  # holds
-    (0.96, 0.85, "detector.ai_pixels", Signal.ai, Strength.weak),    # strong -> weak
-    (0.85, 0.80, "detector.ai_pixels", Signal.ai, Strength.weak),    # holds at weak
-    (0.96, 0.33, "detector.unstable", Signal.neutral, Strength.weak),
-    (0.85, 0.60, "detector.unstable", Signal.neutral, Strength.weak),
-])
-def test_flag_counts_only_as_far_as_its_lowest_copy(p, low, code, signal, strength):
-    name = next(iter(STABILITY_COPIES))
-    (finding,) = findings_for(p, {name: low})
-    assert (finding.code, finding.signal, finding.strength) == (code, signal, strength)
-    assert f"{round(p * 100)}%" in finding.message and f"{round(low * 100)}%" in finding.message
-
-
-def test_a_copy_scoring_higher_never_raises_the_evidence():
-    (finding,) = findings_for(0.85, {name: 0.99 for name in STABILITY_COPIES})
-    assert finding.strength == Strength.weak
-
-
-def test_working_copy_is_small_and_outlives_the_file(tmp_path: Path):
-    path = tmp_path / "big.png"
-    _photo(5000, 1000).convert("L").save(path)
-    with Image.open(path) as img:
-        work = working_copy(img)
-    assert work.size == (STABILITY_WORK_SIDE, round(1000 * STABILITY_WORK_SIDE / 5000))
-    assert work.mode == "RGB"
-    for _, make in STABILITY_COPIES.values():
-        assert preprocess(make(work)).shape == (1, 3, 224, 224)

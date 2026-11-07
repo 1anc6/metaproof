@@ -63,19 +63,10 @@ BANDS = [
 ]
 LIKELY_REAL_BELOW = 0.05
 
-# Stability check (ml/eval_stability.py, docs/evaluation.md). A score that flags an image is
-# also taken on a few everyday copies of it, and the evidence counts only as far as the lowest
-# of those scores supports it: a real photo the detector happens to flag tends to lose the
-# flag when cropped, while an AI image keeps it. Only flagged images are checked, so the extra
-# inferences are spent where a score can push a verdict towards AI. Copies are made from a
-# working copy at most STABILITY_WORK_SIDE px long, so a 50 MP photo isn't rotated full size.
-STABILITY_FROM = BANDS[1][0]
-STABILITY_WORK_SIDE = 2048
-
 
 class DetectorAnalyzer:
     name = "detector"
-    version = "0.2.0"
+    version = "0.1.0"
 
     def __init__(self, model_path: Path) -> None:
         self.model_path = model_path
@@ -121,60 +112,23 @@ class DetectorAnalyzer:
             # Leaving `with` only closes the file; this frees the decoded photo (115 MB at
             # 30 MP) before the model is loaded and run, instead of after.
             img.close()
-        session = self._get_session()
-        p_ai, embedding = session.run(None, {"pixels": pixels})
+        p_ai, embedding = self._get_session().run(None, {"pixels": pixels})
         p_ai = float(p_ai[0])
-        raw = {"available": True, "p_ai": round(p_ai, 4), "model": MODEL_ID,
-               # Added borders removed before scoring, in pixels of the uploaded image.
-               "trimmed_px": trimmed,
-               # The band edges used for this score, so a report can draw them correctly
-               # even after a later model changes them.
-               "bands": {"strong": BANDS[0][0], "weak": BANDS[1][0],
-                         "likely_real_below": LIKELY_REAL_BELOW}}
-        copies = None
-        if p_ai >= STABILITY_FROM:
-            with Image.open(media.path) as img:
-                work = working_copy(img)
-            copies = {name: round(float(session.run(None, {"pixels": prepare(make(work))[0]})[0][0]), 4)
-                      for name, (_, make) in STABILITY_COPIES.items()}
-            del work
-            # Scores of each everyday copy, in STABILITY_COPIES order. Absent when the image
-            # wasn't flagged, so the check didn't run.
-            raw["stability"] = {"copies": copies, "lowest": min(round(p_ai, 4), *copies.values())}
         return AnalyzerResult(
-            raw=raw,
-            findings=findings_for(p_ai, copies),
+            raw={"available": True, "p_ai": round(p_ai, 4), "model": MODEL_ID,
+                 # Added borders removed before scoring, in pixels of the uploaded image.
+                 "trimmed_px": trimmed,
+                 # The band edges used for this score, so a report can draw them correctly
+                 # even after a later model changes them.
+                 "bands": {"strong": BANDS[0][0], "weak": BANDS[1][0],
+                           "likely_real_below": LIKELY_REAL_BELOW}},
+            findings=findings_for(p_ai),
             embedding=[round(float(v), 6) for v in embedding[0]],
         )
 
 
-def _band(p: float) -> int:
-    """Index into BANDS of the band a score falls in, len(BANDS) below them all."""
-    return next((i for i, (threshold, _, _) in enumerate(BANDS) if p >= threshold), len(BANDS))
-
-
-def findings_for(p_ai: float, copies: dict[str, float] | None = None) -> list[Finding]:
-    """The detector's finding for its score, held to the lowest score of its everyday copies."""
+def findings_for(p_ai: float) -> list[Finding]:
     pct = round(p_ai * 100)
-    if copies:
-        name, low = min(copies.items(), key=lambda kv: kv[1])
-        counted = min(p_ai, low)
-        if _band(counted) != _band(p_ai):
-            what = STABILITY_COPIES[name][0]
-            said = (f"The AI-image detector rates the pixels {pct}% likely to be AI-generated, "
-                    f"but only {round(low * 100)}% on {what}")
-            if _band(counted) < len(BANDS):
-                _, signal, strength = BANDS[_band(counted)]
-                return [Finding("detector.ai_pixels", signal, strength,
-                                f"{said}, so it counts as weaker evidence.")]
-            return [Finding("detector.unstable", Signal.neutral, Strength.weak,
-                            f"{said}. A score that falls this much counts as no evidence.")]
-        for threshold, signal, strength in BANDS:
-            if p_ai >= threshold:
-                return [Finding("detector.ai_pixels", signal, strength,
-                                f"The AI-image detector rates the pixels {pct}% likely to be "
-                                f"AI-generated, and at least {round(low * 100)}% on everyday "
-                                "copies of it.")]
     for threshold, signal, strength in BANDS:
         if p_ai >= threshold:
             return [Finding("detector.ai_pixels", signal, strength,
@@ -186,37 +140,6 @@ def findings_for(p_ai: float, copies: dict[str, float] | None = None) -> list[Fi
                         "This supports, but cannot prove, a real photo.")]
     return [Finding("detector.uncertain", Signal.neutral, Strength.weak,
                     f"The AI-image detector is unsure ({pct}% AI).")]
-
-
-# --- everyday copies for the stability check ----------------------------------------------
-# The same code as ml/eval_stability.py, which measured them; keep the two identical.
-
-def working_copy(img: Image.Image) -> Image.Image:
-    """A new RGB image, independent of `img`, so the decoded original can be freed."""
-    img = img.convert("RGB")
-    w, h = img.size
-    if max(w, h) > STABILITY_WORK_SIDE:
-        r = STABILITY_WORK_SIDE / max(w, h)
-        img = img.resize((max(1, round(w * r)), max(1, round(h * r))), Image.Resampling.LANCZOS)
-    return img
-
-
-def _crop(img: Image.Image, keep: float, ax: float = 0.5, ay: float = 0.5) -> Image.Image:
-    """Keep `keep` of each side; (ax, ay) places the kept part (0.5, 0.5 = centre)."""
-    w, h = img.size
-    cw, ch = max(1, round(w * keep)), max(1, round(h * keep))
-    x, y = round((w - cw) * ax), round((h - ch) * ay)
-    return img.crop((x, y, x + cw, y + ch))
-
-
-# name -> (how a report names it after "on", how to make it from the working copy)
-# Provisional, from the calibration split: of seven candidates, an 80% centre crop alone took
-# every flagged real photo out of the strong band (3 -> 0, and 17 -> 5 at weak or above) while
-# keeping 80% of AI images there; corner crops kept only 39%. To be confirmed on the camera-
-# photo set before it ships (ml/eval_stability.py).
-STABILITY_COPIES = {
-    "crop_80": ("a crop of its centre", lambda im: _crop(im, 0.8)),
-}
 
 
 def _border(a: np.ndarray) -> int:

@@ -1,23 +1,27 @@
-"""Does a flagged image keep its score when it is shared, cropped or straightened?
+"""Does a flagged image keep its score when it is cropped, shared or straightened?
 
-The report's stability check (backend/app/analyzers/detector.py) re-scores an image the
-detector flags (score >= the weak band, 0.79) on a few everyday copies of it, and counts the
-detector's evidence only as far as the lowest of those scores supports it. This script
-measures what that does, on the live model with the backend's own preprocessing:
+A tested idea that does not ship (docs/evaluation.md, "Stability check"). When the detector
+flags an image (score >= the weak band, 0.79), score a few everyday copies of it too and count
+the evidence only as far as the lowest of those scores supports it: a real photo the detector
+flags by mistake should lose the flag on a crop, while an AI image keeps it.
 
-  - which copies to use: every candidate below is scored, so subsets can be compared;
-  - what the rule costs and buys: AI images and real photos at the strong and weak bands,
-    with the original score alone and with the lowest of the original and the copies.
+This script measures that on the live model with the backend's own preprocessing:
 
-Copies are chosen on the calibration split (plan_calib.v3) and reported on the held-out
-generators (the same 40 chunks as eval_robustness.py) and on the real camera photos from
-real_photos.py, original files and their social-media copies, where false alarms happen.
+  - seven candidate copies, each scored, so single copies and subsets can be compared;
+  - AI images and real photos at the strong and weak bands, on the original score alone and
+    on the lowest of the original and the copies;
+  - the baseline that decides it: the threshold on the original score alone that flags no more
+    real photos than a rule does, and how many AI images that threshold keeps.
+
+Copies were chosen on the calibration split (plan_calib.v3); results are also reported on the
+held-out generators (the same 40 chunks as eval_robustness.py) and on the real camera photos
+from real_photos.py, original files and their social-media copies, where false alarms happen.
 
     python eval_stability.py --out results_stability.json
     python eval_stability.py --summarize           # re-read stored scores, e.g. for new rules
 
-Only images at or above the weak band get copies, as in the backend, so this is quick for
-real photos. Per-image scores go to DATA_DIR/stability_scores.jsonl; --resume reuses them.
+Only images at or above the weak band get copies, so this is quick for real photos. Per-image
+scores go to DATA_DIR/stability_scores.jsonl; --resume reuses them.
 """
 
 import argparse
@@ -25,6 +29,7 @@ import io
 import itertools
 import json
 import random
+import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -42,6 +47,12 @@ ROOT = Path(__file__).resolve().parent.parent
 BACKEND_DETECTOR = ROOT / "backend/app/analyzers/detector.py"
 MODEL = ROOT / "backend/models/detector.onnx"
 
+# The API rejects larger uploads (max_image_pixels in backend/app/config.py), so files above it
+# never reach the detector and are left out here, as many full-size 45-50 MP camera files are.
+MAX_PIXELS = int(re.search(r"max_image_pixels: int = ([\d_]+)",
+                           (ROOT / "backend/app/config.py").read_text(encoding="utf-8"))[1])
+Image.MAX_IMAGE_PIXELS = None  # checked against MAX_PIXELS before decoding instead
+
 
 def load_backend() -> dict:
     """The backend detector module's namespace, without importing the backend package."""
@@ -58,8 +69,8 @@ def load_backend() -> dict:
 
 
 # --- candidate copies ---------------------------------------------------------------------
-# Built from a working copy whose longer side is at most WORK_SIDE, as the backend does, so a
-# 50 MP photo isn't rotated at full size. Everything after that is deterministic.
+# Built from a working copy whose longer side is at most WORK_SIDE, so a 50 MP photo isn't
+# rotated at full size (a server would have to do the same). Everything after that is deterministic.
 
 WORK_SIDE = 2048
 
@@ -159,6 +170,8 @@ class Scorer:
 
     def __call__(self, key: str, label: int, opener) -> dict:
         with opener() as img:
+            if img.width * img.height > MAX_PIXELS:
+                return {"key": key, "label": label, "too_large": True}
             p0 = self.score(img)
             rec = {"key": key, "label": label, "p": round(p0, 4)}
             if p0 >= self.weak:
@@ -179,7 +192,7 @@ def collect(name: str, items, scorer: Scorer, store: Path, done: set[str]) -> No
             return
         try:
             rec = scorer(key, label, opener)
-        except (OSError, ValueError) as e:  # an unreadable file is skipped, as an upload would be
+        except (OSError, ValueError, Image.DecompressionBombError) as e:  # rejected as an upload
             print(f"skip {key}: {e}", flush=True)
             return
         rec["set"] = name
@@ -202,7 +215,7 @@ def ci_hi(k: int, n: int) -> float:
 
 
 def effective(rec: dict, copies: tuple[str, ...]) -> float:
-    """The score the evidence counts at: the lowest of the original and its copies."""
+    """The score the evidence would count at: the lowest of the original and its copies."""
     if "copies" not in rec or not copies:
         return rec["p"]
     return min([rec["p"], *(rec["copies"][c] for c in copies)])
@@ -237,16 +250,29 @@ def spread(recs: list[dict], copies: tuple[str, ...]) -> dict:
     return out
 
 
-def check_backend_copies(backend: dict) -> None:
-    """The backend's copies must be the ones measured here, pixel for pixel."""
-    assert backend["STABILITY_WORK_SIDE"] == WORK_SIDE
-    rng = np.random.default_rng(SEED)
-    img = Image.fromarray(rng.integers(0, 256, (1600, 2600, 3), dtype=np.uint8))
-    work = working_copy(img)
-    assert np.array_equal(np.asarray(work), np.asarray(backend["working_copy"](img)))
-    for name, (_, make) in backend["STABILITY_COPIES"].items():
-        assert name in CANDIDATES, f"backend copy {name} was never measured"
-        assert np.array_equal(np.asarray(make(work)), np.asarray(CANDIDATES[name](work))), name
+def against_threshold(real: list[dict], ai: list[dict], copies: tuple[str, ...],
+                      band: float) -> dict:
+    """A rule at one band, next to raising that band on the original score alone until it
+    flags no more real photos than the rule does."""
+    def count(recs, score, t):
+        return int(sum(score(r) >= t for r in recs))
+
+    def rule(r):
+        return effective(r, copies)
+
+    def original(r):
+        return r["p"]
+
+    k_real = count(real, rule, band)
+    t = band
+    while count(real, original, t) > k_real and t < 1:
+        t = round(t + 0.0005, 4)
+    pct = lambda k: round(100 * k / len(ai), 1)  # noqa: E731
+    return {
+        "rule": {"real": k_real, "ai_kept_%": pct(count(ai, rule, band))},
+        "threshold": {"at": t, "real": count(real, original, t),
+                      "ai_kept_%": pct(count(ai, original, t))},
+    }
 
 
 def main():
@@ -260,8 +286,6 @@ def main():
 
     backend = load_backend()
     strong, weak = backend["BANDS"][0][0], backend["BANDS"][1][0]
-    shipped = tuple(backend["STABILITY_COPIES"])
-    check_backend_copies(backend)
     store = DATA_DIR / "stability_scores.jsonl"
     if not (args.resume or args.summarize) and store.exists():
         store.unlink()
@@ -281,8 +305,12 @@ def main():
         collect(name, sources[name](), scorer, store, done)
 
     recs: dict[str, list[dict]] = {}
+    too_large: dict[str, int] = {}
     for r in map(json.loads, store.open(encoding="utf-8")):
-        recs.setdefault(r["set"], []).append(r)
+        if r.get("too_large"):
+            too_large[r["set"]] = too_large.get(r["set"], 0) + 1
+        else:
+            recs.setdefault(r["set"], []).append(r)
 
     # Subsets of up to three copies, ranked on the calibration split by how many AI images
     # stay at the strong band (the cost), ties broken by fewer real photos there.
@@ -295,13 +323,24 @@ def main():
         "bands": {"strong": strong, "weak": weak},
         "candidates": list(CANDIDATES),
         "work_side": WORK_SIDE,
+        "max_pixels": MAX_PIXELS,
+        "left_out_too_large": too_large,
         "calib_ranking": [{"copies": list(c), **summarize(calib, c, strong, weak)}
                           for c in ranked],
+        # Every real photo (all four sets) against every AI image (calibration and held-out).
+        "against_threshold": {
+            "+".join(c) or "original": {
+                band_name: against_threshold(
+                    [r for rs in recs.values() for r in rs if r["label"] == 0],
+                    [r for rs in recs.values() for r in rs if r["label"] == 1], c, t)
+                for band_name, t in (("strong", strong), ("weak", weak))
+            }
+            for c in [(), *((c,) for c in CANDIDATES), ("crop_80", "shared"),
+                      ("crop_80", "straightened")]
+        },
         "sets": {
             name: {
                 "original_only": summarize(rs, (), strong, weak),
-                "shipped": {"copies": list(shipped), **summarize(rs, shipped, strong, weak),
-                            "spread": spread(rs, shipped)},
                 "spread_all_candidates": spread(rs, tuple(CANDIDATES)),
                 "per_candidate": {c: summarize(rs, (c,), strong, weak) for c in CANDIDATES},
                 "top_subsets": [{"copies": list(c), **summarize(rs, c, strong, weak)}
@@ -311,7 +350,7 @@ def main():
         },
     }
     Path(args.out).write_text(json.dumps(out, indent=2))
-    print(json.dumps({k: v for k, v in out.items() if k != "calib_ranking"}, indent=2)[:6000])
+    print(json.dumps(out["against_threshold"], indent=1))
 
 
 if __name__ == "__main__":

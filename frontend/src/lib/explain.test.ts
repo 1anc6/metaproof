@@ -72,17 +72,6 @@ describe('evidenceChecklist', () => {
     expect(items.find((i) => i.key === 'detector')!.note).toBe('Score 42/100: in the range where it cannot tell.')
   })
 
-  it('says when a flag held or fell on everyday copies', () => {
-    const note = (code: string, signal: Finding['signal'], lowest: number) =>
-      evidenceChecklist(job({
-        detector: { findings: [finding(code, signal)], raw: { available: true, p_ai: 0.96, stability: { copies: { shared: 0.95, crop_tl_70: lowest }, lowest } } },
-      })).find((i) => i.key === 'detector')!
-    expect(note('detector.ai_pixels', 'ai', 0.93).note).toBe('Score 96/100: the pixels resemble AI images, 93 or more on everyday copies.')
-    const fell = note('detector.unstable', 'neutral', 0.33)
-    expect(fell.state).toBe('unclear')
-    expect(fell.note).toBe('Score 96/100, but 33 on an everyday copy, so the flag does not hold.')
-  })
-
   it('marks checks that failed or never ran as not checked', () => {
     const items = evidenceChecklist(job({ metadata: { ok: false } }))
     expect(items.filter((i) => i.state === 'skipped').map((i) => i.key)).toEqual(['camera', 'c2pa', 'watermark', 'detector'])

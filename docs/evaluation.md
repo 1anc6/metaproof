@@ -124,6 +124,50 @@ identically to real and AI images. Reproduce: `python ml/eval_robustness.py --ch
 - **Detection falls on corner crops and screenshots**, from 70.7% to about 41% of AI images at the strong band.
 - **A caption band nearly disables detection** (2.9% at strong, AUC 0.872). A likely cause is that the uniform band dominates the 256 px standardization and centre crop; trimming uniform borders before scoring is an untested candidate fix.
 
+### 2.1 Stability check: tested, does not ship
+
+Measured on 2026-11-07. The idea, from the robustness results above: when the detector flags an
+image (score ≥ 0.79), also score everyday copies of it (cropped, shared, straightened) and count
+the evidence only as far as the lowest score supports it, since a real photo flagged by mistake
+might lose the flag on a copy while an AI image keeps it. Script: `python ml/eval_stability.py`
+(results: [`ml/results_stability.json`](../ml/results_stability.json)), on the live model with the
+backend's preprocessing. Real photos: the calibration split (352), the 40 held-out chunks above
+(351), and the camera photos from `ml/real_photos.py`, as 1,331 originals the API accepts (124
+files over its 24 MP limit are left out) plus 1,455 social-media copies: 3,489 in all. AI images:
+the calibration split (728) and the held-out chunks (577), 1,305 in all.
+
+**Per image, the signal is real.** On the 80% centre crop, a flagged real photo's score drops by
+0.13 (median), against 0.007 for a flagged AI image; 60% of flagged real photos drop by more than
+0.1, against 16% of flagged AI images. Every flagged real photo in the held-out chunks left the
+weak band.
+
+**As a rule, it does no better than a higher threshold.** Far more AI images are flagged than
+real ones, so the AI images that also drop cost as many detections as the false alarms saved.
+Each rule below is set against the threshold on the original score alone that flags no more
+real photos:
+
+| Copies (lowest counts) | Strong: real flagged | AI kept | Same real at threshold | AI kept | Weak: real flagged | AI kept | Same real at threshold | AI kept |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| none (live) | 20 | 60.1% | 0.91 | 60.1% | 73 | 73.3% | 0.79 | 73.3% |
+| centre crop 80% (chosen on calibration) | 7 | 49.0% | 0.95 | **52.0%** | 26 | **63.5%** | 0.895 | 62.4% |
+| shared (1,080 px, JPEG q75) | 15 | 53.6% | 0.931 | **56.1%** | 42 | 67.4% | 0.8545 | 67.5% |
+| straightened (3°, cropped) | 6 | 49.0% | 0.9525 | **51.1%** | 24 | **63.2%** | 0.899 | 61.8% |
+| corner crops (70%, each corner) | 1–3 | 35% | 0.975 | **40–41%** | 9–10 | 51% | 0.945 | **53%** |
+| centre crop + straightened | 3 | **44.8%** | 0.9745 | 41.3% | 13 | **58.9%** | 0.934 | 55.5% |
+
+- **At the strong band, a higher threshold wins** for every single copy: at 7 real photos, 52.0%
+  of AI images against 49.0% for the centre crop, and with no extra inference.
+- **At the weak band they are level** (within about 1.5 points), and the check costs one more
+  detector pass per flagged image (about 0.75 s locally; on Render's free instance, where the
+  detector already dominates the report's time, it would nearly double that for flagged images).
+- **Two copies together do a little better** (centre crop + straightened: 44.8% against 41.3% at
+  3 real photos), but that pair was picked after seeing these test sets, and 3 against 3 real
+  photos is too few to tell apart.
+
+So the bands stay as they are and the report does not run the check. Raising the strong band to
+0.95 (20 → 7 of these 3,489 real photos flagged; 60.1% → 52.0% of AI images kept) is a separate
+trade-off that this experiment measured but did not decide.
+
 ## 3. Provenance (C2PA) benchmark
 
 **Data.** Published sample files from the C2PA project, [`contentauth/c2pa-rs`](https://github.com/contentauth/c2pa-rs)
