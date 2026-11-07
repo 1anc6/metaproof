@@ -103,26 +103,29 @@ photos at 0.2% (1.5% recompressed) rather than catching them.
 
 ## 2. Robustness to edits
 
-The live model (`backend/models/detector.onnx`, the 8-bit ONNX export) with the live bands (strong 0.91, weak 0.79),
-on 928 images from the nine unseen generators (577 AI, 351 real), each change applied
-identically to real and AI images. Reproduce: `python ml/eval_robustness.py --chunks 40 --plan plan_heldout.v3.json`
-(results: [`ml/results_robustness.json`](../ml/results_robustness.json)). This is a 928-image subset, so its
-"original" row (AUC 0.976) differs slightly from the full-test numbers in section 1.
+The live model (`backend/models/detector.onnx`, the 8-bit ONNX export) with the live bands (strong 0.91, weak 0.79)
+and the backend's preprocessing, including the border trimming that runs before scoring, on 928 images from the
+nine unseen generators (577 AI, 351 real), each change applied identically to real and AI images. Reproduce:
+`python ml/eval_robustness.py --chunks 40 --plan plan_heldout.v3.json --out results_robustness_trim.json` (results:
+[`ml/results_robustness_trim.json`](../ml/results_robustness_trim.json); the same run before trimming is
+[`ml/results_robustness.json`](../ml/results_robustness.json), compared in [`ml/README.md`](../ml/README.md#robustness-to-edits-border-trimming)).
+This is a 928-image subset, so its "original" row (AUC 0.976) differs slightly from the full-test numbers in
+section 1. The Method page charts the "AI at strong" and "Real photos at strong" columns.
 
 | Change | AUC | Real photos at strong (≥0.91) | Real at weak (≥0.79) | AI at strong | AI above 0.5 |
 | --- | --- | --- | --- | --- | --- |
 | none (`original`) | 0.976 | 0.3% | 2.3% | 70.7% | 92.4% |
-| centre crop (60) (`crop_center_60`) | 0.961 | 0.6% | 2.6% | 55.6% | 86.0% |
-| corner crop (50) (`crop_corner_50`) | 0.951 | 0.0% | 0.0% | 40.6% | 78.7% |
-| 1080 px wide screenshot with dark UI bars, PNG (`screenshot`) | 0.948 | 0.0% | 1.1% | 41.1% | 80.1% |
-| filter edit (`filter_edit`) | 0.967 | 1.4% | 2.6% | 64.0% | 91.0% |
-| white meme caption band on top, JPEG q85 (`caption_band`) | 0.872 | 0.0% | 0.0% | 2.9% | 22.0% |
+| filter edit (`filter_edit`) | 0.967 | 1.4% | 2.6% | 63.8% | 91.0% |
 | rotated 3 degrees (`rotate_3deg`) | 0.971 | 0.3% | 1.7% | 61.5% | 90.1% |
-| social-media recompression (`social_recompress`) | 0.967 | 0.9% | 2.0% | 59.8% | 89.8% |
+| social-media recompression (`social_recompress`) | 0.966 | 0.9% | 2.0% | 59.6% | 89.8% |
+| 1080 px wide screenshot with dark UI bars, PNG (`screenshot`) | 0.958 | 0.0% | 1.4% | 57.4% | 84.1% |
+| white meme caption band on top, JPEG q85 (`caption_band`) | 0.970 | 0.0% | 0.9% | 57.0% | 85.3% |
+| centre crop (60) (`crop_center_60`) | 0.961 | 0.6% | 2.6% | 55.5% | 85.8% |
+| corner crop (50) (`crop_corner_50`) | 0.951 | 0.0% | 0.0% | 40.6% | 78.7% |
 
 - **False alarms stay low.** Real photos reach the strong band at most 1.4% of the time under every change, so the conservative design holds.
-- **Detection falls on corner crops and screenshots**, from 70.7% to about 41% of AI images at the strong band.
-- **A caption band nearly disables detection** (2.9% at strong, AUC 0.872). A likely cause is that the uniform band dominates the 256 px standardization and centre crop; trimming uniform borders before scoring is an untested candidate fix.
+- **Detection falls most on corner crops**, from 70.7% to 40.6% of AI images at the strong band; border trimming does not help there.
+- **Caption bands and screenshots recover with trimming.** Before it, a caption band cut AI images at strong to 2.9% (AUC 0.872) and a screenshot to 41.1%, because the uniform band filled much of the 256 px standardization and centre crop.
 
 ### 2.1 Stability check: tested, does not ship
 

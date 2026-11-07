@@ -1,5 +1,5 @@
 import { Copy, Droplets, Fingerprint, Layers, ShieldCheck, Sparkles } from 'lucide-react'
-import { BANDS, GENERATORS, NEWEST, SUMMARY } from '../data/detectorResults'
+import { BANDS, CAPTION_BEFORE_TRIM, GENERATORS, NEWEST, ROBUSTNESS, ROBUSTNESS_SAMPLE, SUMMARY } from '../data/detectorResults'
 import { PageHeader, PanelTitle } from '../components/ui'
 
 const LAYERS = [
@@ -131,6 +131,76 @@ function RateRow({ name, rates }: { name: string; rates: number[] }) {
   )
 }
 
+const pct = (v: number) => `${v.toFixed(1)}%`
+
+/**
+ * What everyday edits do to the detector: AI images it still scores high enough to decide a verdict
+ * alone (one thin bar each, the unedited rate ticked), with real photos wrongly reaching that band in
+ * a column of their own, since they sit on a scale a hundred times smaller.
+ */
+function EditsChart() {
+  const base = ROBUSTNESS[0]
+  const corner = ROBUSTNESS.find((r) => r.key === 'crop_corner_50')!
+  const worstReal = Math.max(...ROBUSTNESS.map((r) => r.realStrong))
+  // Two columns of figures; on a phone the edit's name takes its own line above the bar.
+  const grid = 'grid grid-cols-[minmax(0,1fr)_44px_56px] items-center gap-x-3 sm:grid-cols-[150px_minmax(0,1fr)_68px_76px]'
+  return (
+    <div className="mt-7">
+      <p className="text-fine font-medium text-ink">After everyday edits: AI images scored 91% or more</p>
+      <p className="mt-1 text-[13px] leading-relaxed text-faint">
+        The score that can decide a verdict on its own. The tick marks the unedited rate; hover or tap a row for more.
+      </p>
+      <div className={`${grid} mt-4 text-meta text-faint`} aria-hidden>
+        <span className="sm:col-span-2" />
+        <span className="text-right leading-tight">AI images</span>
+        <span className="text-right leading-tight">Real photos</span>
+      </div>
+      <ul className="mt-1.5 flex flex-col" aria-label="AI images and real photos scored 91% or more after each edit">
+        {ROBUSTNESS.map((r) => (
+          <li
+            key={r.key}
+            tabIndex={0}
+            className={`group relative ${grid} gap-y-1 rounded-xl py-2 outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+          >
+            <span className="min-w-0 truncate text-[13.5px] text-muted max-sm:col-span-3">
+              {r.name}
+              <span className="sr-only">
+                {`: ${r.detail}. ${pct(r.aiStrong)} of AI images and ${pct(r.realStrong)} of real photos scored 91% or more; ${pct(r.aiAbove50)} of AI images above 50%.`}
+              </span>
+            </span>
+            <span className="bar-track relative h-1.5 rounded-full" aria-hidden>
+              <span className="bar-fill absolute inset-y-0 left-0 rounded-full" style={{ width: `${r.aiStrong}%` }} />
+              <span className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-line-strong" style={{ left: `${base.aiStrong}%` }} />
+            </span>
+            <span className="text-right text-[13.5px] font-semibold text-ink tabular-nums" aria-hidden>
+              {pct(r.aiStrong)}
+            </span>
+            <span className="text-right text-[13.5px] text-muted tabular-nums" aria-hidden>
+              {pct(r.realStrong)}
+            </span>
+            {/* The detail for a pointer or keyboard; screen readers get it in the row's own text. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute bottom-full left-0 z-10 mb-1 hidden glass w-max max-w-[280px] rounded-2xl px-3 py-2 text-[12.5px] leading-snug text-muted group-hover:block group-focus:block"
+            >
+              <span className="block font-medium text-ink">{r.detail}</span>
+              {pct(r.aiAbove50)} of AI images above 50% · AUC {r.auc.toFixed(3)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-[13px] leading-relaxed text-faint">
+        Real photos reach this band at most {pct(worstReal)} of the time after any edit, so an edit does not turn a real
+        photo into an AI verdict. What edits cost is detection: after a corner crop {pct(corner.aiStrong)} of AI images
+        score this high, against {pct(base.aiStrong)} unedited. Caption bands and app bars are cut off before scoring;
+        before that, only {pct(CAPTION_BEFORE_TRIM)} of captioned AI images reached this band. Measured on{' '}
+        {(ROBUSTNESS_SAMPLE.ai + ROBUSTNESS_SAMPLE.real).toLocaleString()} images from the nine unseen generators (
+        {ROBUSTNESS_SAMPLE.ai} AI, {ROBUSTNESS_SAMPLE.real} real), each edit applied the same way to both.
+      </p>
+    </div>
+  )
+}
+
 function DetectorResults() {
   return (
     <section id="accuracy" className="panel mt-4 scroll-mt-16 sm:scroll-mt-6 rounded-[28px] p-5 sm:p-6">
@@ -224,6 +294,8 @@ function DetectorResults() {
           </table>
         </div>
       </div>
+
+      <EditsChart />
 
       <p className="mt-5 text-[13px] leading-relaxed text-faint">
         Wrongly calling a real photo AI-generated is the costlier mistake, so only very high scores decide on their own. About
