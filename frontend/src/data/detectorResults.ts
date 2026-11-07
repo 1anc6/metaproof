@@ -47,3 +47,26 @@ export const BANDS: { range: string; effect: string; caught: string; falseAlarm:
   { range: '5–79%', effect: 'Neutral: detector stays out', caught: '–', falseAlarm: '–' },
   { range: '< 5%', effect: 'Weak support for a real photo (only 0.8% / 0.3% of AI images score this low)', caught: '–', falseAlarm: '–' },
 ]
+
+/**
+ * The live detector after edits people make before checking an image: ml/eval_robustness.py on
+ * 928 held-out images (577 AI, 351 real), with the backend's border trimming
+ * (ml/results_robustness_trim.json; src/data/detectorResults.test.ts keeps the two in step).
+ * Percentages: AI images at or above the strong band (0.91, where the score can decide a
+ * verdict on its own), real photos wrongly there, and AI images above 0.5.
+ */
+export const ROBUSTNESS_SAMPLE = { ai: 577, real: 351 }
+
+/** AI images with a meme caption at the strong band before borders were trimmed (ml/results_robustness.json). */
+export const CAPTION_BEFORE_TRIM = 2.9
+
+export const ROBUSTNESS: { key: string; name: string; detail: string; aiStrong: number; realStrong: number; aiAbove50: number; auc: number }[] = [
+  { key: 'original', name: 'Unedited', detail: 'As generated or taken', aiStrong: 70.7, realStrong: 0.3, aiAbove50: 92.4, auc: 0.9764 },
+  { key: 'filter_edit', name: 'Photo filter', detail: 'Brighter, more contrast and colour, sharpened', aiStrong: 63.8, realStrong: 1.4, aiAbove50: 91.0, auc: 0.9673 },
+  { key: 'rotate_3deg', name: 'Straightened', detail: 'Rotated 3° and cropped to hide the corners', aiStrong: 61.5, realStrong: 0.3, aiAbove50: 90.1, auc: 0.9709 },
+  { key: 'social_recompress', name: 'Shared online', detail: 'Halved in size and saved as JPEG quality 60', aiStrong: 59.6, realStrong: 0.9, aiAbove50: 89.8, auc: 0.966 },
+  { key: 'screenshot', name: 'Phone screenshot', detail: 'Shown 1080 px wide with app bars, saved as PNG', aiStrong: 57.4, realStrong: 0.0, aiAbove50: 84.1, auc: 0.9581 },
+  { key: 'caption_band', name: 'Meme caption', detail: 'A white band of text added above the picture', aiStrong: 57.0, realStrong: 0.0, aiAbove50: 85.3, auc: 0.97 },
+  { key: 'crop_center_60', name: 'Centre crop', detail: 'The middle 60% of each side kept', aiStrong: 55.5, realStrong: 0.6, aiAbove50: 85.8, auc: 0.9612 },
+  { key: 'crop_corner_50', name: 'Corner crop', detail: 'Half of each side kept, from a corner', aiStrong: 40.6, realStrong: 0.0, aiAbove50: 78.7, auc: 0.9508 },
+]
